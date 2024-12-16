@@ -30,7 +30,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "192.168.29.2",
     "127.0.0.1",
-    "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net"
+    "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net",
+    "ptpi.tech"
 ]
 
 # Application definition
