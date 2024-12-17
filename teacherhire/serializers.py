@@ -27,7 +27,6 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
-    is_recruiter = serializers.BooleanField(required=True)
 
     class Meta:
         model = CustomUser
