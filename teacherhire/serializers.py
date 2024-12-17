@@ -28,7 +28,6 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
     is_recruiter = serializers.BooleanField(required=True)
-    # email = serializers.EmailField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
@@ -40,7 +39,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         username = base_username
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
-        is_recruiter = validated_data['is_recruiter']
+        is_recruiter = True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
         while CustomUser.objects.filter(username=username).exists():
@@ -62,7 +61,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
-    # email = serializers.EmailField(write_only=True, required=True)
+    email = serializers.EmailField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
