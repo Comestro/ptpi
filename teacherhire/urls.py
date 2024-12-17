@@ -37,7 +37,8 @@ router.register(r'self/basicProfile', BasicProfileViewSet, basename='teacher-bas
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('register/', RegisterUser.as_view(), name='register'),
+    path('recruiter/register/', RecruiterRegisterUser.as_view(), name='register'),
+    path('register/', TeacherRegisterUser.as_view(), name='teacher-register'),
     path('login/', LoginUser.as_view()),
     path('logout/', LogoutUser.as_view()),
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),

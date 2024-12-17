@@ -67,9 +67,30 @@ def get_single_object(viewset):
 def get_count(model_class):
     return model_class.objects.count()
 
-class RegisterUser(APIView):
+class RecruiterRegisterUser(APIView):
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+        serializer = RecruiterRegisterSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response({
+                'error': serializer.errors,
+                # Todo
+                'message': 'Something went wrong'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer.save()
+        user = CustomUser.objects.get(email=serializer.data['email'])
+        token_obj, __ = Token.objects.get_or_create(user=user)
+
+        return Response({
+            'payload': serializer.data,
+            'token': str(token_obj),
+            'message': 'Your data is saved'
+        },status=status.HTTP_200_OK)
+    
+class TeacherRegisterUser(APIView):
+    def post(self, request):
+        serializer = TeacherRegisterSerializer(data=request.data)
 
         if not serializer.is_valid():
             return Response({
@@ -116,15 +137,21 @@ class LoginUser(APIView):
                 'is_admin': is_admin,
                 'is_admin': user.is_staff,
                 'is_recruiter': user.is_recruiter,
-                'is_user': True
+                'is_user': not (user.is_staff and user.is_recruiter)
                 
             }
+            if user.is_staff and user.is_recruiter :
+                role = 'admin'
+            elif user.is_recruiter:
+                role = 'recruiter'
+            else:
+                role = 'user'
             return Response({
                 'access_token': token.key,
                 'refresh_token': refresh_token,
                 'Fname':user.Fname, 
                 'email':user.email, 
-                'roles': roles,
+                'role': role,
                 # 'refresh_expires_at': refresh_expires_at,  
                 'message': 'Login successful'
             }, status=status.HTTP_200_OK)

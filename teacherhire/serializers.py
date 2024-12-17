@@ -23,7 +23,42 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class RecruiterRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+    Fname = serializers.CharField(required=True)
+    Lname = serializers.CharField(required=True)
+    is_recruiter = serializers.BooleanField(required=True)
+    # email = serializers.EmailField(write_only=True, required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter']
+    
+    def create(self, validated_data):
+        email = validated_data['email']
+        base_username = email.split('@')[0]
+        username = base_username
+        Fname = validated_data['Fname']
+        Lname = validated_data['Lname']
+        is_recruiter = validated_data['is_recruiter']
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError({'email': 'Email is already in use.'})
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}{random.randint(1000, 9999)}"
+        try:
+            user = CustomUser.objects.create_user(
+                username=username,
+                email=email,
+                password=validated_data['password'],
+                Fname=Fname,
+                Lname=Lname,
+                is_recruiter=is_recruiter
+            )
+        except Exception as e:
+            raise ValidationError({'error': str(e)})
+        return user
+        
+class TeacherRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
