@@ -249,8 +249,18 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TeachersAddress.objects.filter(user=self.request.user)
 
-    # def list(self, request, *args, **kwargs):
-    #     return self.retrieve(request, *args, **kwargs)
+    def list(self, request, *args, **kwargs):
+        current_address = self.get_queryset().filter(address_type='current').first()
+        permanent_address = self.get_queryset().filter(address_type='permanent').first()
+
+        current_address_data = self.get_serializer(current_address).data if current_address else None
+        permanent_address_data = self.get_serializer(permanent_address).data if permanent_address else None
+
+        data = {
+            "current_address" : current_address_data,
+            "permanent_address": permanent_address_data
+        }
+        return Response(data, status=status.HTTP_200_OK)
     
     # def get_object(self):
     #  try:
