@@ -60,7 +60,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
-    email = serializers.EmailField(write_only=True, required=True)
+    # email = serializers.EmailField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
