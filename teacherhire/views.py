@@ -764,16 +764,16 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
         return TeacherSubject.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-            data = request.data.copy()
-            data['user'] = request.user.id
-            if TeacherSubject.objects.filter(user=request.user).exists():
-                return Response({"detail": "SingleTeacherSubject already exists. "}, status=status.HTTP_400_BAD_REQUEST)
-            serializer = self.get_serializer(data=data)
-            if serializer.is_valid():
-                self.perform_create(serializer)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()
+        data['user'] = request.user.id
+        if TeacherSubject.objects.filter(user=request.user).exists():
+            return Response({"detail": "SingleTeacherSubject already exists. "}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # def list(self, request, *args, **kwargs):
     #     return self.retrieve(request, *args, **kwargs)
     def get_object(self):
@@ -862,6 +862,7 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Job preference location deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
     
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
