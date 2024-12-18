@@ -274,6 +274,7 @@ class JobPreferenceLocation(models.Model):
     city = models.CharField(max_length=200,null=True, blank=True)
     sub_division = models.CharField(max_length=200,null=True, blank=True)
     block = models.CharField(max_length=200,null=True, blank=True)
+    post_office = models.CharField(max_length=200, null=True, blank=True)
     area = models.TextField(null=True, blank=True)
     pincode = models.CharField(max_length=6, null=True, blank=True)
     def __str__(self):
