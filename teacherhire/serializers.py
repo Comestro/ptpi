@@ -461,9 +461,17 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
         return representation
     
     def validate_area(self, value):
-        if JobPreferenceLocation.objects.filter(area=value).exists():
-            raise serializers.ValidationError("A area with this name already exists.")
-        return value   
+        if JobPreferenceLocation.objects.filter(area=value, preference=self.initial_data.get('preference')).exists():
+            raise serializers.ValidationError(" this area name already exists")
+        
+        preference_id = self.initial_data.get('preference')
+        if preference_id:
+            area_count = JobPreferenceLocation.objects.filter(preference=preference_id).count()
+            if area_count >= 5:
+                raise serializers.ValidationError("You can only add up to 5 areas for a single preference.")
+        
+        return value
+ 
 
 class BasicProfileSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
