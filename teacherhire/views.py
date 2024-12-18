@@ -132,15 +132,14 @@ class LoginUser(APIView):
 
             refresh_token = generate_refresh_token()
       
-            is_admin =  user.is_staff and user.is_recruiter            
+            is_admin =  user.is_staff          
             roles = {                
-                'is_admin': is_admin,
                 'is_admin': user.is_staff,
                 'is_recruiter': user.is_recruiter,
                 'is_user': not (user.is_staff and user.is_recruiter)
                 
             }
-            if user.is_staff and user.is_recruiter :
+            if user.is_staff :
                 role = 'admin'
             elif user.is_recruiter:
                 role = 'recruiter'
