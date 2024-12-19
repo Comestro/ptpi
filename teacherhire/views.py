@@ -871,21 +871,12 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         else:
             raise NotFound("Associated user not found.")
         
-
-        if jobPreferenceLocation:
-            return update_auth_data(
-                serializer_class=self.get_serializer_class(),
-                instance=jobPreferenceLocation,
-                request_data=data,
-                user=jobPreferenceLocation.preference.user
-            )
-        else:
-            return create_auth_data(
-                serializer_class=self.get_serializer_class(),
-                request_data=data,
-                user=jobPreferenceLocation.preference.user,
-                model_class=JobPreferenceLocation
-            )
+        return update_auth_data(
+            serializer_class=self.get_serializer_class(),
+            instance=jobPreferenceLocation,
+            request_data=data,
+            user=jobPreferenceLocation.preference.user
+        )
     
     
 class BasicProfileViewSet(viewsets.ModelViewSet):
