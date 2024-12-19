@@ -407,7 +407,7 @@ class PreferenceSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Preference
-        fields = ['user', 'job_role', 'class_category', 'prefered_subject', 'teacher_job_type']
+        fields = ['id', 'user', 'job_role', 'class_category', 'prefered_subject', 'teacher_job_type']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)        

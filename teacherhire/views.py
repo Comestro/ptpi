@@ -856,11 +856,36 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset= JobPreferenceLocation.objects.all()
     serializer_class = JobPreferenceLocationSerializer
+    lookup_field = 'id'
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Job preference location deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    def put(self, request, *args, **kwargs):
+        data = request.data.copy()
+        
+        jobPreferenceLocation = self.get_object()
+        if jobPreferenceLocation.preference and jobPreferenceLocation.preference.user:
+            data['user'] = request.preference.user.id
+        else:
+            raise NotFound("Associated user not found.")
+        
+
+        if jobPreferenceLocation:
+            return update_auth_data(
+                serializer_class=self.get_serializer_class(),
+                instance=jobPreferenceLocation,
+                request_data=data,
+                user=jobPreferenceLocation.preference.user
+            )
+        else:
+            return create_auth_data(
+                serializer_class=self.get_serializer_class(),
+                request_data=data,
+                user=jobPreferenceLocation.preference.user,
+                model_class=JobPreferenceLocation
+            )
     
     
 class BasicProfileViewSet(viewsets.ModelViewSet):
