@@ -3,7 +3,6 @@ import re
 from teacherhire.models import *
 import random
 from rest_framework.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
 
 
 
