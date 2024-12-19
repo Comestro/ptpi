@@ -898,7 +898,6 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
     def get_queryset(self):
         return JobPreferenceLocation.objects.filter(preference__user=self.request.user)
 
@@ -906,22 +905,28 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Job preference location deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        
+        user = request.user
+
+        user_preference = user.preference_set.first()  
+
+        if not user_preference:
+            return Response({"error": "Create a preference first."}, status=status.HTTP_400_BAD_REQUEST)
+
         jobPreferenceLocation = self.get_object()
-        if jobPreferenceLocation.preference and jobPreferenceLocation.preference.user:
-            data['user'] = request.preference.user.id
-        else:
-            raise NotFound("Associated user not found.")
-        
-        return update_auth_data(
-            serializer_class=self.get_serializer_class(),
-            instance=jobPreferenceLocation,
-            request_data=data,
-            user=jobPreferenceLocation.preference.user
-        )
-    
+
+        if jobPreferenceLocation.preference.id != user_preference.id:
+            return Response({"error": "You can only update locations linked to your preference."}, status=status.HTTP_403_FORBIDDEN)
+
+        data['preference'] = user_preference.id
+
+        serializer = self.get_serializer(instance=jobPreferenceLocation, data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK) 
     
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
