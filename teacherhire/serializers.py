@@ -3,6 +3,8 @@ import re
 from teacherhire.models import *
 import random
 from rest_framework.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -54,7 +56,17 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
-        return user
+        return 
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8)
+
+    def validate_new_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        return value
+
         
 class TeacherRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
