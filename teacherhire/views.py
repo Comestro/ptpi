@@ -882,6 +882,23 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     serializer_class = JobPreferenceLocationSerializer
     lookup_field = 'id'
 
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        user = request.user
+
+        preference = user.preference_set.first() 
+
+        if not preference:
+            return Response({"error": "No preference found for the user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        data["preference"] = preference.id  
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+    
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
     def get_queryset(self):
         return JobPreferenceLocation.objects.filter(preference__user=self.request.user)
 
