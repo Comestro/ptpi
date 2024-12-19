@@ -882,6 +882,9 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     serializer_class = JobPreferenceLocationSerializer
     lookup_field = 'id'
 
+    def get_queryset(self):
+        return JobPreferenceLocation.objects.filter(preference__user=self.request.user)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
