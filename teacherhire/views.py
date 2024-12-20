@@ -189,7 +189,7 @@ class LogoutUser(APIView):
         try:
             token = Token.objects.get(user=request.user)
             token.delete()
-            return Response({"success": "Logout successful"}, status=status.HTTP_200_OK)
+            return Response({"success": "Logout succesJobsful"}, status=status.HTTP_200_OK)
         except Token.DoesNotExist:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -627,9 +627,16 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherExperiences.objects.all()
     serializer_class = TeacherExperiencesSerializer
-
+   
     def create(self, request, *args, **kwargs):
-        return create_auth_data(self, TeacherExperiencesSerializer, request.data, TeacherExperiences)
+        data = request.data.copy()
+        return create_auth_data(
+            serializer_class=self.get_serializer_class(),
+            request_data=data,
+            user=request.user,
+            model_class=TeacherExperiences
+        )
+    
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
     def list(self, request, *args, **kwargs):
