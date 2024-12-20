@@ -514,6 +514,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = ['id', 'last_login', 'is_superuser', 'email', 'username',
             'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter',
             'is_teacher', 'groups', 'user_permissions']
+        read_only_fields = ['email', 'username'] 
 
 class TeacherJobTypeSerializer(serializers.ModelSerializer):
     class Meta:
