@@ -628,8 +628,14 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     queryset = TeacherExperiences.objects.all()
     serializer_class = TeacherExperiencesSerializer
    
-    def create(self, request, *args, **kwargs):
+    def create(self, request):
         data = request.data.copy()
+        institution = data.get('institution')
+        if TeacherExperiences.objects.filter(user=request.user, institution=institution).exists():
+            return Response(
+                {"error": "Experience with the same institution already exists."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         return create_auth_data(
             serializer_class=self.get_serializer_class(),
             request_data=data,
