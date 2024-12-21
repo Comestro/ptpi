@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -30,6 +31,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "192.168.29.2",
     "127.0.0.1",
+    "localhost",
     "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net",
     "ptpi.tech"
 ]
@@ -161,5 +163,15 @@ CORS_ALLOWED_ORIGINS = [
     'http://192.168.29.2:8000',   # Django server on the local network
 ]
 
+PASSWORD_RESET_TIME_OUT = 900
+
 # Custom user model
 AUTH_USER_MODEL = 'teacherhire.CustomUser'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+

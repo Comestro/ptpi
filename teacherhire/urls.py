@@ -39,6 +39,8 @@ urlpatterns = [
     path('auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('recruiter/register/', RecruiterRegisterUser.as_view(), name='register'),
     path('change_password/', ChangePasswordView.as_view(), name='change_password'),
+    path('forget-password/', SendPasswordResetEmailViewSet.as_view(), name='forget-password'),
+    path('reset-password/<str:uidb64>/<str:token>/', ResetPasswordViewSet.as_view(), name='reset_password'),
     path('register/', TeacherRegisterUser.as_view(), name='teacher-register'),
     path('login/', LoginUser.as_view()),
     path('logout/', LogoutUser.as_view()),

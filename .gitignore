@@ -10,3 +10,4 @@
 
 # Ignore server folder
 /server
+.env
