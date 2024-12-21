@@ -60,7 +60,6 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         return 
     
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, min_length=8)
 
     def validate_new_password(self, value):
