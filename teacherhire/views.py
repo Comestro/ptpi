@@ -617,7 +617,12 @@ class TeacherExperiencesViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherExperiencesSerializer
 
     def create(self,request,*args, **kwargs):
-        return create_object(TeacherExperiencesSerializer,request.data,TeacherExperiences)
+        return create_auth_data(
+                serializer_class=self.get_serializer_class(),
+                request_data=data,
+                user=request.user,
+                model_class=TeacherExperiences
+            )
    
     @action (detail=False,methods=['get'])
     def count(self,request):
@@ -1138,7 +1143,7 @@ class VarifyOTP(APIView):
                     'message': 'The provided OTP is incorrect'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            expiration_time = timedelta(minutes=1)
+            expiration_time = timedelta(minutes=2)
             if user.otp_created_at is None or now() > user.otp_created_at + expiration_time:
                 return Response({
                     'error': 'OTP expired',
