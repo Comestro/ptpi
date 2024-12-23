@@ -648,7 +648,26 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
             user=request.user,
             model_class=TeacherExperiences
         )
-    
+    def put(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data['user'] = request.user.id
+        
+        teacher_qualification = TeacherExperiences.objects.filter(user=request.user).first()
+
+        if teacher_qualification:
+           return update_auth_data(
+               serialiazer_class=self.get_serializer_class(),
+               instance=teacher_qualification,
+               request_data=data,
+               user=request.user
+           )
+        else:
+            return create_auth_data(
+                serializer_class=self.get_serializer_class(),
+                request_data=data,
+                user=request.user,
+                model_class=TeacherExperiences
+            )
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
     def list(self, request, *args, **kwargs):
