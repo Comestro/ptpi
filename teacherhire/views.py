@@ -617,12 +617,7 @@ class TeacherExperiencesViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherExperiencesSerializer
 
     def create(self,request,*args, **kwargs):
-        return create_auth_data(
-                serializer_class=self.get_serializer_class(),
-                request_data=data,
-                user=request.user,
-                model_class=TeacherExperiences
-            )
+        return create_object(TeacherExperiencesSerializer,request.data,TeacherExperiences)
    
     @action (detail=False,methods=['get'])
     def count(self,request):
