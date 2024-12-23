@@ -7,6 +7,9 @@ from .models import *
 class EducationalQualificationAdmin(admin.ModelAdmin):
     list_display = ['name', 'description']
 
+@admin.register(CustomUser)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ['email', 'username', 'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter', 'is_teacher', 'is_verified', 'otp', 'otp_created_at']
 @admin.register(TeacherQualification)
 class TeacherQualificationAdmin(admin.ModelAdmin):
     list_display = ['user', 'qualification','institution','year_of_passing','grade_or_percentage']
