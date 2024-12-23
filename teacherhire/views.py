@@ -13,7 +13,9 @@ from .permissions import IsRecruiterPermission, IsAdminPermission
 import uuid  
 from .models import Level, Subject, Question, ClassCategory
 from .serializers import QuestionSerializer
-
+from .utils import *
+from datetime import timedelta
+from django.utils.timezone import now
     
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
@@ -79,13 +81,16 @@ class RecruiterRegisterUser(APIView):
             }, status=status.HTTP_403_FORBIDDEN)
         
         serializer.save()
-        user = CustomUser.objects.get(email=serializer.data['email'])
+        email=serializer.data['email']
+        send_otp_via_email(email)
+        request.session['email'] = email
+        user = CustomUser.objects.get(email=email)
         token_obj, __ = Token.objects.get_or_create(user=user)
 
         return Response({
             'payload': serializer.data,
             'token': str(token_obj),
-            'message': 'Your data is saved'
+            'message': 'Your data is saved. Please check your email and verify your account first.'
         },status=status.HTTP_200_OK)
     
 #
@@ -120,13 +125,17 @@ class TeacherRegisterUser(APIView):
             }, status=status.HTTP_403_FORBIDDEN)
         
         serializer.save()
-        user = CustomUser.objects.get(email=serializer.data['email'])
+        send_otp_via_email(serializer.data['email'])
+        email=serializer.data['email']
+        request.session['email'] = email
+
+        user = CustomUser.objects.get(email=email)
         token_obj, __ = Token.objects.get_or_create(user=user)
 
         return Response({
             'payload': serializer.data,
             'token': str(token_obj),
-            'message': 'Your data is saved'
+            'message': 'Your data is saved. Please check your email and verify your account first.'
         },status=status.HTTP_200_OK)
     
 
@@ -142,7 +151,8 @@ class LoginUser(APIView):
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
-
+        if not user.is_verified:  
+            return Response({'message': 'User is not verified. Please verify your account before logging in.'}, status=status.HTTP_403_FORBIDDEN)
         # Check password validity
         if user.check_password(password):
             # Delete old token if it exists
@@ -1100,3 +1110,87 @@ class ResetPasswordViewSet(APIView):
         if serializer.is_valid(raise_exception=True):
             return Response({'msg': 'Password reset Successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class VarifyOTP(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+            serializer = VerifyOTPSerializer(data=data)
+            if not serializer.is_valid():
+                return Response({
+                    'error': serializer.errors,
+                    'message': 'Invalid data provided'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+            email = request.session.get('email')
+            otp = serializer.data['otp']
+
+            user = CustomUser.objects.filter(email=email).first()
+            if not user:
+                return Response({
+                    'error': 'Invalid Email',
+                    'message': 'User does not exist'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if user.otp != otp:
+                return Response({
+                    'error': 'Invalid OTP',
+                    'message': 'The provided OTP is incorrect'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            expiration_time = timedelta(minutes=1)
+            if user.otp_created_at is None or now() > user.otp_created_at + expiration_time:
+                return Response({
+                    'error': 'OTP expired',
+                    'message': 'Please request a new OTP'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            user.is_verified = True
+            user.save()
+            request.session.pop('email', None)
+
+            return Response({
+                'message': 'Account verified successfully'
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return Response({
+                'error': 'Server Error',
+                'message': 'An unexpected error occurred'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ResendOTP(APIView):
+    def post(self, request):
+        try:
+            email = request.session.get('email')
+            if not email:
+                return Response({
+                    'error': 'Email not found in session',
+                    'message': 'Please register again'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            user = CustomUser.objects.filter(email=email).first()
+            if not user:
+                return Response({
+                    'error': 'Invalid Email',
+                    'message': 'Something went wrong'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            if user.is_verified:
+                return Response({
+                    'error': 'User already verified',
+                    'message': 'Account already verified'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            send_otp_via_email(user.email)
+
+            return Response({
+                'message': 'OTP resent successfully'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(e)
+            return Response({
+                'error': 'Something went wrong',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

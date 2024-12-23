@@ -11,7 +11,7 @@ from .utils import Util
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'password' ,'Fname', 'Lname', 'email',]
+        fields = ['id', 'password' ,'Fname', 'Lname', 'email','is_verified']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -33,7 +33,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -57,7 +57,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
-        return 
+        return user
     
 class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, min_length=8)
@@ -76,7 +76,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
 
 
     def create(self, validated_data):
@@ -573,3 +573,6 @@ class ResetPasswordSerializer(serializers.Serializer):
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
             raise ValidationError('Token is not valid or Expired')
+        
+class VerifyOTPSerializer(serializers.Serializer):
+    otp = serializers.CharField()
