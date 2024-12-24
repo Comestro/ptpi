@@ -637,9 +637,10 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data.copy()
         institution = data.get('institution')
-        if TeacherExperiences.objects.filter(user=request.user, institution=institution).exists():
+        role = data.get('role')
+        if TeacherExperiences.objects.filter(user=request.user, institution=institution, role=role).exists():
             return Response(
-                {"error": "Experience with the same institution already exists."},
+                {"error": "Experience with the same institution and role already exists."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         return create_auth_data(
