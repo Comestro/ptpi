@@ -544,8 +544,8 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
     
     
 class TeacherQualificationViewSet(viewsets.ModelViewSet): 
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
+    # authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherQualification.objects.all()
     serializer_class = TeacherQualificationSerializer
 
