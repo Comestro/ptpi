@@ -670,8 +670,7 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
             )
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
-    def list(self, request, *args, **kwargs):
-        return get_single_object(self)
+
     
     
 class QuestionViewSet(viewsets.ModelViewSet): 
