@@ -13,7 +13,8 @@ class Command(BaseCommand):
                 username='admin',
                 password='adminpassword',
                 Fname='Admin',
-                Lname='User'
+                Lname='User',
+                is_verified=True
             )
             self.stdout.write(self.style.SUCCESS('Successfully created admin user'))
         else:
