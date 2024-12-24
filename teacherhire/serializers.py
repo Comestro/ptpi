@@ -7,6 +7,8 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
+from datetime import datetime
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -375,11 +377,9 @@ class EducationalQualificationSerializer(serializers.ModelSerializer):
         model = EducationalQualification
         fields = '__all__'
 
-
 class TeacherQualificationSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    qualification = serializers.PrimaryKeyRelatedField(queryset=EducationalQualification.objects.all(), required=True)
-
+    qualification = serializers.SlugRelatedField(queryset=EducationalQualification.objects.all(),slug_field="name",required=False)
     class Meta:
         model = TeacherQualification
         fields = "__all__"
@@ -389,7 +389,24 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
         representation['user'] = UserSerializer(instance.user).data
         representation['qualification'] = EducationalQualificationSerializer(instance.qualification).data
         return representation
-    
+
+    def validate_year_of_passing(self, value):        
+        current_year = datetime.now().year
+        if value > current_year:
+            raise serializers.ValidationError("Year of passing cannot be in the future.")
+        return value
+
+    def validate(self, data):        
+        user = data.get('user')
+        if user:
+            previous_qualification = TeacherQualification.objects.filter(user=user).order_by('-year_of_passing').first()
+            if previous_qualification:
+                if data.get('year_of_passing') <= previous_qualification.year_of_passing:
+                    raise serializers.ValidationError(
+                        "Year of passing should be greater than the previous qualification's year."
+                    )
+        return data
+
     
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
