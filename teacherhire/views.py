@@ -565,17 +565,44 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherQualification.objects.all()
     serializer_class = TeacherQualificationSerializer
-
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-
-        return create_auth_data(
-                serializer_class=self.get_serializer_class(),
-                request_data=data,
-                user=request.user,
-                model_class=TeacherQualification
-            )
     
+    def create(self, request):
+        data = request.data.copy()
+        qualification = data.get('qualification')  # Slug value of the qualification
+        year_of_passing = data.get('year_of_passing')
+
+        # Validate required fields
+        if not qualification and year_of_passing :
+            return Response(
+                {"error": "Qualification and year_of_passing is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if the qualification exists in the database
+        if not EducationalQualification.objects.filter(name=qualification).exists():
+            return Response(
+                {"error": f"Qualification '{qualification}' does not exist."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check for duplicates based on user, qualification, and year_of_passing
+        if TeacherQualification.objects.filter(
+            user=request.user,
+            qualification__name=qualification,
+            year_of_passing=year_of_passing
+        ).exists():
+            return Response(
+                {"error": f"A record with qualification '{qualification}' and year of passing '{year_of_passing}' already exists."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Proceed with creation if no duplicates exist
+        return create_auth_data(
+            serializer_class=self.get_serializer_class(),
+            request_data=data,
+            user=request.user,
+            model_class=TeacherQualification
+        )
+
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
