@@ -593,18 +593,18 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user_qualifications = TeacherQualification.objects.filter(user=request.user)
+        user_qua = TeacherQualification.objects.filter(user=request.user)
 
         if qualification == "inter":
-            matric_record = user_qualifications.filter(qualification__name="matric").first()
-            if matric_record and (year_of_passing - matric_record.year_of_passing < 2):
+            matric = user_qua.filter(qualification__name="matric").first()
+            if matric and (year_of_passing - matric.year_of_passing < 2):
              return Response(
                     {"error": "There must be at least a 2-year gap between matric and inter."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
         if qualification == "graduation":
-            inter_record = user_qualifications.filter(qualification__name="inter").first()
+            inter_record = user_qua.filter(qualification__name="inter").first()
             if inter_record and (year_of_passing - inter_record.year_of_passing < 3):
                 return Response(
                     {"error": "There must be at least a 3-year gap between inter and graduation."},

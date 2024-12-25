@@ -118,7 +118,10 @@ class TeacherQualification(models.Model):
     grade_or_percentage = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        return self.user.username
+        if self.user:
+            return f"{self.user.username} - {self.qualification.name} ({self.year_of_passing})"
+        return f"Unknown User - {self.qualification.name} ({self.year_of_passing})"
+
 
 class Role(models.Model):
     jobrole_name = models.CharField(max_length=400, null=True, blank=True)
