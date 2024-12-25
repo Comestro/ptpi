@@ -656,6 +656,11 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
             user=request.user,
             model_class=TeacherQualification
         )
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     
 
