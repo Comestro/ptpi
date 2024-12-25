@@ -565,27 +565,24 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherQualification.objects.all()
     serializer_class = TeacherQualificationSerializer
-    
+
     def create(self, request):
         data = request.data.copy()
         qualification = data.get('qualification')  # Slug value of the qualification
-        year_of_passing = data.get('year_of_passing')
+        year_of_passing = int(data.get('year_of_passing')) if data.get('year_of_passing') else None
 
-        # Validate required fields
-        if not qualification and year_of_passing :
+        if not qualification or not year_of_passing:
             return Response(
-                {"error": "Qualification and year_of_passing is required."},
+                {"error": "Qualification and year_of_passing are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Check if the qualification exists in the database
         if not EducationalQualification.objects.filter(name=qualification).exists():
             return Response(
                 {"error": f"Qualification '{qualification}' does not exist."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Check for duplicates based on user, qualification, and year_of_passing
         if TeacherQualification.objects.filter(
             user=request.user,
             qualification__name=qualification,
@@ -595,7 +592,25 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
                 {"error": f"A record with qualification '{qualification}' and year of passing '{year_of_passing}' already exists."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        # Proceed with creation if no duplicates exist
+
+        user_qua = TeacherQualification.objects.filter(user=request.user)
+
+        if qualification == "inter":
+            matric = user_qua.filter(qualification__name="matric").first()
+            if matric and (year_of_passing - matric.year_of_passing < 2):
+             return Response(
+                    {"error": "There must be at least a 2-year gap between matric and inter."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        if qualification == "graduation":
+            inter_record = user_qua.filter(qualification__name="inter").first()
+            if inter_record and (year_of_passing - inter_record.year_of_passing < 3):
+                return Response(
+                    {"error": "There must be at least a 3-year gap between inter and graduation."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         return create_auth_data(
             serializer_class=self.get_serializer_class(),
             request_data=data,
