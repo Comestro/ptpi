@@ -16,7 +16,7 @@ from .serializers import QuestionSerializer
 from .utils import *
 from datetime import timedelta
 from django.utils.timezone import now
-    
+
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
     def get(self, request):
@@ -660,7 +660,8 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherExperiences.objects.all()
     serializer_class = TeacherExperiencesSerializer
-   
+    lookup_field = 'id'
+
     def create(self, request):
         data = request.data.copy()
         institution = data.get('institution')
@@ -678,14 +679,17 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
         )
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        data['user'] = request.user.id
-        
-        teacher_qualification = TeacherExperiences.objects.filter(user=request.user).first()
+        experienced_id = kwargs.get('id')
+        user = request.user.id
+        try:
+            teacher_experienced = TeacherExperiences.objects.get(id=experienced_id, user=user)
+        except TeacherExperiences.DoesNotExist:
+            return Response({"error": "Experience not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        if teacher_qualification:
+        if teacher_experienced:
            return update_auth_data(
                serialiazer_class=self.get_serializer_class(),
-               instance=teacher_qualification,
+               instance=teacher_experienced,
                request_data=data,
                user=request.user
            )
