@@ -406,6 +406,7 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
     serializer_class = TeacherSkillSerializer
+    lookup_field = 'id'
     
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
@@ -417,9 +418,16 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        data['user'] = request.user.id
+        skill_id = kwargs.get('id')
+        user = request.user.id
         
-        skill = TeacherSkill.objects.filter(user=request.user).first()
+        try:
+            skill = TeacherSkill.objects.get(id=skill_id, user=user)
+        except TeacherSkill.DoesNotExist:
+            return Response(
+                {"error": "Skill not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         if skill:
             return update_auth_data(
@@ -442,11 +450,12 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     # def list(self, request, *args, **kwargs):
     #     return self.retrieve(request, *args, **kwargs)
 
-    def get_object(self):
-        try:
-            return TeacherSkill.objects.get(user=self.request.user)
-        except TeacherSkill.DoesNotExist:
-            raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
+    # def get_object(self):
+    #     skill_id = self.kwargs.get('id')
+    #     try:
+    #         return TeacherSkill.objects.get(id=skill_id, user=self.request.user)
+    #     except TeacherSkill.DoesNotExist:
+    #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class SubjectViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated] 
