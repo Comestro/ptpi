@@ -1228,7 +1228,7 @@ class VarifyOTP(APIView):
                     'message': 'The provided OTP is incorrect'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            expiration_time = timedelta(minutes=2)
+            expiration_time = timedelta(minutes=10)
             if user.otp_created_at is None or now() > user.otp_created_at + expiration_time:
                 return Response({
                     'error': 'OTP expired',
