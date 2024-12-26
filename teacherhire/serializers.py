@@ -592,4 +592,5 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise ValidationError('Token is not valid or Expired')
         
 class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
     otp = serializers.CharField()

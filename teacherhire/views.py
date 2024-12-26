@@ -127,7 +127,7 @@ class TeacherRegisterUser(APIView):
         serializer.save()
         send_otp_via_email(serializer.data['email'])
         email=serializer.data['email']
-        request.session['email'] = email
+        # request.session['email'] = email
 
         user = CustomUser.objects.get(email=email)
         token_obj, __ = Token.objects.get_or_create(user=user)
@@ -1212,7 +1212,7 @@ class VarifyOTP(APIView):
                     'message': 'Invalid data provided'
                 }, status=status.HTTP_400_BAD_REQUEST)
         
-            email = request.session.get('email')
+            email = serializer.data['email']
             otp = serializer.data['otp']
 
             user = CustomUser.objects.filter(email=email).first()
@@ -1237,7 +1237,6 @@ class VarifyOTP(APIView):
 
             user.is_verified = True
             user.save()
-            request.session.pop('email', None)
 
             return Response({
                 'message': 'Account verified successfully'
@@ -1253,11 +1252,11 @@ class VarifyOTP(APIView):
 class ResendOTP(APIView):
     def post(self, request):
         try:
-            email = request.session.get('email')
+            email = request.data.get('email')
             if not email:
                 return Response({
-                    'error': 'Email not found in session',
-                    'message': 'Please register again'
+                    'error': 'Email is required',
+                    'message': 'Please provide a valid email address'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             user = CustomUser.objects.filter(email=email).first()
