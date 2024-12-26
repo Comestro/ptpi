@@ -1283,3 +1283,43 @@ class ResendOTP(APIView):
                 'error': 'Something went wrong',
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserVerify(APIView):
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            if not email:
+                return Response({
+                    'error': 'Email is required',
+                    'message': 'Please provide a valid email address'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                user = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                return Response({
+                    'error': 'Invalid Email',
+                    'message': 'User with this email does not exist'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            if not user.is_verified:
+                return Response({
+                    'error': 'User is not verified',
+                    'message': 'Please verify your email first'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            return Response({
+                "verified": True,
+                "email": user.email,
+                "username": user.username,
+                "First name": user.Fname,
+                "Last name": user.Lname,
+                'message': 'User is verified'
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(e)
+            return Response({
+                'error': 'An unexpected error occurred',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
