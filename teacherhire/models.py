@@ -192,8 +192,6 @@ class Question(models.Model):
 class TeacherSkill(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
-    proficiency_level = models.CharField(max_length=100, null=True, blank=True)
-    years_of_experience = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.user.username
