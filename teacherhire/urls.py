@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.urls import path, include
 from teacherhire.views import *
 from rest_framework import routers
+from .views import ProfilecompletedView
+
 
 #access admin
 router = routers.DefaultRouter()
@@ -36,6 +38,8 @@ router.register(r'self/basicProfile', BasicProfileViewSet, basename='teacher-bas
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('profile/completed/', ProfilecompletedView.as_view(), name='profile-completed'),
+
     path('auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('recruiter/register/', RecruiterRegisterUser.as_view(), name='register'),
     path('change_password/', ChangePasswordView.as_view(), name='change_password'),

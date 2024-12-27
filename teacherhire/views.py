@@ -92,8 +92,6 @@ class RecruiterRegisterUser(APIView):
             'token': str(token_obj),
             'message': 'Your data is saved. Please check your email and verify your account first.'
         },status=status.HTTP_200_OK)
-    
-#
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -110,9 +108,7 @@ class ChangePasswordView(APIView):
             user.save()
             return Response({"message": "Password updated successfully!"}, status=status.HTTP_200_OK)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 class TeacherRegisterUser(APIView):
     def post(self, request):
         serializer = TeacherRegisterSerializer(data=request.data)
@@ -138,7 +134,6 @@ class TeacherRegisterUser(APIView):
             'message': 'Your data is saved. Please check your email and verify your account first.'
         },status=status.HTTP_200_OK)
     
-
 def generate_refresh_token():
     return str(uuid.uuid4())
 
@@ -198,9 +193,7 @@ class LogoutUser(APIView):
             return Response({"success": "Logout succesJobsful"}, status=status.HTTP_200_OK)
         except Token.DoesNotExist:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
-    
-
-
+        
 #TeacerAddress GET ,CREATE ,DELETE 
 class TeachersAddressViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -297,7 +290,6 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     #  except TeachersAddress.DoesNotExist:
     #     return Response({"detail": "This address not found."}, status=status.HTTP_404_NOT_FOUND)
 
-
 class EducationalQulificationViewSet(viewsets.ModelViewSet):   
     permission_classes = [IsAuthenticated]    
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -366,7 +358,6 @@ class LevelViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
     
 class SkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -383,8 +374,7 @@ class SkillViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-  
-    
+     
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
     permission_classes = [IsAuthenticated]
@@ -530,9 +520,7 @@ class SingleTeacherViewSet(viewsets.ModelViewSet):
             return Teacher.objects.get(user=self.request.user)
         except Teacher.DoesNotExist:
             raise Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
-    
-    
-    
+       
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
     # permission_classes = [IsAuthenticated]
     # authentication_classes = [ExpiringTokenAuthentication] 
@@ -550,8 +538,7 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
-    
+       
 class TeacherQualificationViewSet(viewsets.ModelViewSet): 
     # permission_classes = [IsAuthenticated]
     # authentication_classes = [ExpiringTokenAuthentication]
@@ -675,7 +662,6 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     #         return TeacherQualification.objects.get(user=self.request.user)
     #     except TeacherQualification.DoesNotExist:
     #         raise Response({"detail": "Qualification not found."}, status=status.HTTP_404_NOT_FOUND)
-
     
 class TeacherExperiencesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -742,9 +728,7 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
             )
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
-
-    
-    
+   
 class QuestionViewSet(viewsets.ModelViewSet): 
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -867,8 +851,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
             serializer.save(user=user)  # Assign the user to the new preference object
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-   
+  
 class TeacherSubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]    
     authentication_classes = [ExpiringTokenAuthentication]     
@@ -1117,7 +1100,6 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
         except BasicProfile.DoesNotExist:
             return Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
         
-
 class CustomUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]    
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1323,3 +1305,22 @@ class UserVerify(APIView):
                 'error': 'An unexpected error occurred',
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ProfilecompletedView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    
+    @action(detail=False, methods=["get"])
+    def get(self, request, *args, **kwargs):
+        user = request.user  # Get the logged-in user
+        try:
+            completed_percentage = calculate_profile_completed(user)  # Calculate completed
+            return Response(
+                {"profile_completed": completed_percentage},  # Return percentage
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": "An error occurred while calculating profile completed.", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
