@@ -436,6 +436,11 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return TeacherSkill.objects.filter(user=self.request.user)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     # def list(self, request, *args, **kwargs):
     #     return self.retrieve(request, *args, **kwargs)
