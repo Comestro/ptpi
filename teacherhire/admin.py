@@ -26,6 +26,10 @@ class SubjectAdmin(admin.ModelAdmin):
 class RoleAdmin(admin.ModelAdmin):
     list_display = ['jobrole_name']
 
+@admin.register(ClassCategory)
+class classCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name']
+
 @admin.register(TeacherClassCategory)
 class TeacherClassCategoryAdmin(admin.ModelAdmin):
     list_display = ['user', 'class_category']
