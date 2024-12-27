@@ -270,6 +270,7 @@ class TeacherExamResult(models.Model):
     isqulified = models.BooleanField(default=False)
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
     attempt = models.IntegerField(default=3)
+    language = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return self.correct_answer
