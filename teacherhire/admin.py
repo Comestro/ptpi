@@ -48,7 +48,7 @@ class TeachersAddressAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherSkill)
 class TeacherSkillAdmin(admin.ModelAdmin):
-    list_display = ['user', 'skill', 'proficiency_level', 'years_of_experience']
+    list_display = ['user', 'skill']
 
 @admin.register(TeacherSubject)
 class TeacherSubjectAdmin(admin.ModelAdmin):

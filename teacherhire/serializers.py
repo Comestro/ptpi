@@ -356,7 +356,7 @@ class TeacherSkillSerializer(serializers.ModelSerializer):
     skill = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), required=False)
     class Meta:
         model = TeacherSkill
-        fields = ['id', 'user', 'skill', 'proficiency_level', 'years_of_experience']
+        fields = ['id', 'user', 'skill']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
