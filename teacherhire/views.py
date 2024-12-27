@@ -317,9 +317,15 @@ class EducationalQulificationViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Educationqulification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework import status
+from .models import Level, Subject, ClassCategory, Question
+from .serializers import QuestionSerializer
+
 class LevelViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]    
-    authentication_classes = [ExpiringTokenAuthentication]     
+    # permission_classes = [IsAuthenticated]    
+    # authentication_classes = [ExpiringTokenAuthentication]     
     queryset = Level.objects.all()
     serializer_class = LevelSerializer
     
@@ -331,8 +337,9 @@ class LevelViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path=r'classes/(?P<class_category_id>[^/.]+)/?subject/(?P<subject_id>[^/.]+)/?questions')
     def level_questions(self, request, pk=None, subject_id=None, class_category_id=None):
         """
-        Custom action to fetch questions by level, optional subject, and optional class category.
+        Custom action to fetch questions by level, optional subject, optional class category, and optional language.
         """
+        # Get the level by pk
         try:
             level = Level.objects.get(pk=pk)
         except Level.DoesNotExist:
@@ -355,13 +362,18 @@ class LevelViewSet(viewsets.ModelViewSet):
                 class_category = ClassCategory.objects.get(pk=class_category_id)
             except ClassCategory.DoesNotExist:
                 return Response({"error": "Class Category not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(classCategory=class_category)  # Use 'classCategory' instead of 'classes'
+            questions = questions.filter(classCategory=class_category)
 
-        # Serialize the questions
+        language = request.query_params.get('language', None)
+        if language:
+            if language not in ['Hindi', 'English']:
+                return Response({"error": "Invalid language, please choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = questions.filter(language=language)
+
+        # Serialize the filtered questions
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    
     def destroy(self, request, *args, **kwargs):    
         instance = self.get_object()
         instance.delete()
@@ -463,8 +475,8 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class SubjectViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated] 
-    authentication_classes = [ExpiringTokenAuthentication] 
+    # permission_classes = [IsAuthenticated] 
+    # authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     
