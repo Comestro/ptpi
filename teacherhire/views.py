@@ -83,7 +83,7 @@ class RecruiterRegisterUser(APIView):
         serializer.save()
         email=serializer.data['email']
         send_otp_via_email(email)
-        request.session['email'] = email
+        # request.session['email'] = email
         user = CustomUser.objects.get(email=email)
         token_obj, __ = Token.objects.get_or_create(user=user)
 
