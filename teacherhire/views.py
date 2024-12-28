@@ -748,24 +748,55 @@ class QuestionViewSet(viewsets.ModelViewSet):
         count = get_count(Question)
         return Response({"Count":count})
     
-    # def get_queryset(self):
-    #     queryset = Level.objects.all() def create(self, request, *args, **kwargs):
-        request.data['user'] = request.user.id
-        return super().create(request, *args, **kwargs)
-    #     level_filter = self.request.query_params.get('level', None)
-    #     if level_filter is not None:
-    #         level_filter = int(level_filter)
-    #         if level_filter == 1:
-    #             queryset = queryset.filter(question__level=1)
-    #         else:
-    #             queryset = queryset.filter(question__level=level_filter)
-    #     return queryset
+    @action(
+    detail=True, 
+    methods=['get'],
+    url_path=r'level/(?P<level_id>\d*)/classes/(?P<class_category_id>\d*)/subject/(?P<subject_id>\d*)/questions',
+    )
+    def questions(self, request, level_id=None, class_category_id=None, subject_id=None, pk=None):
+        """
+        Custom action to fetch questions filtered by level, class category, subject, and optional language.
+        """
+        questions = Question.objects.all()
+
+        # Filter by level
+        if level_id:
+            try:
+                level = Level.objects.get(pk=level_id)
+            except Level.DoesNotExist:
+                return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
+            questions = questions.filter(level=level)
+
+        # Filter by subject
+        if subject_id:
+            try:
+                subject = Subject.objects.get(pk=subject_id)
+            except Subject.DoesNotExist:
+                return Response({"error": "Subject not found"}, status=status.HTTP_404_NOT_FOUND)
+            questions = questions.filter(subject=subject)
+
+        # Filter by class category
+        if class_category_id:
+            try:
+                class_category = ClassCategory.objects.get(pk=class_category_id)
+            except ClassCategory.DoesNotExist:
+                return Response({"error": "Class Category not found"}, status=status.HTTP_404_NOT_FOUND)
+            questions = questions.filter(classCategory_id=class_category)
+
+        # Filter by language (optional)
+        language = request.query_params.get('language', None)
+        if language:
+            if language not in ['Hindi', 'English']:
+                return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = questions.filter(language=language)
+
+        # Serialize and return the filtered questions
+        serializer = QuestionSerializer(questions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message":" Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 class RoleViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 

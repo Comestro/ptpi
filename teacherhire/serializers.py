@@ -321,7 +321,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
-    classCategory = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=True)
+    classCategory = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
     class Meta:
@@ -334,14 +334,6 @@ class QuestionSerializer(serializers.ModelSerializer):
         if Question.objects.filter(text=value).exists():
             raise serializers.ValidationError("This question is already exists.")
         return value
-
-    # def validate_options(self, value):
-    #     if value is not None:
-    #         if not isinstance(value, list):
-    #             raise serializers.ValidationError("Options must be a list.")
-    #         if len(value) != 4:
-    #             raise serializers.ValidationError("Options must contain exactly 4 items.")
-    #     return value
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
