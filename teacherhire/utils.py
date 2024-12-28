@@ -27,60 +27,28 @@ def send_otp_via_email(email):
     user_obj.save()
 
 def calculate_profile_completed(user):
-    completion_percentage = 0
-
-    # Check CustomUser Profile
+    complete_profile = 0
     if user:
-        completion_percentage += 16  # Custom user field
+        complete_profile += 16  # Custom user field
 
-    # Check Basic Profile
     basic_profile = BasicProfile.objects.filter(user=user).exists()
     if basic_profile:
-        completion_percentage += 16  # Basic profile filled
+        complete_profile += 16  # Basic profile filled
 
-    # Check Teacher Address
     teacher_address = TeachersAddress.objects.filter(user=user).exists()
     if teacher_address:
-        completion_percentage += 16  # Teacher address filled
+        complete_profile += 16  # Teacher address filled
 
-    # Check Teacher Job Preference
     job_preference = Preference.objects.filter(user=user).exists()
     if job_preference:
-        completion_percentage += 16  # Job preference filled
+        complete_profile += 16  # Job preference filled
 
-    # Check Job Preference Location
     job_pref_location = JobPreferenceLocation.objects.filter(preference__user=user).exists()
     if job_pref_location:
-        completion_percentage += 16  # Job preference location filled
+        complete_profile += 16  # Job preference location filled
 
-    # Check Teacher Qualification
     qualification = TeacherQualification.objects.filter(user=user).exists()
     if qualification:
-        completion_percentage += 20  # Qualification filled
+        complete_profile += 20  # Qualification filled
 
-    return min(completion_percentage, 100)  # Ensure it doesn't exceed 100%
-
-
-# def calculate_profile_completed(user):
-#     """
-#     Calculate the profile completed percentage based on the user's associated data.
-#     """
-#     percentage = 0
-#     if CustomUser.objects.filter(id=user.id).exists():
-#         percentage += 16
-
-#     if BasicProfile.objects.filter(user=user).exists():
-#         percentage += 16
-
-#     if TeachersAddress.objects.filter(user=user).exists():
-#         percentage += 16
-    
-#     if Preference.objects.filter(user=user).exists():
-#         percentage += 16
-
-#     return percentage
-
-#     # if JobPreferenceLocation.objects.filter(user=user).exists():
-#     #     percentage += 20
-#     # if TeacherQualification.objects.filter(user=user).exists():
-#     #     percentage += 20
+    return min(complete_profile, 100)  # Ensure it doesn't exceed 100%
