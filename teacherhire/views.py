@@ -1,4 +1,3 @@
-from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
@@ -11,11 +10,11 @@ from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
 from .permissions import IsRecruiterPermission, IsAdminPermission 
 import uuid  
-from .models import Level, Subject, Question, ClassCategory
-from .serializers import QuestionSerializer
 from .utils import *
 from datetime import timedelta
 from django.utils.timezone import now
+from rest_framework.response import Response
+from rest_framework.decorators import action
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
@@ -309,15 +308,9 @@ class EducationalQulificationViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Educationqulification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework import status
-from .models import Level, Subject, ClassCategory, Question
-from .serializers import QuestionSerializer
-
 class LevelViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]    
-    # authentication_classes = [ExpiringTokenAuthentication]     
+    permission_classes = [IsAuthenticated]    
+    authentication_classes = [ExpiringTokenAuthentication]     
     queryset = Level.objects.all()
     serializer_class = LevelSerializer
     
@@ -465,8 +458,8 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class SubjectViewSet(viewsets.ModelViewSet):    
-    # permission_classes = [IsAuthenticated] 
-    # authentication_classes = [ExpiringTokenAuthentication] 
+    permission_classes = [IsAuthenticated] 
+    authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     
@@ -539,8 +532,8 @@ class SingleTeacherViewSet(viewsets.ModelViewSet):
             raise Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
        
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
-    # permission_classes = [IsAuthenticated]
-    # authentication_classes = [ExpiringTokenAuthentication] 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication] 
     queryset= ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
 
