@@ -84,11 +84,9 @@ class RecruiterRegisterUser(APIView):
         send_otp_via_email(email)
         # request.session['email'] = email
         user = CustomUser.objects.get(email=email)
-        token_obj, __ = Token.objects.get_or_create(user=user)
 
         return Response({
             'payload': serializer.data,
-            'token': str(token_obj),
             'message': 'Your data is saved. Please check your email and verify your account first.'
         },status=status.HTTP_200_OK)
 
@@ -122,14 +120,10 @@ class TeacherRegisterUser(APIView):
         serializer.save()
         send_otp_via_email(serializer.data['email'])
         email=serializer.data['email']
-        # request.session['email'] = email
-
         user = CustomUser.objects.get(email=email)
-        token_obj, __ = Token.objects.get_or_create(user=user)
 
         return Response({
             'payload': serializer.data,
-            'token': str(token_obj),
             'message': 'Your data is saved. Please check your email and verify your account first.'
         },status=status.HTTP_200_OK)
     
