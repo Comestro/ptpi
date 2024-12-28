@@ -9,7 +9,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
 
-
+# djnjdnhv jvj
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
