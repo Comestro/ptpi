@@ -13,7 +13,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
             raise AuthenticationFailed('Invalid token.')
 
         # Calculate token expiration
-        expiration_time = timedelta(seconds=getattr(settings, 'TOKEN_EXPIRATION_TIME', 86,400))  
+        expiration_time = timedelta(seconds=getattr(settings, 'TOKEN_EXPIRATION_TIME', 86400))  
         if timezone.now() > (token.created + expiration_time):
             raise AuthenticationFailed('Access token has expired. Please log in again.')
 

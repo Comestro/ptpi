@@ -752,9 +752,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
    
-
-    # def create(self,request):
-    #     return create_object(QuestionSerializer,request.data,Question)
+    
+    def create(self,request):
+        return create_object(QuestionSerializer,request.data,Question)
     
     @action (detail=False,methods=['get'])
     def count(self,request):
