@@ -749,11 +749,11 @@ class QuestionViewSet(viewsets.ModelViewSet):
         return Response({"Count":count})
     
     @action(
-    detail=True, 
+    detail=False, 
     methods=['get'],
     url_path=r'level/(?P<level_id>\d*)/classes/(?P<class_category_id>\d*)/subject/(?P<subject_id>\d*)/questions',
     )
-    def questions(self, request, level_id=None, class_category_id=None, subject_id=None, pk=None):
+    def questions(self, request, level_id=None, class_category_id=None, subject_id=None):
         """
         Custom action to fetch questions filtered by level, class category, subject, and optional language.
         """
