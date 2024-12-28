@@ -413,6 +413,15 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = ['id','jobrole_name']
 
+    def validate_jobrole_name(self, value):
+        # Validate if the name has at least 3 characters
+        if len(value) < 3:
+            raise serializers.ValidationError("Role name must be at least 3 characters.")
+        
+        if Role.objects.filter(jobrole_name=value).exists():
+            raise serializers.ValidationError("A Role with this name already exists.")
+        return value
+
 class PreferenceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)    
     job_role = serializers.SlugRelatedField(
