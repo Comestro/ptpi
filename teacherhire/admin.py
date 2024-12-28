@@ -68,12 +68,14 @@ class SkillAdmin(admin.ModelAdmin):
 
 @admin.register(Preference)
 class PreferenceAdmin(admin.ModelAdmin):
-    list_display = ['user', 'job_role', 'class_category', 'get_prefered_subject', 'get_teacher_job_type']
+    list_display = ['user', 'get_job_role', 'class_category', 'get_prefered_subject', 'get_teacher_job_type']
 
     def get_prefered_subject(self, obj):
         return ", ".join([str(subject) for subject in obj.prefered_subject.all()])
     def get_teacher_job_type(self, obj):
         return ", ".join([str(job_type) for job_type in obj.teacher_job_type.all()])
+    def get_job_role(self, obj):
+        return ", ".join([str(job_role) for job_role in obj.teacher_job_role.all()])
     
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
