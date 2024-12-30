@@ -754,9 +754,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
     url_path=r'level/(?P<level_id>\d*)/classes/(?P<class_category_id>\d*)/subject/(?P<subject_id>\d*)/questions',
     )
     def questions(self, request, level_id=None, class_category_id=None, subject_id=None):
-        """
-        Custom action to fetch questions filtered by level, class category, subject, and optional language.
-        """
         questions = Question.objects.all()
 
         # Filter by level
@@ -797,6 +794,68 @@ class QuestionViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
+        
+class SelfQuestionViewSet(viewsets.ModelViewSet): 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication] 
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = get_count(Question.objects.filter(user=request.user))
+        return Response({"Count": count})
+    
+    @action(detail=False, methods=['get'])
+    def questions(self, request):
+        user = request.user
+
+        # Extract query parameters
+        level_id = request.query_params.get('level_id', None)
+        class_category_id = request.query_params.get('class_category_id', None)
+        subject_id = request.query_params.get('subject_id', None)
+        language = request.query_params.get('language', None)
+
+        # Validate class category
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
+        if not teacher_class_category:
+            return Response(
+                {"message": "Please choose a valid class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        teacher_subject = Subject.objects.filter(user=user, pk=subject_id).first()
+        if not teacher_subject:
+            return Response(
+                {"message": "Please choose a valid subject."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        questions = Question.objects.filter(
+            classCategory=teacher_class_category.class_category,
+            subject=teacher_subject.subject
+        )
+
+        # Filter by level if provided
+        if level_id:
+            try:
+                level = Level.objects.get(pk=level_id)
+                questions = questions.filter(level=level)
+            except Level.DoesNotExist:
+                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Filter by language if provided
+        if language:
+            if language not in ['Hindi', 'English']:
+                return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = questions.filter(language=language)
+
+        # Serialize and return data
+        serializer = QuestionSerializer(questions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    
 class RoleViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -975,6 +1034,61 @@ class TeacherClassCategoryViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherclasscategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+class SingleTeacherClassCategory(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = TeacherClassCategory.objects.all()
+    serializer_class = TeacherClassCategorySerializer
+
+    def get_queryset(self):
+        return TeacherClassCategory.objects.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data['user'] = request.user.id
+        if TeacherClassCategory.objects.filter(user=request.user).exists():
+            return Response({"detail": "SingleTeacher class category already exists. "}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # def list(self, request, *args, **kwargs):
+    #     return self.retrieve(request, *args, **kwargs)
+    def get_object(self):
+        try: 
+            return TeacherClassCategory.objects.get(user=self.request.user)
+        except TeacherClassCategory.DoesNotExist:
+            raise NotFound({"detail": "TeacherClassCategory not found."})
+    def put(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data['user'] = request.user.id
+        
+        SingleTeacherClassCategory = TeacherClassCategory.objects.filter(user=request.user).first()
+
+        if SingleTeacherClassCategory:
+            return update_auth_data(
+                serializer_class=self.get_serializer_class(),
+                instance=SingleTeacherClassCategory,
+                request_data=data,
+                user=request.user
+            )
+        else:
+            return create_auth_data(
+                serializer_class=self.get_serializer_class(),
+                request_data=data,
+                user=request.user,
+                model_class=TeacherClassCategory
+            )
+    def delete(self, request, *args, **kwargs):
+        try:
+            profile = TeacherClassCategory.objects.get(user=request.user)
+            profile.delete()
+            return Response({"detail": "TeacherClassCategory deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except TeacherClassCategory.DoesNotExist:
+            return Response({"detail": "TeacherClassCategory not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class TeacherExamResultViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]    
@@ -1359,3 +1473,57 @@ class ProfilecompletedView(APIView):
                 {"error": "An error occurred while calculating profile completed.", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class PostData(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def post(self, request):
+        static_data = {
+            "teacher_job_types": [
+                {"teacher_job_name": "Permanent Teacher"},
+                {"teacher_job_name": "Guest Teacher"},
+            ],
+            "levels": [
+                {"name": "Primary", "description": "Primary Level Description"},
+                {"name": "Secondary", "description": "Secondary Level Description"},
+            ],
+            "roles": [
+                {"jobrole_name": "Headmaster"},
+                {"jobrole_name": "Subject Teacher"},
+            ],
+        }
+
+        try:
+            for job_data in static_data["teacher_job_types"]:
+                TeacherJobType.objects.get_or_create(**job_data)
+
+            # Create Level objects
+            for level_data in static_data["levels"]:
+                Level.objects.get_or_create(**level_data)
+
+            # Create Role objects
+            for role_data in static_data["roles"]:
+                Role.objects.get_or_create(**role_data)
+
+            # Dynamic data from the request
+            if "teacher_job_type" in request.data:
+                teacher_job_serializer = TeacherJobTypeSerializer(data=request.data["teacher_job_type"])
+                if teacher_job_serializer.is_valid():
+                    teacher_job_serializer.save()
+
+            if "level" in request.data:
+                level_serializer = LevelSerializer(data=request.data["level"])
+                if level_serializer.is_valid():
+                    level_serializer.save()
+
+            if "role" in request.data:
+                role_serializer = RoleSerializer(data=request.data["role"])
+                if role_serializer.is_valid():
+                    role_serializer.save()
+
+            return Response({"message": "Data successfully posted"}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+

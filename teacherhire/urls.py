@@ -15,6 +15,7 @@ router.register(r"admin/classcategory", ClassCategoryViewSet)
 router.register(r"admin/teacher", TeacherViewSet)
 router.register(r'admin/question', QuestionViewSet)
 router.register(r'admin/educationalQulification', EducationalQulificationViewSet)
+router.register(r'admin/teacherclasscategory', TeacherClassCategoryViewSet, basename='teacherclasscategory')
 router.register(r'admin/teachersAddress', TeachersAddressViewSet)
 router.register(r'admin/teachersubject', TeacherSubjectViewSet)
 router.register(r'admin/level', LevelViewSet)
@@ -22,12 +23,13 @@ router.register(r'admin/teacherexperience', TeacherExperiencesViewSet, basename=
 router.register(r'admin/role', RoleViewSet, basename='role')
 router.register(r'admin/teacherjobtype', TeacherJobTypeViewSet, basename='teacherjobtype')
 
+
 #access OnlyTeacher
 router.register(r'self/teacher', SingleTeacherViewSet, basename='self-teacher')
 router.register(r'self/customuser', CustomUserViewSet, basename='self-customuser')
 router.register(r"self/teacherexperience", SingleTeacherExperiencesViewSet, basename="self-teacherexperience")
 router.register(r'self/teacherexamresult', TeacherExamResultViewSet, basename='self-teacherexamresult')
-router.register(r'self/teacherclasscategory', TeacherClassCategoryViewSet, basename='self-teacherclasscategory')
+router.register(r'self/teacherclasscategory', SingleTeacherClassCategory, basename='self-teacherclasscategory')
 router.register(r'self/teacherskill', SingleTeacherSkillViewSet, basename='self-teacherskill')
 router.register(r'self/teacherAddress', SingleTeachersAddressViewSet, basename='self-teacherAddress')
 router.register(r'self/teacherqualification', SingleTeacherQualificationViewSet, basename='self-teacherqualification')
@@ -35,6 +37,8 @@ router.register(r'self/teachersubject', SingleTeacherSubjectViewSet, basename='s
 router.register(r'self/teacherpreference', PreferenceViewSet, basename='teacher-preference')
 router.register(r'self/teacherjobpreferencelocation', JobPreferenceLocationViewSet, basename='teacher-jobpreferencelocation')
 router.register(r'self/basicProfile', BasicProfileViewSet, basename='teacher-basicProfile')
+router.register(r'self/question', SelfQuestionViewSet, basename='teacher-question')
+
 
 urlpatterns = [
     path('', include(router.urls)),
