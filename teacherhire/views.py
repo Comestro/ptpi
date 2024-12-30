@@ -751,25 +751,24 @@ class QuestionViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
-   
     
-    def create(self,request):
-        return create_object(QuestionSerializer,request.data,Question)
+    def create(self, request):
+        return create_object(QuestionSerializer, request.data, Question)
     
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(Question)
-        return Response({"Count":count})
-    
+        return Response({"Count": count})
+
     @action(
-    detail=False, 
-    methods=['get'],
-    url_path=r'level/(?P<level_id>\d*)/classes/(?P<class_category_id>\d*)/subject/(?P<subject_id>\d*)/questions',
+        detail=False,
+        methods=['get'],
+        url_path='questions',
     )
-    def questions(self, request, level_id=None, class_category_id=None, subject_id=None):
+    def questions(self, request):
         questions = Question.objects.all()
 
-        # Filter by level
+        level_id = request.query_params.get('level', None)
         if level_id:
             try:
                 level = Level.objects.get(pk=level_id)
@@ -777,7 +776,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
                 return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
             questions = questions.filter(level=level)
 
-        # Filter by subject
+        subject_id = request.query_params.get('subject', None)
         if subject_id:
             try:
                 subject = Subject.objects.get(pk=subject_id)
@@ -785,25 +784,23 @@ class QuestionViewSet(viewsets.ModelViewSet):
                 return Response({"error": "Subject not found"}, status=status.HTTP_404_NOT_FOUND)
             questions = questions.filter(subject=subject)
 
-        # Filter by class category
+        class_category_id = request.query_params.get('classCategory', None)
         if class_category_id:
             try:
                 class_category = ClassCategory.objects.get(pk=class_category_id)
             except ClassCategory.DoesNotExist:
                 return Response({"error": "Class Category not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(classCategory_id=class_category)
+            questions = questions.filter(classCategory=class_category)
 
-        # Filter by language (optional)
         language = request.query_params.get('language', None)
         if language:
             if language not in ['Hindi', 'English']:
                 return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
             questions = questions.filter(language=language)
 
-        # Serialize and return the filtered questions
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+   
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
