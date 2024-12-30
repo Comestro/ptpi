@@ -817,6 +817,11 @@ class PreferenceViewSet(viewsets.ModelViewSet):
 
         if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
             data['teacher_job_type'] = [data['teacher_job_type']]
+        if 'prefered_subject' in data and isinstance(data['prefered_subject'], str):
+            data['prefered_subject'] = [data['prefered_subject']]
+
+        if 'job_role' in data and isinstance(data['job_role'], str):
+            data['job_role'] = [data['job_role']]
 
 
         if profile:
