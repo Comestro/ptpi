@@ -74,7 +74,6 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
-    # email = serializers.EmailField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
@@ -102,7 +101,6 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
-
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=100)
@@ -181,7 +179,6 @@ class SubjectSerializer(serializers.ModelSerializer):
         if Subject.objects.filter(subject_name=value).exists():
             raise serializers.ValidationError("A subject with this name already exists.")
         return value
-
 
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -317,7 +314,6 @@ class TeacherSerializer(serializers.ModelSerializer):
         return TeacherSkillSerializer(teacherSkills, many=True).data
 
 
-
 class QuestionSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
@@ -341,7 +337,6 @@ class QuestionSerializer(serializers.ModelSerializer):
         representation['level'] = LevelSerializer(instance.level).data
         representation['classCategory'] = ClassCategorySerializer(instance.classCategory).data
         return representation
-
 
 class TeacherSkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
@@ -397,9 +392,7 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         "Year of passing should be greater than the previous qualification's year."
                     )
-        return data
-
-    
+        return data   
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
@@ -416,23 +409,23 @@ class RoleSerializer(serializers.ModelSerializer):
 
 class PreferenceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)    
-    job_role = serializers.SlugRelatedField(
-        queryset=Role.objects.all(), slug_field='jobrole_name',
+    job_role = serializers.PrimaryKeyRelatedField(
+        queryset=Role.objects.all(),
         many=True
     )
     
-    class_category = serializers.SlugRelatedField(
-        queryset=ClassCategory.objects.all(), slug_field='name',
+    class_category = serializers.PrimaryKeyRelatedField(
+        queryset=ClassCategory.objects.all(),
         required=False
     )
     
     prefered_subject = serializers.PrimaryKeyRelatedField(
-        queryset=Subject.objects.all(), many=True,
+        queryset=Subject.objects.all(),many=True,
         required=False
     )
     
     teacher_job_type = serializers.PrimaryKeyRelatedField(
-        queryset=TeacherJobType.objects.all(), many=True,
+        queryset=TeacherJobType.objects.all(),many=True,
         required=False
     )
     
@@ -502,7 +495,6 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("You can only add up to 5 areas for a single preference.")
         
         return value
- 
 
 class BasicProfileSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)

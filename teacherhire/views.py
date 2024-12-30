@@ -15,6 +15,9 @@ from datetime import timedelta
 from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django.http import JsonResponse
+
+
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
@@ -77,7 +80,7 @@ class RecruiterRegisterUser(APIView):
                 'error': serializer.errors,
                 # Todo
                 'message': 'Something went wrong'
-            }, status=status.HTTP_403_FORBIDDEN)
+            }, status=status.HTTP_409_CONFLICT)
         
         serializer.save()
         email=serializer.data['email']
@@ -115,7 +118,7 @@ class TeacherRegisterUser(APIView):
                 'error': serializer.errors,
                 # Todo
                 'message': 'Something went wrong'
-            }, status=status.HTTP_403_FORBIDDEN)
+            }, status=status.HTTP_409_CONFLICT)
         
         serializer.save()
         send_otp_via_email(serializer.data['email'])
@@ -140,7 +143,7 @@ class LoginUser(APIView):
         except CustomUser.DoesNotExist:
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
         if not user.is_verified:  
-            return Response({'message': 'User is not verified. Please verify your account before logging in.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Account is not verified. Please verify your account before logging in.'}, status=status.HTTP_403_FORBIDDEN)
         # Check password validity
         if user.check_password(password):
             # Delete old token if it exists
@@ -373,6 +376,25 @@ class SkillViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+
+def seed_skills(request):
+    """
+    A view that inserts 5 predefined skills into the database.
+    """
+    skills = ["Maths", "Physics", "Writing", "Mapping", "Research"]
+    
+    skills_added = 0
+    for skill_name in skills:
+        if not Skill.objects.filter(name=skill_name).exists():
+            Skill.objects.create(name=skill_name)
+            skills_added += 1
+
+    return JsonResponse({
+        'message': f'{skills_added} skills added successfully.' if skills_added > 0 else 'All skills already exist.',
+        'skills_added': skills_added
+    })
+
      
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
@@ -652,8 +674,7 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-    
+ 
 
     def get_queryset(self):
         return TeacherQualification.objects.filter(user=self.request.user)
@@ -888,8 +909,13 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         if Preference.objects.filter(user=request.user).exists():
             return Response({"detail": "Preference already exists."}, status=status.HTTP_400_BAD_REQUEST)
         
+        if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
+            data['teacher_job_type'] = [data['teacher_job_type']]
+
+
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
+       
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -901,6 +927,15 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         
         # Check if the user has an existing preference
         profile = Preference.objects.filter(user=request.user).first()
+
+        if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
+            data['teacher_job_type'] = [data['teacher_job_type']]
+        if 'prefered_subject' in data and isinstance(data['prefered_subject'], str):
+            data['prefered_subject'] = [data['prefered_subject']]
+
+        if 'job_role' in data and isinstance(data['job_role'], str):
+            data['job_role'] = [data['job_role']]
+
 
         if profile:
             return self.update_auth_data(
@@ -929,6 +964,10 @@ class PreferenceViewSet(viewsets.ModelViewSet):
             return Preference.objects.get(user=self.request.user)
         except Preference.DoesNotExist:
             raise NotFound({"detail": "Preference not found."})
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Prefrence deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     def update_auth_data(self, serializer_class, instance, request_data, user):
         """Handle updating preference data."""
@@ -1474,56 +1513,4 @@ class ProfilecompletedView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class PostData(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication]
-
-    def post(self, request):
-        static_data = {
-            "teacher_job_types": [
-                {"teacher_job_name": "Permanent Teacher"},
-                {"teacher_job_name": "Guest Teacher"},
-            ],
-            "levels": [
-                {"name": "Primary", "description": "Primary Level Description"},
-                {"name": "Secondary", "description": "Secondary Level Description"},
-            ],
-            "roles": [
-                {"jobrole_name": "Headmaster"},
-                {"jobrole_name": "Subject Teacher"},
-            ],
-        }
-
-        try:
-            for job_data in static_data["teacher_job_types"]:
-                TeacherJobType.objects.get_or_create(**job_data)
-
-            # Create Level objects
-            for level_data in static_data["levels"]:
-                Level.objects.get_or_create(**level_data)
-
-            # Create Role objects
-            for role_data in static_data["roles"]:
-                Role.objects.get_or_create(**role_data)
-
-            # Dynamic data from the request
-            if "teacher_job_type" in request.data:
-                teacher_job_serializer = TeacherJobTypeSerializer(data=request.data["teacher_job_type"])
-                if teacher_job_serializer.is_valid():
-                    teacher_job_serializer.save()
-
-            if "level" in request.data:
-                level_serializer = LevelSerializer(data=request.data["level"])
-                if level_serializer.is_valid():
-                    level_serializer.save()
-
-            if "role" in request.data:
-                role_serializer = RoleSerializer(data=request.data["role"])
-                if role_serializer.is_valid():
-                    role_serializer.save()
-
-            return Response({"message": "Data successfully posted"}, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
