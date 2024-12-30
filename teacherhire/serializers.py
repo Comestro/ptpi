@@ -417,23 +417,23 @@ class RoleSerializer(serializers.ModelSerializer):
 
 class PreferenceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)    
-    job_role = serializers.SlugRelatedField(
-        queryset=Role.objects.all(), slug_field='jobrole_name',
+    job_role = serializers.PrimaryKeyRelatedField(
+        queryset=Role.objects.all(),
         many=True
     )
     
-    class_category = serializers.SlugRelatedField(
-        queryset=ClassCategory.objects.all(), slug_field='name',
+    class_category = serializers.PrimaryKeyRelatedField(
+        queryset=ClassCategory.objects.all(),
         required=False
     )
     
-    prefered_subject = serializers.SlugRelatedField(
-        queryset=Subject.objects.all(),slug_field='subject_name', many=True,
+    prefered_subject = serializers.PrimaryKeyRelatedField(
+        queryset=Subject.objects.all(),many=True,
         required=False
     )
     
-    teacher_job_type = serializers.SlugRelatedField(
-        queryset=TeacherJobType.objects.all(),slug_field='teacher_job_name', many=True,
+    teacher_job_type = serializers.PrimaryKeyRelatedField(
+        queryset=TeacherJobType.objects.all(),many=True,
         required=False
     )
     
