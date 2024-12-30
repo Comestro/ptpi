@@ -652,8 +652,7 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-    
+ 
 
     def get_queryset(self):
         return TeacherQualification.objects.filter(user=self.request.user)
@@ -833,12 +832,12 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
-    def get_object(self):
-        # Retrieve the preference object for the current user
-        try:
-            return Preference.objects.get(user=self.request.user)
-        except Preference.DoesNotExist:
-            raise NotFound({"detail": "Preference not found."})
+    # def get_object(self):
+    #     # Retrieve the preference object for the current user
+    #     try:
+    #         return Preference.objects.get(user=self.request.user)
+    #     except Preference.DoesNotExist:
+    #         raise NotFound({"detail": "Preference not found."})
 
     def update_auth_data(self, serializer_class, instance, request_data, user):
         """Handle updating preference data."""
