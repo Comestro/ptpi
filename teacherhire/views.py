@@ -805,7 +805,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         
-class SelfQuestionViewSet(viewsets.ModelViewSet): 
+class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Question.objects.all()
@@ -820,13 +820,11 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
     def questions(self, request):
         user = request.user
 
-        # Extract query parameters
         level_id = request.query_params.get('level_id', None)
         class_category_id = request.query_params.get('class_category_id', None)
         subject_id = request.query_params.get('subject_id', None)
         language = request.query_params.get('language', None)
 
-        # Validate class category
         teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
         if not teacher_class_category:
             return Response(
@@ -834,7 +832,7 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        teacher_subject = Subject.objects.filter(user=user, pk=subject_id).first()
+        teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
         if not teacher_subject:
             return Response(
                 {"message": "Please choose a valid subject."},
@@ -846,7 +844,6 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
             subject=teacher_subject.subject
         )
 
-        # Filter by level if provided
         if level_id:
             try:
                 level = Level.objects.get(pk=level_id)
@@ -854,13 +851,11 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Filter by language if provided
         if language:
             if language not in ['Hindi', 'English']:
                 return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
             questions = questions.filter(language=language)
 
-        # Serialize and return data
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
