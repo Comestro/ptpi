@@ -77,7 +77,7 @@ class RecruiterRegisterUser(APIView):
                 'error': serializer.errors,
                 # Todo
                 'message': 'Something went wrong'
-            }, status=status.HTTP_403_FORBIDDEN)
+            }, status=status.HTTP_409_CONFLICT)
         
         serializer.save()
         email=serializer.data['email']
@@ -115,7 +115,7 @@ class TeacherRegisterUser(APIView):
                 'error': serializer.errors,
                 # Todo
                 'message': 'Something went wrong'
-            }, status=status.HTTP_403_FORBIDDEN)
+            }, status=status.HTTP_409_CONFLICT)
         
         serializer.save()
         send_otp_via_email(serializer.data['email'])
@@ -140,7 +140,7 @@ class LoginUser(APIView):
         except CustomUser.DoesNotExist:
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
         if not user.is_verified:  
-            return Response({'message': 'User is not verified. Please verify your account before logging in.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Account is not verified. Please verify your account before logging in.'}, status=status.HTTP_403_FORBIDDEN)
         # Check password validity
         if user.check_password(password):
             # Delete old token if it exists
