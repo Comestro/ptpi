@@ -15,6 +15,8 @@ from datetime import timedelta
 from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
+import requests
+
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
@@ -373,6 +375,9 @@ class SkillViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+
+
      
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
@@ -800,6 +805,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
+       
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -839,6 +845,10 @@ class PreferenceViewSet(viewsets.ModelViewSet):
             return Preference.objects.get(user=self.request.user)
         except Preference.DoesNotExist:
             raise NotFound({"detail": "Preference not found."})
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Prefrence deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     def update_auth_data(self, serializer_class, instance, request_data, user):
         """Handle updating preference data."""
@@ -1328,3 +1338,5 @@ class ProfilecompletedView(APIView):
                 {"error": "An error occurred while calculating profile completed.", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
