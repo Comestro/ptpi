@@ -15,7 +15,8 @@ from datetime import timedelta
 from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
-import requests
+from django.http import JsonResponse
+
 
 
 class RecruiterView(APIView):
@@ -377,6 +378,22 @@ class SkillViewSet(viewsets.ModelViewSet):
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
 
+def seed_skills(request):
+    """
+    A view that inserts 5 predefined skills into the database.
+    """
+    skills = ["Maths", "Physics", "Writing", "Mapping", "Research"]
+    
+    skills_added = 0
+    for skill_name in skills:
+        if not Skill.objects.filter(name=skill_name).exists():
+            Skill.objects.create(name=skill_name)
+            skills_added += 1
+
+    return JsonResponse({
+        'message': f'{skills_added} skills added successfully.' if skills_added > 0 else 'All skills already exist.',
+        'skills_added': skills_added
+    })
 
      
 class TeacherSkillViewSet(viewsets.ModelViewSet):
