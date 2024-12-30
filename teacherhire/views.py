@@ -832,12 +832,12 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
-    # def get_object(self):
-    #     # Retrieve the preference object for the current user
-    #     try:
-    #         return Preference.objects.get(user=self.request.user)
-    #     except Preference.DoesNotExist:
-    #         raise NotFound({"detail": "Preference not found."})
+    def get_object(self):
+        # Retrieve the preference object for the current user
+        try:
+            return Preference.objects.get(user=self.request.user)
+        except Preference.DoesNotExist:
+            raise NotFound({"detail": "Preference not found."})
 
     def update_auth_data(self, serializer_class, instance, request_data, user):
         """Handle updating preference data."""
