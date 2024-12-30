@@ -797,6 +797,10 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         if Preference.objects.filter(user=request.user).exists():
             return Response({"detail": "Preference already exists."}, status=status.HTTP_400_BAD_REQUEST)
         
+        if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
+            data['teacher_job_type'] = [data['teacher_job_type']]
+
+
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
@@ -810,6 +814,10 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         
         # Check if the user has an existing preference
         profile = Preference.objects.filter(user=request.user).first()
+
+        if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
+            data['teacher_job_type'] = [data['teacher_job_type']]
+
 
         if profile:
             return self.update_auth_data(
