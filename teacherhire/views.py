@@ -556,7 +556,18 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-       
+    
+def insertclasscategory(request):
+    class_cat = ["1 to 5", "6 to 10", "11 to 12", "BCA", "MCA"]
+    class_cat_added = 0
+    for classcategory_name in class_cat:
+        if not ClassCategory.objects.filter(name=classcategory_name).exists():
+             ClassCategory.objects.create(name=classcategory_name)
+             class_cat_added += 1
+    return JsonResponse({
+        'message': f'{ class_cat_added} class category added successfully.' if  class_cat_added > 0 else 'All class category already exist.',
+        'class_category_added':  class_cat_added
+    })  
 class TeacherQualificationViewSet(viewsets.ModelViewSet): 
     # permission_classes = [IsAuthenticated]
     # authentication_classes = [ExpiringTokenAuthentication]

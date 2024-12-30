@@ -4,7 +4,6 @@ from teacherhire.views import *
 from rest_framework import routers
 from .views import ProfilecompletedView
 
-
 #access admin
 router = routers.DefaultRouter()
 router.register(r"admin/teacherqualification", TeacherQualificationViewSet)
@@ -57,6 +56,7 @@ urlpatterns = [
     path('logout/', LogoutUser.as_view()),
     path('insert/skills/', insertskills, name='insert-skills'),
     path('insert/roles/', insertrole, name='insert-roles'),
+    path('insert/class_category/', insertclasscategory, name='insert-class_category'),
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
 ]
