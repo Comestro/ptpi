@@ -376,26 +376,18 @@ class SkillViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
 
-def seed_skills(request):
-    """
-    A view that inserts 5 predefined skills into the database.
-    """
+def insertskills(request):
     skills = ["Maths", "Physics", "Writing", "Mapping", "Research"]
-    
     skills_added = 0
     for skill_name in skills:
         if not Skill.objects.filter(name=skill_name).exists():
             Skill.objects.create(name=skill_name)
             skills_added += 1
-
     return JsonResponse({
         'message': f'{skills_added} skills added successfully.' if skills_added > 0 else 'All skills already exist.',
         'skills_added': skills_added
     })
-
-     
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
     permission_classes = [IsAuthenticated]
@@ -805,6 +797,20 @@ class RoleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Role deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+def insertrole(request):
+    roles = ["Teacher", "Professor","Principal", "PtTeacher", "Sports Teacher"]
+    roles_added = 0
+    for jobrole_name in roles:
+        if not Role.objects.filter(jobrole_name=jobrole_name).exists():
+            Role.objects.create(jobrole_name=jobrole_name)
+            roles_added += 1
+    return JsonResponse({
+        'message': f'{roles_added} roles added successfully.' if roles_added > 0 else 'All skills already exist.',
+        'roles_added': roles_added
+    })
+
+
 
 class PreferenceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

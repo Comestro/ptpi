@@ -51,7 +51,8 @@ urlpatterns = [
     path('register/', TeacherRegisterUser.as_view(), name='teacher-register'),
     path('login/', LoginUser.as_view()),
     path('logout/', LogoutUser.as_view()),
-    path('seed_skills/', seed_skills, name='seed-skills'),
+    path('insert/skills/', insertskills, name='insert-skills'),
+    path('insert/roles/', insertrole, name='insert-roles'),
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
 ]
