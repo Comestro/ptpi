@@ -57,6 +57,8 @@ urlpatterns = [
     path('insert/skills/', insertskills, name='insert-skills'),
     path('insert/roles/', insertrole, name='insert-roles'),
     path('insert/class_category/', insertclasscategory, name='insert-class_category'),
+    path('insert/levels/', insertlevel, name='insert-levels'),
+    path('insert/subjects/', insertsubjects, name='insert-subjects'),
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
 ]

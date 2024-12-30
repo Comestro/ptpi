@@ -360,7 +360,18 @@ class LevelViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
+
+def insertlevel(request):
+    level = ["1st Level", "2nd Level", "3rd Level", "4th Level", "5th Level"]
+    level_added = 0
+    for level_name in level:
+        if not Level.objects.filter(name=level_name).exists():
+             Level.objects.create(name=level_name)
+             level_added += 1
+    return JsonResponse({
+        'message': f'{ level_added}levely added successfully.' if  level_added > 0 else 'All level already exist.',
+        'level_added':  level_added
+    })    
 class SkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -479,7 +490,19 @@ class SubjectViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
+# 
+def insertsubjects(request):
+    subject = ["Maths", "Physics", "php", "DBMS", "Hindi"]
+    subject_added = 0
+    for subject_name in subject:
+        if not Subject.objects.filter(subject_name=subject_name).exists():
+            Subject.objects.create(subject_name=subject_name)
+            subject_added += 1
+    return JsonResponse({
+        'message': f'{subject_added} subject_added successfully.' if subject_added > 0 else 'All Subjects already exist.',
+        'subject_added': subject_added
+    })
+
 class TeacherViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
