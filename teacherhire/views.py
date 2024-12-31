@@ -549,8 +549,8 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
     
  
 class TeacherQualificationViewSet(viewsets.ModelViewSet): 
-    # permission_classes = [IsAuthenticated]
-    # authentication_classes = [ExpiringTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherQualification.objects.all()
     serializer_class = TeacherQualificationSerializer
    
@@ -1578,6 +1578,16 @@ def insert_data(request):
             "model": Subject,
             "field": "subject_name",
             "data": ["Maths", "Physics", "php", "DBMS", "Hindi"]
+        },
+        "Teacherjobtype": {
+            "model": TeacherJobType,
+            "field": "teacher_job_name",
+            "data": ["Coaching Teacher", "School Teacher", "Tutor"]
+        },
+        "Educationqualification": {
+            "model": EducationalQualification,
+            "field": "name",
+            "data": ["matric", "Intermediate", "Under Graduate","Post Graduate"]
         }
     }
 
