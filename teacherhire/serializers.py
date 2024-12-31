@@ -316,7 +316,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 class ExamSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
-    classCategory = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
 
     class Meta:
         model = Exam
@@ -326,7 +326,7 @@ class ExamSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['subject'] = SubjectSerializer(instance.subject).data
         representation['level'] = LevelSerializer(instance.level).data
-        representation['classCategory'] = ClassCategorySerializer(instance.classCategory).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category).data
         return representation
 
 class QuestionSerializer(serializers.ModelSerializer):
