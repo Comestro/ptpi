@@ -1536,7 +1536,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             )
         
         exam = Exam.objects.filter(
-            classCategory=teacher_class_category.class_category,
+            class_category=teacher_class_category.class_category,
             subject=teacher_subject.subject
         )
 
