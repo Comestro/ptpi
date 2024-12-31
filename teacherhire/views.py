@@ -801,57 +801,67 @@ class QuestionViewSet(viewsets.ModelViewSet):
         
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
-    
+
     @action(detail=False, methods=['get'])
     def count(self, request):
-        count = get_count(Question.objects.filter(user=request.user))
-        return Response({"Count": count})
-    
+        count = Question.objects.filter(user=request.user).count()
+        return Response({"count": count})
+
     @action(detail=False, methods=['get'])
     def questions(self, request):
         user = request.user
+        exam_id = request.query_params.get('exam_id')
+        level_id = request.query_params.get('level_id')
+        class_category_id = request.query_params.get('class_category_id')
+        subject_id = request.query_params.get('subject_id')
+        language = request.query_params.get('language')
 
-        level_id = request.query_params.get('level_id', None)
-        class_category_id = request.query_params.get('class_category_id', None)
-        subject_id = request.query_params.get('subject_id', None)
-        language = request.query_params.get('language', None)
+        if not class_category_id or not subject_id:
+            return Response(
+                {"error": "Class category ID and subject ID are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
         if not teacher_class_category:
-            return Response(
-                {"message": "Please choose a valid class category."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+            return Response({"error": "Invalid class category."}, status=status.HTTP_400_BAD_REQUEST)
+
         teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
         if not teacher_subject:
-            return Response(
-                {"message": "Please choose a valid subject."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Invalid subject."}, status=status.HTTP_400_BAD_REQUEST)
         
-        questions = Question.objects.filter(
-            classCategory=teacher_class_category.class_category,
-            subject=teacher_subject.subject
-        )
-
         if level_id:
             try:
                 level = Level.objects.get(pk=level_id)
-                questions = questions.filter(level=level)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        questions = Question.objects.all()
+
+        if exam_id:
+            try:
+                exam = Exam.objects.get(pk=exam_id)
+                questions = questions.filter(exam=exam)
+            except Exam.DoesNotExist:
+                return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            questions = questions.filter(
+                exam__class_category=teacher_class_category.class_category,
+                exam__subject=teacher_subject.subject,
+                exam__level=level
+            )
+
         if language:
             if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
             questions = questions.filter(language=language)
 
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
     
