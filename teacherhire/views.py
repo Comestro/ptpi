@@ -1525,34 +1525,40 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         class_category_id = request.query_params.get('class_category_id', None)
         subject_id = request.query_params.get('subject_id', None)
+        
+        exams = Exam.objects.all()
 
-        teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
-        if not teacher_class_category:
-            return Response(
-                {"message": "Please choose a valid class category."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if class_category_id:
+            teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
+            if not teacher_class_category:
+                return Response(
+                    {"message": "Please choose a valid class category."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            exams = exams.filter(class_category=teacher_class_category.class_category)
         
-        teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
-        if not teacher_subject:
-            return Response(
-                {"message": "Please choose a valid subject."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if subject_id:
+            teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
+            if not teacher_subject:
+                return Response(
+                    {"message": "Please choose a valid subject."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            exams = exams.filter(subject=teacher_subject.subject)
         
-        exam = Exam.objects.filter(
-            class_category=teacher_class_category.class_category,
-            subject=teacher_subject.subject
-        )
+        # exams = Exam.objects.filter(
+        #     class_category=teacher_class_category.class_category,
+        #     subject=teacher_subject.subject
+        # )
 
         if level_id:
             try:
                 level = Level.objects.get(pk=level_id)
-                exam = exam.filter(level=level)
+                exams = exams.filter(level=level)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ExamSerializer(exam, many=True)
+        serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
