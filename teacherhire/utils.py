@@ -32,7 +32,7 @@ import os
 
 def verified_msg(email):
     try:
-        subject = "Hooray!🎉 Account Verified Successfully! Welcome to TeacherGotHire!"
+        subject = "🎉 Account Verified Successfully! Welcome to TeacherGotHire!"
         
         html_message = (
             "Yay!! Welcome to <strong style='color: #008080;'>TeacherGotHire</strong>! 🎉<br><br>"

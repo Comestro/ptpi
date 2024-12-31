@@ -751,46 +751,42 @@ class QuestionViewSet(viewsets.ModelViewSet):
         count = get_count(Question)
         return Response({"Count": count})
 
-    # @action(
-    #     detail=False,
-    #     methods=['get'],
-    #     url_path='questions',
-    # )
-    # def questions(self, request):
-    #     questions = Question.objects.all()
+    @action(detail=False, methods=['get'])
+    def questions(self, request):
+        user = request.user
+        exam_id = request.query_params.get('exam_id')
+        language = request.query_params.get('language')
 
-    #     level_id = request.query_params.get('level', None)
-    #     if level_id:
-    #         try:
-    #             level = Level.objects.get(pk=level_id)
-    #         except Level.DoesNotExist:
-    #             return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
-    #         questions = questions.filter(level=level)
+        questions = Question.objects.all()
 
-    #     subject_id = request.query_params.get('subject', None)
-    #     if subject_id:
-    #         try:
-    #             subject = Subject.objects.get(pk=subject_id)
-    #         except Subject.DoesNotExist:
-    #             return Response({"error": "Subject not found"}, status=status.HTTP_404_NOT_FOUND)
-    #         questions = questions.filter(subject=subject)
+        if not exam_id:
+            return Response(
+                {"error": "Exam ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+        )
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user, class_category=exam.class_category).exists()
+        teacher_subject = TeacherSubject.objects.filter(user=user, subject=exam.subject).exists()
 
-    #     class_category_id = request.query_params.get('classCategory', None)
-    #     if class_category_id:
-    #         try:
-    #             class_category = ClassCategory.objects.get(pk=class_category_id)
-    #         except ClassCategory.DoesNotExist:
-    #             return Response({"error": "Class Category not found"}, status=status.HTTP_404_NOT_FOUND)
-    #         questions = questions.filter(classCategory=class_category)
+        if not teacher_class_category or not teacher_subject:
+            return Response(
+                {"error": "You do not have permission to access this exam."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
-    #     language = request.query_params.get('language', None)
-    #     if language:
-    #         if language not in ['Hindi', 'English']:
-    #             return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
-    #         questions = questions.filter(language=language)
+        questions = Question.objects.filter(exam=exam)
 
-    #     serializer = QuestionSerializer(questions, many=True)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
+        if language:
+            if language not in ['Hindi', 'English']:
+                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = questions.filter(language=language)
+
+        serializer = QuestionSerializer(questions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -986,8 +982,8 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        if TeacherSubject.objects.filter(user=request.user).exists():
-            return Response({"detail": "SingleTeacherSubject already exists. "}, status=status.HTTP_400_BAD_REQUEST)
+        # if TeacherSubject.objects.filter(user=request.user).exists():
+        #     return Response({"detail": "SingleTeacherSubject already exists. "}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
@@ -1531,19 +1527,17 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     def exams(self, request):
         user = request.user
         level_id = request.query_params.get('level_id', None)
-        class_category_id = request.query_params.get('class_category_id', None)
         subject_id = request.query_params.get('subject_id', None)
         
         exams = Exam.objects.all()
 
-        if class_category_id:
-            teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
-            if not teacher_class_category:
-                return Response(
-                    {"message": "Please choose a valid class category."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            exams = exams.filter(class_category=teacher_class_category.class_category)
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user).first()
+        if not teacher_class_category:
+            return Response(
+                {"message": "Please choose a valid class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        exams = exams.filter(class_category=teacher_class_category.class_category)
         
         if subject_id:
             teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
