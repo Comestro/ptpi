@@ -1609,11 +1609,9 @@ def insert_data(request):
             "data": ["matric", "Intermediate", "Under Graduate","Post Graduate"]
         }
     }
-
     response_data = {}
-
     for key, config in data_to_insert.items():
-        model: Model = config["model"]
+        model: models = config["model"]
         field = config["field"]
         entries = config["data"]
 
