@@ -38,6 +38,8 @@ router.register(r'self/teacherpreference', PreferenceViewSet, basename='teacher-
 router.register(r'self/teacherjobpreferencelocation', JobPreferenceLocationViewSet, basename='teacher-jobpreferencelocation')
 router.register(r'self/basicProfile', BasicProfileViewSet, basename='teacher-basicProfile')
 router.register(r'self/question', SelfQuestionViewSet, basename='teacher-question')
+router.register(r'self/exam', SelfExamViewSet, basename='self-exam')
+
 
 
 urlpatterns = [

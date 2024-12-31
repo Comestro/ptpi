@@ -549,8 +549,8 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
     
  
 class TeacherQualificationViewSet(viewsets.ModelViewSet): 
-    # permission_classes = [IsAuthenticated]
-    # authentication_classes = [ExpiringTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherQualification.objects.all()
     serializer_class = TeacherQualificationSerializer
    
@@ -1513,6 +1513,49 @@ class ExamViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
+class SelfExamViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Exam.objects.all()
+    serializer_class = ExamSerializer
+
+    @action(detail=False, methods=['get'])
+    def exams(self, request):
+        user = request.user
+        level_id = request.query_params.get('level_id', None)
+        class_category_id = request.query_params.get('class_category_id', None)
+        subject_id = request.query_params.get('subject_id', None)
+
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
+        if not teacher_class_category:
+            return Response(
+                {"message": "Please choose a valid class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
+        if not teacher_subject:
+            return Response(
+                {"message": "Please choose a valid subject."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        exam = Exam.objects.filter(
+            class_category=teacher_class_category.class_category,
+            subject=teacher_subject.subject
+        )
+
+        if level_id:
+            try:
+                level = Level.objects.get(pk=level_id)
+                exam = exam.filter(level=level)
+            except Level.DoesNotExist:
+                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ExamSerializer(exam, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 def insert_data(request):
     data_to_insert = {
@@ -1540,6 +1583,16 @@ def insert_data(request):
             "model": Subject,
             "field": "subject_name",
             "data": ["Maths", "Physics", "php", "DBMS", "Hindi"]
+        },
+        "Teacherjobtype": {
+            "model": TeacherJobType,
+            "field": "teacher_job_name",
+            "data": ["Coaching Teacher", "School Teacher", "Tutor"]
+        },
+        "Educationqualification": {
+            "model": EducationalQualification,
+            "field": "name",
+            "data": ["matric", "Intermediate", "Under Graduate","Post Graduate"]
         }
     }
 
