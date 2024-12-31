@@ -122,7 +122,6 @@ class TeacherQualification(models.Model):
             return f"{self.user.username} - {self.qualification.name} ({self.year_of_passing})"
         return f"Unknown User - {self.qualification.name} ({self.year_of_passing})"
 
-
 class Role(models.Model):
     jobrole_name = models.CharField(max_length=400, null=True, blank=True)
 
@@ -154,40 +153,6 @@ class Level(models.Model):
 
     def __str__(self):
         return self.name
-
-class Question(models.Model):
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    level = models.ForeignKey(Level, on_delete=models.CASCADE)
-    classCategory = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, default=1)
-    time = models.FloatField(default=2.5)
-    language = models.CharField(
-        max_length=20,
-        choices=[
-            ('Hindi', 'Hindi'),
-            ('English', 'English'),
-        ],blank=True, null=True)
-    text = models.CharField(max_length=2000)
-    options = models.JSONField()
-    solution = models.TextField(null=True,blank=True)
-    correct_option = models.PositiveIntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def clean(self):
-        super().clean()
-        if self.correct_option < 1 or self.correct_option > len(self.options):
-            raise models.ValidationError({
-                'correct_option': f'Correct option must be between 1 and {len(self.options)}.'
-            })
-
-    class Meta:
-        ordering = ['created_at']
-
-    def __str__(self):
-        subject_name = getattr(self.subject, 'subject_name', 'Unknown Subject')
-        level_name = getattr(self.level, 'name', 'Unknown Level')
-        text_preview = self.text[:50] if self.text else "No text"
-        return f"{subject_name} - {level_name} - {text_preview}"
-
 
 class TeacherSkill(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
@@ -222,7 +187,7 @@ class BasicProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="user_profile", null=True)
     bio = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
     religion = models.CharField(max_length=100, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     marital_status = models.CharField(
@@ -259,16 +224,59 @@ class TeacherClassCategory(models.Model):
   def __str__(self):
         return self.user.username	
 
-class TeacherExamResult(models.Model):
-    user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
+class Exam(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    level = models.ForeignKey(Level, on_delete=models.CASCADE)
+    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
+    total_marks = models.PositiveIntegerField()
+    duration = models.PositiveIntegerField(help_text="Duration in minutes")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+class Question(models.Model):
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, null=True)
+    time = models.FloatField(default=2.5)
+    language = models.CharField(
+        max_length=20,
+        choices=[
+            ('Hindi', 'Hindi'),
+            ('English', 'English'),
+        ],blank=True, null=True)
+    text = models.CharField(max_length=2000)
+    options = models.JSONField()
+    solution = models.TextField(null=True,blank=True)
+    correct_option = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        super().clean()
+        if self.correct_option < 1 or self.correct_option > len(self.options):
+            raise models.ValidationError({
+                'correct_option': f'Correct option must be between 1 and {len(self.options)}.'
+            })
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        subject_name = getattr(self.subject, 'subject_name', 'Unknown Subject')
+        level_name = getattr(self.level, 'name', 'Unknown Level')
+        text_preview = self.text[:50] if self.text else "No text"
+        return f"{subject_name} - {level_name} - {text_preview}"
+
+class TeacherExamResult(models.Model):
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
     correct_answer = models.IntegerField(default=0, null=True, blank=True)
     is_unanswered = models.IntegerField(null=True, blank=True)
     incorrect_answer = models.IntegerField(default=0, null=True, blank=True)
     isqulified = models.BooleanField(default=False)
-    level = models.ForeignKey(Level, on_delete=models.CASCADE)
     attempt = models.IntegerField(default=3)
-    language = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return self.correct_answer
@@ -284,6 +292,7 @@ class JobPreferenceLocation(models.Model):
     pincode = models.CharField(max_length=6, null=True, blank=True)
     def __str__(self):
         return self.preference.user.username
+    
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
