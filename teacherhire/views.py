@@ -814,45 +814,30 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
     def questions(self, request):
         user = request.user
         exam_id = request.query_params.get('exam_id')
-        level_id = request.query_params.get('level_id')
-        class_category_id = request.query_params.get('class_category_id')
-        subject_id = request.query_params.get('subject_id')
         language = request.query_params.get('language')
-
-        if not class_category_id or not subject_id:
-            return Response(
-                {"error": "Class category ID and subject ID are required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
-        if not teacher_class_category:
-            return Response({"error": "Invalid class category."}, status=status.HTTP_400_BAD_REQUEST)
-
-        teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
-        if not teacher_subject:
-            return Response({"error": "Invalid subject."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if level_id:
-            try:
-                level = Level.objects.get(pk=level_id)
-            except Level.DoesNotExist:
-                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
 
         questions = Question.objects.all()
 
-        if exam_id:
-            try:
-                exam = Exam.objects.get(pk=exam_id)
-                questions = questions.filter(exam=exam)
-            except Exam.DoesNotExist:
-                return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            questions = questions.filter(
-                exam__class_category=teacher_class_category.class_category,
-                exam__subject=teacher_subject.subject,
-                exam__level=level
+        if not exam_id:
+            return Response(
+                {"error": "Exam ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+        )
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user, class_category=exam.class_category).exists()
+        teacher_subject = TeacherSubject.objects.filter(user=user, subject=exam.subject).exists()
+
+        if not teacher_class_category or not teacher_subject:
+            return Response(
+                {"error": "You do not have permission to access this exam."},
+                status=status.HTTP_403_FORBIDDEN
             )
+
+        questions = Question.objects.filter(exam=exam)
 
         if language:
             if language not in ['Hindi', 'English']:
@@ -861,8 +846,6 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
 
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 
     
 class RoleViewSet(viewsets.ModelViewSet):    
