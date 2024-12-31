@@ -360,18 +360,7 @@ class LevelViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-def insertlevel(request):
-    level = ["1st Level", "2nd Level", "3rd Level", "4th Level", "5th Level"]
-    level_added = 0
-    for level_name in level:
-        if not Level.objects.filter(name=level_name).exists():
-             Level.objects.create(name=level_name)
-             level_added += 1
-    return JsonResponse({
-        'message': f'{ level_added}levely added successfully.' if  level_added > 0 else 'All level already exist.',
-        'level_added':  level_added
-    })    
+    
 class SkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -388,17 +377,7 @@ class SkillViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-def insertskills(request):
-    skills = ["Maths", "Physics", "Writing", "Mapping", "Research"]
-    skills_added = 0
-    for skill_name in skills:
-        if not Skill.objects.filter(name=skill_name).exists():
-            Skill.objects.create(name=skill_name)
-            skills_added += 1
-    return JsonResponse({
-        'message': f'{skills_added} skills added successfully.' if skills_added > 0 else 'All skills already exist.',
-        'skills_added': skills_added
-    })
+
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
     permission_classes = [IsAuthenticated]
@@ -490,18 +469,6 @@ class SubjectViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-# 
-def insertsubjects(request):
-    subject = ["Maths", "Physics", "php", "DBMS", "Hindi"]
-    subject_added = 0
-    for subject_name in subject:
-        if not Subject.objects.filter(subject_name=subject_name).exists():
-            Subject.objects.create(subject_name=subject_name)
-            subject_added += 1
-    return JsonResponse({
-        'message': f'{subject_added} subject_added successfully.' if subject_added > 0 else 'All Subjects already exist.',
-        'subject_added': subject_added
-    })
 
 class TeacherViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
@@ -580,17 +547,7 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
-def insertclasscategory(request):
-    class_cat = ["1 to 5", "6 to 10", "11 to 12", "BCA", "MCA"]
-    class_cat_added = 0
-    for classcategory_name in class_cat:
-        if not ClassCategory.objects.filter(name=classcategory_name).exists():
-             ClassCategory.objects.create(name=classcategory_name)
-             class_cat_added += 1
-    return JsonResponse({
-        'message': f'{ class_cat_added} class category added successfully.' if  class_cat_added > 0 else 'All class category already exist.',
-        'class_category_added':  class_cat_added
-    })  
+ 
 class TeacherQualificationViewSet(viewsets.ModelViewSet): 
     # permission_classes = [IsAuthenticated]
     # authentication_classes = [ExpiringTokenAuthentication]
@@ -912,19 +869,6 @@ class RoleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Role deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
-def insertrole(request):
-    roles = ["Teacher", "Professor","Principal", "PtTeacher", "Sports Teacher"]
-    roles_added = 0
-    for jobrole_name in roles:
-        if not Role.objects.filter(jobrole_name=jobrole_name).exists():
-            Role.objects.create(jobrole_name=jobrole_name)
-            roles_added += 1
-    return JsonResponse({
-        'message': f'{roles_added} roles added successfully.' if roles_added > 0 else 'All skills already exist.',
-        'roles_added': roles_added
-    })
-
 
 
 class PreferenceViewSet(viewsets.ModelViewSet):
@@ -1545,4 +1489,52 @@ class ProfilecompletedView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+def insert_data(request):
+    data_to_insert = {
+        "class_categories": {
+            "model": ClassCategory,
+            "field": "name",
+            "data": ["1 to 5", "6 to 10", "11 to 12", "BCA", "MCA"]
+        },
+        "levels": {
+            "model": Level,
+            "field": "name",
+            "data": ["1st Level", "2nd Level", "3rd Level", "4th Level", "5th Level"]
+        },
+        "skills": {
+            "model": Skill,
+            "field": "name",
+            "data": ["Maths", "Physics", "Writing", "Mapping", "Research"]
+        },
+        "roles": {
+            "model": Role,
+            "field": "jobrole_name",
+            "data": ["Teacher", "Professor", "Principal", "PtTeacher", "Sports Teacher"]
+        },
+        "subjects": {
+            "model": Subject,
+            "field": "subject_name",
+            "data": ["Maths", "Physics", "php", "DBMS", "Hindi"]
+        }
+    }
+
+    response_data = {}
+
+    for key, config in data_to_insert.items():
+        model: Model = config["model"]
+        field = config["field"]
+        entries = config["data"]
+
+        added_count = 0
+        for entry in entries:
+            if not model.objects.filter(**{field: entry}).exists():
+                model.objects.create(**{field: entry})
+                added_count += 1
+
+        response_data[key] = {
+            "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
+            "added_count": added_count
+        }
+
+    return JsonResponse(response_data)
 
