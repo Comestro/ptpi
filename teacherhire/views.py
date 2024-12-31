@@ -751,46 +751,46 @@ class QuestionViewSet(viewsets.ModelViewSet):
         count = get_count(Question)
         return Response({"Count": count})
 
-    @action(
-        detail=False,
-        methods=['get'],
-        url_path='questions',
-    )
-    def questions(self, request):
-        questions = Question.objects.all()
+    # @action(
+    #     detail=False,
+    #     methods=['get'],
+    #     url_path='questions',
+    # )
+    # def questions(self, request):
+    #     questions = Question.objects.all()
 
-        level_id = request.query_params.get('level', None)
-        if level_id:
-            try:
-                level = Level.objects.get(pk=level_id)
-            except Level.DoesNotExist:
-                return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(level=level)
+    #     level_id = request.query_params.get('level', None)
+    #     if level_id:
+    #         try:
+    #             level = Level.objects.get(pk=level_id)
+    #         except Level.DoesNotExist:
+    #             return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
+    #         questions = questions.filter(level=level)
 
-        subject_id = request.query_params.get('subject', None)
-        if subject_id:
-            try:
-                subject = Subject.objects.get(pk=subject_id)
-            except Subject.DoesNotExist:
-                return Response({"error": "Subject not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(subject=subject)
+    #     subject_id = request.query_params.get('subject', None)
+    #     if subject_id:
+    #         try:
+    #             subject = Subject.objects.get(pk=subject_id)
+    #         except Subject.DoesNotExist:
+    #             return Response({"error": "Subject not found"}, status=status.HTTP_404_NOT_FOUND)
+    #         questions = questions.filter(subject=subject)
 
-        class_category_id = request.query_params.get('classCategory', None)
-        if class_category_id:
-            try:
-                class_category = ClassCategory.objects.get(pk=class_category_id)
-            except ClassCategory.DoesNotExist:
-                return Response({"error": "Class Category not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(classCategory=class_category)
+    #     class_category_id = request.query_params.get('classCategory', None)
+    #     if class_category_id:
+    #         try:
+    #             class_category = ClassCategory.objects.get(pk=class_category_id)
+    #         except ClassCategory.DoesNotExist:
+    #             return Response({"error": "Class Category not found"}, status=status.HTTP_404_NOT_FOUND)
+    #         questions = questions.filter(classCategory=class_category)
 
-        language = request.query_params.get('language', None)
-        if language:
-            if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
-            questions = questions.filter(language=language)
+    #     language = request.query_params.get('language', None)
+    #     if language:
+    #         if language not in ['Hindi', 'English']:
+    #             return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
+    #         questions = questions.filter(language=language)
 
-        serializer = QuestionSerializer(questions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    #     serializer = QuestionSerializer(questions, many=True)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1386,6 +1386,7 @@ class VarifyOTP(APIView):
 
             user.is_verified = True
             user.save()
+            verified_msg(serializer.data['email'])
 
             return Response({
                 'message': 'Account verified successfully'
