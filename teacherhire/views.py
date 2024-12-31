@@ -791,10 +791,13 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-   
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
+        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+   
+    
         
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1502,6 +1505,8 @@ class ExamViewSet(viewsets.ModelViewSet):
     def count(self, request):
         count = get_count(Exam)
         return Response({"Count": count})
+    
+   
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
