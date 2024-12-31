@@ -54,11 +54,7 @@ urlpatterns = [
     path('register/', TeacherRegisterUser.as_view(), name='teacher-register'),
     path('login/', LoginUser.as_view()),
     path('logout/', LogoutUser.as_view()),
-    path('insert/skills/', insertskills, name='insert-skills'),
-    path('insert/roles/', insertrole, name='insert-roles'),
-    path('insert/class_category/', insertclasscategory, name='insert-class_category'),
-    path('insert/levels/', insertlevel, name='insert-levels'),
-    path('insert/subjects/', insertsubjects, name='insert-subjects'),
+    path('insert/data/', insert_data, name='insert_data'),
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
 ]
