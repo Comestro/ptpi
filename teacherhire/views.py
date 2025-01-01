@@ -1618,7 +1618,8 @@ def insert_data(request):
                 {"name": "Semester Exam", "total_marks": 200, "duration": 240},
                 {"name": "Practical Exam", "total_marks": 50, "duration": 120}
             ]
-        }
+        },
+        
     }
 
     response_data = {}
@@ -1661,6 +1662,76 @@ def insert_data(request):
         response_data[key] = {
             "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
             "added_count": added_count
+        }
+         # Insert 5 Questions into the database
+    exams = Exam.objects.all()  # Get all exams in the database
+    if exams.exists():
+        # Data for inserting 5 questions
+        questions_data = [
+            {
+                "exam": exams[0],  # Associate with the first exam
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the capital of India?",
+                "options": ["New Delhi", "Mumbai", "Kolkata", "Chennai"],
+                "solution": "New Delhi is the capital of India.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[0],
+                "time": 3.0,
+                "language": "Hindi",
+                "text": "भारत की राजधानी क्या है?",
+                "options": ["नई दिल्ली", "मुंबई", "कोलकाता", "चेन्नई"],
+                "solution": "नई दिल्ली भारत की राजधानी है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[1],  # Associate with the second exam
+                "time": 2.0,
+                "language": "English",
+                "text": "What is 5 + 5?",
+                "options": ["8", "9", "10", "11"],
+                "solution": "The correct answer is 10.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[2],  # Associate with the third exam
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the boiling point of water?",
+                "options": ["90°C", "100°C", "110°C", "120°C"],
+                "solution": "The correct answer is 100°C.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[3],  # Associate with the fourth exam
+                "time": 2.5,
+                "language": "Hindi",
+                "text": "भारत में सबसे लंबी नदी कौन सी है?",
+                "options": ["गंगा", "यमुना", "सिंधु", "नर्मदा"],
+                "solution": "गंगा भारत की सबसे लंबी नदी है।",
+                "correct_option": 1
+            }
+        ]
+
+        # Insert the questions
+        question_added_count = 0
+        for question in questions_data:
+            question_obj = Question.objects.create(
+                exam=question["exam"],
+                time=question["time"],
+                language=question["language"],
+                text=question["text"],
+                options=question["options"],
+                solution=question["solution"],
+                correct_option=question["correct_option"]
+            )
+            question_added_count += 1
+
+        response_data["questions"] = {
+            "message": f'{question_added_count} questions added successfully.',
+            "added_count": question_added_count
         }
 
     return JsonResponse(response_data)
