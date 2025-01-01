@@ -16,6 +16,8 @@ from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
+from django.db.utils import IntegrityError
+
 
 
 
@@ -1569,8 +1571,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-
 def insert_data(request):
     data_to_insert = {
         "class_categories": {
@@ -1606,20 +1606,57 @@ def insert_data(request):
         "Educationqualification": {
             "model": EducationalQualification,
             "field": "name",
-            "data": ["matric", "Intermediate", "Under Graduate","Post Graduate"]
+            "data": ["matric", "Intermediate", "Under Graduate", "Post Graduate"]
+        },
+        "Exams": {
+            "model": Exam,
+            "field": "name",
+            "data": [
+                {"name": "Final Exam", "total_marks": 100, "duration": 180},
+                {"name": "Mid Term", "total_marks": 50, "duration": 90},
+                {"name": "Quiz", "total_marks": 20, "duration": 30},
+                {"name": "Semester Exam", "total_marks": 200, "duration": 240},
+                {"name": "Practical Exam", "total_marks": 50, "duration": 120}
+            ]
         }
     }
+
     response_data = {}
+
+    # Insert class categories, levels, etc.
     for key, config in data_to_insert.items():
-        model: models = config["model"]
+        model = config["model"]
         field = config["field"]
         entries = config["data"]
 
         added_count = 0
         for entry in entries:
-            if not model.objects.filter(**{field: entry}).exists():
-                model.objects.create(**{field: entry})
-                added_count += 1
+            if isinstance(entry, dict):  # Handle entries with multiple fields (e.g., exams)
+                name = entry.get("name")
+                total_marks = entry.get("total_marks")
+                duration = entry.get("duration")
+                
+                # Get a class category (you may need a more specific logic here)
+                class_category = ClassCategory.objects.first()  # Example: choosing the first available class category
+                
+                # Get a level (ensure there is at least one level in the database)
+                level = Level.objects.first()  # Example: choosing the first available level
+                subject =Subject.objects.first()
+
+                if not model.objects.filter(name=name).exists():
+                    model.objects.create(
+                        name=name,
+                        total_marks=total_marks,
+                        duration=duration,
+                        class_category=class_category,
+                        level=level ,
+                        subject=subject # Ensure the level is assigned to the exam
+                    )
+                    added_count += 1
+            else:  # Handle other entries (e.g., class categories, roles)
+                if not model.objects.filter(**{field: entry}).exists():
+                    model.objects.create(**{field: entry})
+                    added_count += 1
 
         response_data[key] = {
             "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
@@ -1627,4 +1664,3 @@ def insert_data(request):
         }
 
     return JsonResponse(response_data)
-
