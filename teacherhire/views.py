@@ -1632,16 +1632,14 @@ def insert_data(request):
 
         added_count = 0
         for entry in entries:
-            if isinstance(entry, dict):  # Handle entries with multiple fields (e.g., exams)
+            if isinstance(entry, dict):  
                 name = entry.get("name")
                 total_marks = entry.get("total_marks")
                 duration = entry.get("duration")
                 
-                # Get a class category (you may need a more specific logic here)
-                class_category = ClassCategory.objects.first()  # Example: choosing the first available class category
+                class_category = ClassCategory.objects.first()  
                 
-                # Get a level (ensure there is at least one level in the database)
-                level = Level.objects.first()  # Example: choosing the first available level
+                level = Level.objects.first()  
                 subject =Subject.objects.first()
 
                 if not model.objects.filter(name=name).exists():
@@ -1651,10 +1649,10 @@ def insert_data(request):
                         duration=duration,
                         class_category=class_category,
                         level=level ,
-                        subject=subject # Ensure the level is assigned to the exam
+                        subject=subject
                     )
                     added_count += 1
-            else:  # Handle other entries (e.g., class categories, roles)
+            else:  
                 if not model.objects.filter(**{field: entry}).exists():
                     model.objects.create(**{field: entry})
                     added_count += 1
@@ -1664,12 +1662,11 @@ def insert_data(request):
             "added_count": added_count
         }
          # Insert 5 Questions into the database
-    exams = Exam.objects.all()  # Get all exams in the database
+    exams = Exam.objects.all()  
     if exams.exists():
-        # Data for inserting 5 questions
         questions_data = [
             {
-                "exam": exams[0],  # Associate with the first exam
+                "exam": exams[0],
                 "time": 2.5,
                 "language": "English",
                 "text": "What is the capital of India?",
@@ -1687,7 +1684,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[1],  # Associate with the second exam
+                "exam": exams[1],  
                 "time": 2.0,
                 "language": "English",
                 "text": "What is 5 + 5?",
@@ -1696,7 +1693,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "exam": exams[2],  # Associate with the third exam
+                "exam": exams[2],  
                 "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
@@ -1705,7 +1702,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "exam": exams[3],  # Associate with the fourth exam
+                "exam": exams[3],  
                 "time": 2.5,
                 "language": "Hindi",
                 "text": "भारत में सबसे लंबी नदी कौन सी है?",
