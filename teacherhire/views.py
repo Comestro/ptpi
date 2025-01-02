@@ -16,6 +16,8 @@ from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
+from django.db.utils import IntegrityError
+
 
 
 
@@ -751,105 +753,97 @@ class QuestionViewSet(viewsets.ModelViewSet):
         count = get_count(Question)
         return Response({"Count": count})
 
-    @action(
-        detail=False,
-        methods=['get'],
-        url_path='questions',
-    )
-    def questions(self, request):
-        questions = Question.objects.all()
-
-        level_id = request.query_params.get('level', None)
-        if level_id:
-            try:
-                level = Level.objects.get(pk=level_id)
-            except Level.DoesNotExist:
-                return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(level=level)
-
-        subject_id = request.query_params.get('subject', None)
-        if subject_id:
-            try:
-                subject = Subject.objects.get(pk=subject_id)
-            except Subject.DoesNotExist:
-                return Response({"error": "Subject not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(subject=subject)
-
-        class_category_id = request.query_params.get('classCategory', None)
-        if class_category_id:
-            try:
-                class_category = ClassCategory.objects.get(pk=class_category_id)
-            except ClassCategory.DoesNotExist:
-                return Response({"error": "Class Category not found"}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(classCategory=class_category)
-
-        language = request.query_params.get('language', None)
-        if language:
-            if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
-            questions = questions.filter(language=language)
-
-        serializer = QuestionSerializer(questions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-   
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
-        
-class SelfQuestionViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
-    
-    @action(detail=False, methods=['get'])
-    def count(self, request):
-        count = get_count(Question.objects.filter(user=request.user))
-        return Response({"Count": count})
-    
     @action(detail=False, methods=['get'])
     def questions(self, request):
         user = request.user
+        exam_id = request.query_params.get('exam_id')
+        language = request.query_params.get('language')
 
-        level_id = request.query_params.get('level_id', None)
-        class_category_id = request.query_params.get('class_category_id', None)
-        subject_id = request.query_params.get('subject_id', None)
-        language = request.query_params.get('language', None)
+        questions = Question.objects.all()
 
-        teacher_class_category = TeacherClassCategory.objects.filter(user=user, pk=class_category_id).first()
-        if not teacher_class_category:
+        if not exam_id:
             return Response(
-                {"message": "Please choose a valid class category."},
+                {"error": "Exam ID is required."},
                 status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
-        if not teacher_subject:
-            return Response(
-                {"message": "Please choose a valid subject."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        questions = Question.objects.filter(
-            classCategory=teacher_class_category.class_category,
-            subject=teacher_subject.subject
         )
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user, class_category=exam.class_category).exists()
+        teacher_subject = TeacherSubject.objects.filter(user=user, subject=exam.subject).exists()
 
-        if level_id:
-            try:
-                level = Level.objects.get(pk=level_id)
-                questions = questions.filter(level=level)
-            except Level.DoesNotExist:
-                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+        if not teacher_class_category or not teacher_subject:
+            return Response(
+                {"error": "You do not have permission to access this exam."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        questions = Question.objects.filter(exam=exam)
 
         if language:
             if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language. Choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
             questions = questions.filter(language=language)
 
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+   
+    
+        
+class SelfQuestionViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = Question.objects.filter(user=request.user).count()
+        return Response({"count": count})
+
+    @action(detail=False, methods=['get'])
+    def questions(self, request):
+        user = request.user
+        exam_id = request.query_params.get('exam_id')
+        language = request.query_params.get('language')
+
+        questions = Question.objects.all()
+
+        if not exam_id:
+            return Response(
+                {"error": "Exam ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+        )
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user, class_category=exam.class_category).exists()
+        teacher_subject = TeacherSubject.objects.filter(user=user, subject=exam.subject).exists()
+
+        if not teacher_class_category or not teacher_subject:
+            return Response(
+                {"error": "You do not have permission to access this exam."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        questions = Question.objects.filter(exam=exam)
+
+        if language:
+            if language not in ['Hindi', 'English']:
+                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = questions.filter(language=language)
+
+        serializer = QuestionSerializer(questions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     
 class RoleViewSet(viewsets.ModelViewSet):    
@@ -990,8 +984,8 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        if TeacherSubject.objects.filter(user=request.user).exists():
-            return Response({"detail": "SingleTeacherSubject already exists. "}, status=status.HTTP_400_BAD_REQUEST)
+        # if TeacherSubject.objects.filter(user=request.user).exists():
+        #     return Response({"detail": "SingleTeacherSubject already exists. "}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
@@ -1383,6 +1377,7 @@ class VarifyOTP(APIView):
 
             user.is_verified = True
             user.save()
+            verified_msg(serializer.data['email'])
 
             return Response({
                 'message': 'Account verified successfully'
@@ -1503,11 +1498,72 @@ class ExamViewSet(viewsets.ModelViewSet):
         count = get_count(Exam)
         return Response({"Count": count})
     
+    def put(self, request, *args, **kwargs):
+        exam_id = request.data.get('id', None)  
+        
+        if exam_id:
+            try:
+                exam_instance = Exam.objects.get(id=exam_id)
+                serializer = ExamSerializer(exam_instance, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Exam.DoesNotExist:
+                return create_object(ExamSerializer, request.data, Exam)
+        else:
+            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
+class SelfExamViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Exam.objects.all()
+    serializer_class = ExamSerializer
+
+    @action(detail=False, methods=['get'])
+    def exams(self, request):
+        user = request.user
+        level_id = request.query_params.get('level_id', None)
+        subject_id = request.query_params.get('subject_id', None)
+        
+        exams = Exam.objects.all()
+
+        teacher_class_category = TeacherClassCategory.objects.filter(user=user).first()
+        if not teacher_class_category:
+            return Response(
+                {"message": "Please choose a valid class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        exams = exams.filter(class_category=teacher_class_category.class_category)
+        
+        if subject_id:
+            teacher_subject = TeacherSubject.objects.filter(user=user, pk=subject_id).first()
+            if not teacher_subject:
+                return Response(
+                    {"message": "Please choose a valid subject."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            exams = exams.filter(subject=teacher_subject.subject)
+        
+        # exams = Exam.objects.filter(
+        #     class_category=teacher_class_category.class_category,
+        #     subject=teacher_subject.subject
+        # )
+
+        if level_id:
+            try:
+                level = Level.objects.get(pk=level_id)
+                exams = exams.filter(level=level)
+            except Level.DoesNotExist:
+                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ExamSerializer(exams, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 def insert_data(request):
     data_to_insert = {
@@ -1544,27 +1600,129 @@ def insert_data(request):
         "Educationqualification": {
             "model": EducationalQualification,
             "field": "name",
-            "data": ["matric", "Intermediate", "Under Graduate","Post Graduate"]
-        }
+            "data": ["matric", "Intermediate", "Under Graduate", "Post Graduate"]
+        },
+        "Exams": {
+            "model": Exam,
+            "field": "name",
+            "data": [
+                {"name": "Final Exam", "total_marks": 100, "duration": 180},
+                {"name": "Mid Term", "total_marks": 50, "duration": 90},
+                {"name": "Quiz", "total_marks": 20, "duration": 30},
+                {"name": "Semester Exam", "total_marks": 200, "duration": 240},
+                {"name": "Practical Exam", "total_marks": 50, "duration": 120}
+            ]
+        },
+        
     }
 
     response_data = {}
 
+    # Insert class categories, levels, etc.
     for key, config in data_to_insert.items():
-        model: Model = config["model"]
+        model = config["model"]
         field = config["field"]
         entries = config["data"]
 
         added_count = 0
         for entry in entries:
-            if not model.objects.filter(**{field: entry}).exists():
-                model.objects.create(**{field: entry})
-                added_count += 1
+            if isinstance(entry, dict):  
+                name = entry.get("name")
+                total_marks = entry.get("total_marks")
+                duration = entry.get("duration")
+                
+                class_category = ClassCategory.objects.first()  
+                
+                level = Level.objects.first()  
+                subject =Subject.objects.first()
+
+                if not model.objects.filter(name=name).exists():
+                    model.objects.create(
+                        name=name,
+                        total_marks=total_marks,
+                        duration=duration,
+                        class_category=class_category,
+                        level=level ,
+                        subject=subject
+                    )
+                    added_count += 1
+            else:  
+                if not model.objects.filter(**{field: entry}).exists():
+                    model.objects.create(**{field: entry})
+                    added_count += 1
 
         response_data[key] = {
             "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
             "added_count": added_count
         }
+         # Insert 5 Questions into the database
+    exams = Exam.objects.all()  
+    if exams.exists():
+        questions_data = [
+            {
+                "exam": exams[0],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the capital of India?",
+                "options": ["New Delhi", "Mumbai", "Kolkata", "Chennai"],
+                "solution": "New Delhi is the capital of India.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[0],
+                "time": 3.0,
+                "language": "Hindi",
+                "text": "भारत की राजधानी क्या है?",
+                "options": ["नई दिल्ली", "मुंबई", "कोलकाता", "चेन्नई"],
+                "solution": "नई दिल्ली भारत की राजधानी है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[1],  
+                "time": 2.0,
+                "language": "English",
+                "text": "What is 5 + 5?",
+                "options": ["8", "9", "10", "11"],
+                "solution": "The correct answer is 10.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[2],  
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the boiling point of water?",
+                "options": ["90°C", "100°C", "110°C", "120°C"],
+                "solution": "The correct answer is 100°C.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[3],  
+                "time": 2.5,
+                "language": "Hindi",
+                "text": "भारत में सबसे लंबी नदी कौन सी है?",
+                "options": ["गंगा", "यमुना", "सिंधु", "नर्मदा"],
+                "solution": "गंगा भारत की सबसे लंबी नदी है।",
+                "correct_option": 1
+            }
+        ]
+
+        # Insert the questions
+        question_added_count = 0
+        for question in questions_data:
+            question_obj = Question.objects.create(
+                exam=question["exam"],
+                time=question["time"],
+                language=question["language"],
+                text=question["text"],
+                options=question["options"],
+                solution=question["solution"],
+                correct_option=question["correct_option"]
+            )
+            question_added_count += 1
+
+        response_data["questions"] = {
+            "message": f'{question_added_count} questions added successfully.',
+            "added_count": question_added_count
+        }
 
     return JsonResponse(response_data)
-
