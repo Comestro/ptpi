@@ -761,34 +761,21 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
         questions = Question.objects.all()
 
-        if not exam_id:
-            return Response(
-                {"error": "Exam ID is required."},
-                status=status.HTTP_400_BAD_REQUEST
-        )
-        try:
-            exam = Exam.objects.get(pk=exam_id)
-        except Exam.DoesNotExist:
-            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        teacher_class_category = TeacherClassCategory.objects.filter(user=user, class_category=exam.class_category).exists()
-        teacher_subject = TeacherSubject.objects.filter(user=user, subject=exam.subject).exists()
+        if exam_id:
+            try:
+                exam = Exam.objects.get(pk=exam_id)
+            except Exam.DoesNotExist:
+                return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if not teacher_class_category or not teacher_subject:
-            return Response(
-                {"error": "You do not have permission to access this exam."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        questions = Question.objects.filter(exam=exam)
+            questions = questions.filter(exam=exam)
 
         if language:
-            if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
             questions = questions.filter(language=language)
 
-        serializer = QuestionSerializer(questions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serialized_questions = QuestionSerializer(questions, many=True)
+        return Response(serialized_questions.data, status=status.HTTP_200_OK)
+
+
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1498,6 +1485,42 @@ class ExamViewSet(viewsets.ModelViewSet):
         count = get_count(Exam)
         return Response({"Count": count})
     
+    @action(detail=False, methods=['get'])
+    def exams(self, request):
+        level_id = request.query_params.get('level_id', None)
+        class_category_id = request.query_params.get('class_category_id', None)
+        subject_id = request.query_params.get('subject_id', None)
+        
+        exams = Exam.objects.all()
+
+        if class_category_id:
+            class_category = ClassCategory.objects.filter(pk=class_category_id).first()
+            if not class_category:
+                return Response(
+                    {"message": "Please choose a valid class category."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            exams = exams.filter(class_category=class_category)
+        
+        if subject_id:
+            subject = Subject.objects.filter(pk=subject_id).first()
+            if not subject:
+                return Response(
+                    {"message": "Please choose a valid subject."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            exams = exams.filter(subject=subject)
+
+        if level_id:
+            try:
+                level = Level.objects.get(pk=level_id)
+                exams = exams.filter(level=level)
+            except Level.DoesNotExist:
+                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ExamSerializer(exams, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def put(self, request, *args, **kwargs):
         exam_id = request.data.get('id', None)  
         
@@ -1536,7 +1559,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         teacher_class_category = TeacherClassCategory.objects.filter(user=user).first()
         if not teacher_class_category:
             return Response(
-                {"message": "Please choose a valid class category."},
+                {"message": "Please choose a class category first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         exams = exams.filter(class_category=teacher_class_category.class_category)
@@ -1549,11 +1572,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             exams = exams.filter(subject=teacher_subject.subject)
-        
-        # exams = Exam.objects.filter(
-        #     class_category=teacher_class_category.class_category,
-        #     subject=teacher_subject.subject
-        # )
 
         if level_id:
             try:

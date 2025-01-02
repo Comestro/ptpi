@@ -17,128 +17,49 @@ class Util:
 
 def send_otp_via_email(email):
     subject = "your account verification email"
-    otp = random.randint(1000, 9999)
+    otp = random.randint(10000, 99999)
     message = f"Your OTP is {otp}"
+    html_message = f"""
+        <div style="
+            max-width: 600px; 
+            margin: 20px auto; 
+            padding: 20px; 
+            border-radius: 10px; 
+            background-color: #f9f9f9; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+            text-align: center;
+            font-family: Arial, sans-serif;
+            color: #333;">
+            
+            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">TeacherGotHire Verification Code</h2>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                Use the code below to complete your verification process.
+            </p>
+            
+            <p style="
+                display: inline-block; 
+                padding: 10px 20px; 
+                font-size: 36px; 
+                font-weight: bold; 
+                color: #ffffff; 
+                background-color: #008080; 
+                border-radius: 8px; 
+                text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
+                {otp}
+            </p>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #555;">
+                This OTP is valid for 10 minutes. Please do not share it with anyone.
+            </p>
+        </div>
+        """
     from_email=os.environ.get('EMAIL_FROM')
-    send_mail(subject,message,from_email, [email])
+    send_mail(subject,message,from_email, [email],html_message=html_message)
     user_obj = CustomUser.objects.get(email=email)
     user_obj.otp = otp
     user_obj.otp_created_at = now()
     user_obj.save()
-
-# def calculate_profile_completed(user):
-#     profile_score = 0
-#     incomplete_sections = {}
-
-#     weights = {
-#         "customuser": 16,
-#         "basic_profile": 16,
-#         "teacher_address": 16,
-#         "job_preference": 16,
-#         "job_pref_location": 16,
-#         "qualification": 20,
-#     }
-
-#     try:
-#         def process_fields(fields, weight, section_key, divisor=1):
-#             nonlocal profile_score, incomplete_sections
-#             filled_fields = [key for key, value in fields.items() if value]
-#             incomplete_fields = [key for key, value in fields.items() if not value]
-#             profile_score += (len(filled_fields) / len(fields)) * (weight / divisor)
-#             if incomplete_fields:
-#                 incomplete_sections[section_key] = incomplete_fields
-
-#         #custom fields
-#         customuser = CustomUser.objects.filter(id=user.id).first()
-#         if customuser:
-#             fields = {
-#                 "email": customuser.email,
-#                 "username": customuser.username,
-#                 "Fname": customuser.Fname,
-#                 "Lname": customuser.Lname,
-#             }
-#             process_fields(fields, weights["customuser"], "customuser")
-
-#         # Check BasicProfile fields
-#         basic_profile = BasicProfile.objects.filter(user=user).first()
-#         if basic_profile:
-#             fields = {
-#                 "bio": basic_profile.bio,
-#                 "profile_picture": basic_profile.profile_picture,
-#                 "phone_number": basic_profile.phone_number,
-#                 "religion": basic_profile.religion,
-#                 "date_of_birth": basic_profile.date_of_birth,
-#                 "marital_status": basic_profile.marital_status,
-#                 "gender": basic_profile.gender,
-#                 "language": basic_profile.language,
-#             }
-#             process_fields(fields, weights["basic_profile"], "basic_profile")
-
-#         # Check TeachersAddress fields
-#         teacher_addresses = TeachersAddress.objects.filter(user=user)
-#         if teacher_addresses.exists():
-#             for address in teacher_addresses:
-#                 fields = {
-#                     "state": address.state,
-#                     "division": address.division,
-#                     "district": address.district,
-#                     "block": address.block,
-#                     "village": address.village,
-#                     "area": address.area,
-#                     "pincode": address.pincode,
-#                 }
-#                 process_fields(fields, weights["teacher_address"], "teacher_address", teacher_addresses.count())
-
-#         # Check Preference fields
-#         preference = Preference.objects.filter(user=user).first()
-#         if preference:
-#             fields = {
-#                 "job_role": preference.job_role.exists(),
-#                 "class_category": preference.class_category,
-#                 "prefered_subject": preference.prefered_subject.exists(),
-#                 "teacher_job_type": preference.teacher_job_type.exists(),
-#             }
-#             process_fields(fields, weights["job_preference"], "job_preference")
-
-#         # Check JobPreferenceLocation fields
-#         job_pref_locations = JobPreferenceLocation.objects.filter(preference__user=user)
-#         if job_pref_locations.exists():
-#             for location in job_pref_locations:
-#                 fields = {
-#                     "state": location.state,
-#                     "city": location.city,
-#                     "sub_division": location.sub_division,
-#                     "block": location.block,
-#                     "post_office": location.post_office,
-#                     "area": location.area,
-#                     "pincode": location.pincode,
-#                 }
-#                 process_fields(fields, weights["job_pref_location"], "job_pref_location", job_pref_locations.count())
-
-#         # Check TeacherQualification fields
-#         qualifications = TeacherQualification.objects.filter(user=user)
-#         if qualifications.exists():
-#             for qualification in qualifications:
-#                 fields = {
-#                     "qualification": qualification.qualification,
-#                     "institution": qualification.institution,
-#                     "year_of_passing": qualification.year_of_passing,
-#                     "grade_or_percentage": qualification.grade_or_percentage,
-#                 }
-#                 process_fields(fields, weights["qualification"], "qualification", qualifications.count())
-
-#     except Exception as e:
-#         # Log the error for debugging
-#         print(f"Error calculating profile completion: {e}")
-#         incomplete_sections = {section: list(weights.keys()) for section in weights}
-
-#     return {
-#         "profile_completed": min(round(profile_score), 100),  
-#         "incomplete_sections": incomplete_sections,        
-#     }
-from django.core.mail import send_mail
-from django.conf import settings
-import os
 
 def verified_msg(email):
     try:
@@ -175,9 +96,7 @@ def verified_msg(email):
             "Best regards,\n"
             "The TeacherGotHire Team"
         )
-
-        from_email = os.environ.get('EMAIL_FROM', settings.DEFAULT_FROM_EMAIL)
-
+        from_email = os.environ.get('EMAIL_FROM')
         send_mail(
             subject=subject,
             message=plain_message,  
