@@ -31,7 +31,7 @@ def send_otp_via_email(email):
             font-family: Arial, sans-serif;
             color: #333;">
             
-            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">TeacherGotHire Verification Code</h2>
+            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
             
             <p style="font-size: 16px; margin-bottom: 20px;">
                 Use the code below to complete your verification process.
