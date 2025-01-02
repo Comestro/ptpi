@@ -12,4 +12,5 @@ ptpi/__pycache__
 
 # Ignore server folder
 /server
+/.idea/
 
