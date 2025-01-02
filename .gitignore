@@ -10,4 +10,5 @@
 
 # Ignore server folder
 /server
+/.idea/
 
