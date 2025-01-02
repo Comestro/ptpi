@@ -812,15 +812,6 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
             exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        teacher_class_category = TeacherClassCategory.objects.filter(user=user, class_category=exam.class_category).exists()
-        teacher_subject = TeacherSubject.objects.filter(user=user, subject=exam.subject).exists()
-
-        if not teacher_class_category or not teacher_subject:
-            return Response(
-                {"error": "You do not have permission to access this exam."},
-                status=status.HTTP_403_FORBIDDEN
-            )
 
         questions = Question.objects.filter(exam=exam)
 
@@ -1548,6 +1539,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
 
+
     @action(detail=False, methods=['get'])
     def exams(self, request):
         user = request.user
@@ -1572,6 +1564,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 exams = exams.filter(level=level_id)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+            
 
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

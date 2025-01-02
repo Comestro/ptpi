@@ -312,30 +312,13 @@ class TeacherSerializer(serializers.ModelSerializer):
     def get_teacherSkill(self, obj):
         teacherSkills = TeacherSkill.objects.filter(user=obj.user)
         return TeacherSkillSerializer(teacherSkills, many=True).data
-    
-class ExamSerializer(serializers.ModelSerializer):
-    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
-    level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
-    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
-
-    class Meta:
-        model = Exam
-        fields ="__all__"
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['subject'] = SubjectSerializer(instance.subject).data
-        representation['level'] = LevelSerializer(instance.level).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category).data
-        return representation
 
 class QuestionSerializer(serializers.ModelSerializer):
-    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
     class Meta:
         model = Question
-        fields = "__all__"
+        fields = ['id', 'text', 'options', 'solution', 'correct_option', 'language', 'time']
 
     def validate_text(self, value):
         if value is not None and len(value)< 5:
@@ -349,6 +332,22 @@ class QuestionSerializer(serializers.ModelSerializer):
         representation['exam'] = ExamSerializer(instance.exam).data
         return representation
 
+class ExamSerializer(serializers.ModelSerializer):
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
+    level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
+
+    class Meta:
+        model = Exam
+        fields = ['id', 'name', 'description', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions']
+        depth = 1 
+        
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['subject'] = SubjectSerializer(instance.subject).data
+        representation['level'] = LevelSerializer(instance.level).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category).data
+        return representation
 class TeacherSkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     skill = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), required=False)

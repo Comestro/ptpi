@@ -31,7 +31,7 @@ def send_otp_via_email(email):
             font-family: Arial, sans-serif;
             color: #333;">
             
-            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">TeacherGotHire Verification Code</h2>
+            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
             
             <p style="font-size: 16px; margin-bottom: 20px;">
                 Use the code below to complete your verification process.
@@ -114,26 +114,26 @@ def verified_msg(email):
 def calculate_profile_completed(user):
     complete_profile = 0
     if user:
-        complete_profile += 16  # Custom user field
+        complete_profile += 16 
 
     basic_profile = BasicProfile.objects.filter(user=user).exists()
     if basic_profile:
-        complete_profile += 16  # Basic profile filled
+        complete_profile += 16  
 
     teacher_address = TeachersAddress.objects.filter(user=user).exists()
     if teacher_address:
-        complete_profile += 16  # Teacher address filled
+        complete_profile += 16  
 
     job_preference = Preference.objects.filter(user=user).exists()
     if job_preference:
-        complete_profile += 16  # Job preference filled
+        complete_profile += 16  
 
     job_pref_location = JobPreferenceLocation.objects.filter(preference__user=user).exists()
     if job_pref_location:
-        complete_profile += 16  # Job preference location filled
+        complete_profile += 16  
 
     qualification = TeacherQualification.objects.filter(user=user).exists()
     if qualification:
-        complete_profile += 20  # Qualification filled
+        complete_profile += 20  
 
-    return min(complete_profile, 100)  # Ensure it doesn't exceed 100%
+    return min(complete_profile, 100)

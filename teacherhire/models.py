@@ -239,7 +239,7 @@ class Exam(models.Model):
         return self.name
     
 class Question(models.Model):
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, null=True)
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
     time = models.FloatField(default=2.5)
     language = models.CharField(
         max_length=20,
@@ -264,10 +264,7 @@ class Question(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        subject_name = getattr(self.subject, 'subject_name', 'Unknown Subject')
-        level_name = getattr(self.level, 'name', 'Unknown Level')
-        text_preview = self.text[:50] if self.text else "No text"
-        return f"{subject_name} - {level_name} - {text_preview}"
+       return self.text
 
 class TeacherExamResult(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, null=True)
