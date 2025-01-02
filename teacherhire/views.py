@@ -812,15 +812,6 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
             exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        teacher_class_category = TeacherClassCategory.objects.filter(user=user, class_category=exam.class_category).exists()
-        teacher_subject = TeacherSubject.objects.filter(user=user, subject=exam.subject).exists()
-
-        if not teacher_class_category or not teacher_subject:
-            return Response(
-                {"error": "You do not have permission to access this exam."},
-                status=status.HTTP_403_FORBIDDEN
-            )
 
         questions = Question.objects.filter(exam=exam)
 
