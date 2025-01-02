@@ -4,6 +4,8 @@
 # Ignore SQLite database files
 *.sqlite3
 
+ptpi/__pycache__
+
 # Ignore Django migrations except __init__.py
 **/migrations/*.py
 !**/migrations/__init__.py
