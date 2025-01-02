@@ -1565,7 +1565,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         exams = exams.filter(class_category=teacher_class_category.class_category)
         
         if subject_id:
-            teacher_subject = TeacherSubject.objects.filter(user=user, subject=subject_id).first()
+            teacher_subject = Preference.objects.filter(user=user, prefered_subject__id=subject_id)
             if not teacher_subject:
                 return Response(
                     {"message": "Please choose a valid subject."},
