@@ -66,7 +66,7 @@ def verified_msg(email):
         subject = "🎉 Account Verified Successfully! Welcome to TeacherGotHire!"
         
         html_message = (
-            "Yay!! Welcome to <strong style='color: #008080;'>TeacherGotHire</strong>! 🎉<br><br>"
+            "Congratulations Yay!! Welcome to <strong style='color: #008080;'>TeacherGotHire</strong>! 🎉<br><br>"
             "We're absolutely thrilled to have you join our growing community of passionate educators. 🌟<br><br>"
             "<strong style='color: #008080;'>TeacherGotHire</strong> is your gateway to endless opportunities where you can:<br>"
             "- 🌍 Connect with learners from around the world.<br>"

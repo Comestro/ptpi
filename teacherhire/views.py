@@ -1538,6 +1538,28 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve an Exam instance and filter its questions by language if specified.
+        """
+        exam = self.get_object()
+
+        language = request.query_params.get('language', None)
+
+        questions = exam.questions.all()
+
+        if language:
+            if language not in ['Hindi', 'English']:
+                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = questions.filter(language=language)
+
+        serializer = self.get_serializer(exam)
+        exam_data = serializer.data
+
+        exam_data['questions'] = QuestionSerializer(questions, many=True).data
+
+        return Response(exam_data, status=status.HTTP_200_OK)
+
 
 
     @action(detail=False, methods=['get'])
@@ -1545,7 +1567,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        
+        exam = self.get_object()
+
+        # Get the 'language' parameter from query params
+        language = request.query_params.get('language', None)
         exams = Exam.objects.all()
 
         teacher_class_category = Preference.objects.filter(user=user).first()
@@ -1564,7 +1589,14 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 exams = exams.filter(level=level_id)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
-            
+        
+        questions = exam.questions.all()
+
+        # Filter questions by language if provided
+        if language:
+            if language not in ['Hindi', 'English']:
+                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = questions.filter(language=language)
 
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
