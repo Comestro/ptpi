@@ -316,9 +316,10 @@ class TeacherSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
+    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(),required=False, allow_null=True)
     class Meta:
         model = Question
-        fields = ['id', 'text', 'options', 'solution', 'correct_option', 'language', 'time','exam']
+        fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
 
     def validate_text(self, value):
         if value is not None and len(value)< 5:
@@ -329,7 +330,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # representation['exam'] = ExamSerializer(instance.exam).data
+        representation['exam'] = ExamSerializer(instance.exam).data
         return representation
 
 class ExamSerializer(serializers.ModelSerializer):
