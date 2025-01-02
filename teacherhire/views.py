@@ -1556,7 +1556,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         
         exams = Exam.objects.all()
 
-        teacher_class_category = TeacherClassCategory.objects.filter(user=user).first()
+        teacher_class_category = Preference.objects.filter(user=user).first()
         if not teacher_class_category:
             return Response(
                 {"message": "Please choose a class category first."},
