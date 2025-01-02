@@ -1565,18 +1565,11 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         exams = exams.filter(class_category=teacher_class_category.class_category)
         
         if subject_id:
-            teacher_subject = Preference.objects.filter(user=user, prefered_subject__id=subject_id)
-            if not teacher_subject:
-                return Response(
-                    {"message": "Please choose a valid subject."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            exams = exams.filter(subject=teacher_subject.subject)
+            exams = exams.filter(subject=subject_id)
 
         if level_id:
             try:
-                level = Level.objects.get(pk=level_id)
-                exams = exams.filter(level=level)
+                exams = exams.filter(level=level_id)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
 
