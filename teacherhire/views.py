@@ -1557,7 +1557,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         teacher_class_category = TeacherClassCategory.objects.filter(user=user).first()
         if not teacher_class_category:
             return Response(
-                {"message": "Please choose a valid class category."},
+                {"message": "Please choose a class category first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         exams = exams.filter(class_category=teacher_class_category.class_category)

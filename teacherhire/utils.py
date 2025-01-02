@@ -17,18 +17,49 @@ class Util:
 
 def send_otp_via_email(email):
     subject = "your account verification email"
-    otp = random.randint(1000, 9999)
+    otp = random.randint(10000, 99999)
     message = f"Your OTP is {otp}"
+    html_message = f"""
+        <div style="
+            max-width: 600px; 
+            margin: 20px auto; 
+            padding: 20px; 
+            border-radius: 10px; 
+            background-color: #f9f9f9; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+            text-align: center;
+            font-family: Arial, sans-serif;
+            color: #333;">
+            
+            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">TeacherGotHire Verification Code</h2>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+                Use the code below to complete your verification process.
+            </p>
+            
+            <p style="
+                display: inline-block; 
+                padding: 10px 20px; 
+                font-size: 36px; 
+                font-weight: bold; 
+                color: #ffffff; 
+                background-color: #008080; 
+                border-radius: 8px; 
+                text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
+                {otp}
+            </p>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #555;">
+                This OTP is valid for 10 minutes. Please do not share it with anyone.
+            </p>
+        </div>
+        """
     from_email=os.environ.get('EMAIL_FROM')
-    send_mail(subject,message,from_email, [email])
+    send_mail(subject,message,from_email, [email],html_message=html_message)
     user_obj = CustomUser.objects.get(email=email)
     user_obj.otp = otp
     user_obj.otp_created_at = now()
     user_obj.save()
-
-from django.core.mail import send_mail
-from django.conf import settings
-import os
 
 def verified_msg(email):
     try:
@@ -65,9 +96,7 @@ def verified_msg(email):
             "Best regards,\n"
             "The TeacherGotHire Team"
         )
-
-        from_email = os.environ.get('EMAIL_FROM', settings.DEFAULT_FROM_EMAIL)
-
+        from_email = os.environ.get('EMAIL_FROM')
         send_mail(
             subject=subject,
             message=plain_message,  
