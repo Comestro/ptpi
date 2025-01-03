@@ -276,7 +276,18 @@ class TeacherExamResult(models.Model):
     attempt = models.IntegerField(default=3)
 
     def __str__(self):
-        return self.correct_answer
+        return self.exam.name
+    
+    def get_isqualified(self):
+        total_question = self.correct_answer + self.is_unanswered + self.incorrect_answer
+        percentage = (self.correct_answer / total_question) * 100
+        if percentage >= 60:
+            return True
+        return False
+    
+    def save(self, *args, **kwargs):
+        self.isqulified = self.get_isqualified()
+        return super().save(*args, **kwargs)
     
 class JobPreferenceLocation(models.Model):
     preference = models.ForeignKey(Preference, on_delete=models.CASCADE)
