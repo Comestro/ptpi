@@ -603,3 +603,16 @@ class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
 
+
+class ReportSerializer(serializers.ModelSerializer):
+    # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    # question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
+
+    class Meta:
+        model = Report
+        fields = "__all__"
+
+
+
+
+
