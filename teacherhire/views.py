@@ -1685,7 +1685,7 @@ def insert_data(request):
     if exams.exists():
         questions_data = [
             {
-                "exam": exams[0],
+                "exam": exams[1],
                 "time": 2.5,
                 "language": "English",
                 "text": "What is the capital of India?",
@@ -1694,7 +1694,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-            "exam": exams[2], 
+            "exam": exams[1], 
             "time": 3,
             "language": "English",
             "text": "What is the full form of DBMS?",
@@ -1703,7 +1703,7 @@ def insert_data(request):
             "correct_option": 1
         },
         {
-            "exam": exams[2],  
+            "exam": exams[1],  
             "time": 2.5,
             "language": "English",
             "text": "Which of the following is a type of database model?",
@@ -1712,7 +1712,7 @@ def insert_data(request):
             "correct_option": 3
         },
         {
-            "exam": exams[3],  
+            "exam": exams[1],  
             "time": 3,
             "language": "English",
             "text": "Which SQL command is used to retrieve data from a database?",
@@ -1722,7 +1722,7 @@ def insert_data(request):
         },
         
         {
-            "exam": exams[0],  
+            "exam": exams[1],  
             "time": 3,
             "language": "English",
             "text": "What is normalization in DBMS?",
@@ -1731,7 +1731,7 @@ def insert_data(request):
             "correct_option": 1
         },
         {
-            "exam": exams[0],  
+            "exam": exams[1],  
             "time": 2.5,
             "language": "English",
             "text": "Which of the following is a type of join in SQL?",
@@ -1740,7 +1740,7 @@ def insert_data(request):
             "correct_option": 3
         },
             {
-                "exam": exams[0],
+                "exam": exams[1],
                 "time": 3.0,
                 "language": "Hindi",
                 "text": "भारत की राजधानी क्या है?",
@@ -1758,7 +1758,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "exam": exams[2],  
+                "exam": exams[1],  
                 "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
@@ -1776,7 +1776,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[2],  
+                "exam": exams[1],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
@@ -1785,7 +1785,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[3],  
+                "exam": exams[1],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का पहला प्रधानमंत्री कौन थे?",
@@ -1794,7 +1794,7 @@ def insert_data(request):
                 "correct_option": 2
            },
            {
-                "exam": exams[3],  
+                "exam": exams[1],  
                 "time": 3,
                 "language": "Hindi",
                 "text": "भारत में कितने राज्य हैं?",
@@ -1812,20 +1812,27 @@ def insert_data(request):
                 "correct_option": 1
            }
     ]
-
-        # Insert the questions
+        
         question_added_count = 0
         for question in questions_data:
-            question_obj = Question.objects.create(
+            existing_question = Question.objects.filter(
                 exam=question["exam"],
-                time=question["time"],
-                language=question["language"],
-                text=question["text"],
-                options=question["options"],
-                solution=question["solution"],
-                correct_option=question["correct_option"]
-            )
-            question_added_count += 1
+                text=question["text"]
+            ).first()
+
+            if not existing_question:
+                Question.objects.create(
+                    exam=question["exam"],
+                    time=question["time"],
+                    language=question["language"],
+                    text=question["text"],
+                    options=question["options"],
+                    solution=question["solution"],
+                    correct_option=question["correct_option"]
+                )
+                question_added_count += 1
+            else:
+                print(f"Question already exists: {question['text']}")
 
         response_data["questions"] = {
             "message": f'{question_added_count} questions added successfully.',
@@ -1833,3 +1840,5 @@ def insert_data(request):
         }
 
     return JsonResponse(response_data)
+
+    
