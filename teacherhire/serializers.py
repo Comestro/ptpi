@@ -347,6 +347,8 @@ class ExamSerializer(serializers.ModelSerializer):
         representation['subject'] = SubjectSerializer(instance.subject).data
         representation['level'] = LevelSerializer(instance.level).data
         representation['class_category'] = ClassCategorySerializer(instance.class_category).data
+        representation['questions'] = QuestionSerializer(instance.questions.all(), many=True).data
+
         return representation
 class TeacherSkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
