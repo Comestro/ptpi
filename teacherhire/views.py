@@ -1098,10 +1098,7 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def count(self,request):
         count = get_count(TeacherExamResult)
         return Response({"Count":count}) 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
-        return Response({"message": "Teacher exam result deleted successfully"}, status=status.HTTP_204_NO_CONTENT)   
+    
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
