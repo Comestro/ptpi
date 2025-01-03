@@ -477,20 +477,15 @@ class TeacherClassCategorySerializer(serializers.ModelSerializer):
 
 class TeacherExamResultSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     class Meta:
         model = TeacherExamResult
         fields = '__all__'
 
-    def validate(self, data):
-        user = data.get('user')
-        if user and TeacherExamResult.objects.filter(user=user).exists():
-            raise serializers.ValidationError({"user": "A teacherexamresult entry for this user already exists."})
-        return data 
-    
-    # def to_representation(self, instance):
-    #     return super().to_representation(instance)
-    #     representation['exam'] = TeacherExamResultSerializer(instance.exam).data
-    #     return representation
+    def to_representation(self, instance):
+        return super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.exam).data
+        return representation
         
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
     preference = serializers.PrimaryKeyRelatedField(queryset=Preference.objects.all(), required=False)

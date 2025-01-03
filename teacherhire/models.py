@@ -274,7 +274,7 @@ class TeacherExamResult(models.Model):
     incorrect_answer = models.IntegerField(default=0, null=True, blank=True)
     isqulified = models.BooleanField(default=False)
     attempt = models.IntegerField(default=3)
-
+    created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.exam.name
     
@@ -287,8 +287,17 @@ class TeacherExamResult(models.Model):
     
     def save(self, *args, **kwargs):
         self.isqulified = self.get_isqualified()
-        return super().save(*args, **kwargs)
     
+        if self.pk is None: 
+            last_result = TeacherExamResult.objects.filter(user=self.user, exam=self.exam).order_by('-created_at').first()
+        
+            if last_result:
+                self.attempt = max(0, last_result.attempt - 1)
+            else:
+                self.attempt = max(0, self.attempt - 1)
+    
+        return super().save(*args, **kwargs)
+
 class JobPreferenceLocation(models.Model):
     preference = models.ForeignKey(Preference, on_delete=models.CASCADE)
     state = models.CharField(max_length=200,null=True, blank=True)
