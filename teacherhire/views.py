@@ -1843,6 +1843,9 @@ class ReportViewSet(viewsets.ModelViewSet):
     queryset= Report.objects.all()
     serializer_class = ReportSerializer
 
+    @action (detail=False,methods=['get'])
+    def get(self,request):
+        return Report.objects.all()
     
     @action (detail=False,methods=['get'])
     def count(self,request):
