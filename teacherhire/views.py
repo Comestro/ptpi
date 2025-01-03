@@ -1838,8 +1838,8 @@ def insert_data(request):
 
     return JsonResponse(response_data)
 class ReportViewSet(viewsets.ModelViewSet):    
-    # permission_classes = [IsAuthenticated]
-    # authentication_classes = [ExpiringTokenAuthentication] 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication] 
     queryset= Report.objects.all()
     serializer_class = ReportSerializer
 
@@ -1847,10 +1847,46 @@ class ReportViewSet(viewsets.ModelViewSet):
     def count(self,request):
         count = get_count(Report)
         return Response({"Count":count})
+    def create(self, request, *args, **kwargs):
+        return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+class SelfReportViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+    lookup_field = 'id'
+
+    def list(self, request, *args, **kwargs):
+        return Response({"error": "GET method is not allowed on this endpoint."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def create(self, request):
+        user = request.user
+        question_id = request.data.get('question')
+        
+        try:
+            question = Question.objects.get(id=question_id)
+        except Question.DoesNotExist:
+            return Response({"error": "Question not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if Report.objects.filter(user=user, question=question).exists():
+            return Response({"error": "You have already submitted a report for this question."}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+        data['user'] = user.id
+
+        serializer = self.serializer_class(data=data)
+
+        if serializer.is_valid():
+            serializer.save(user=user, question=question)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
