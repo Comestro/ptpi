@@ -1694,6 +1694,52 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+            "exam": exams[2], 
+            "time": 3,
+            "language": "English",
+            "text": "What is the full form of DBMS?",
+            "options": ["Database Management System", "Data Management System", "Database Maintenance System", "Data Backup Management System"],
+            "solution": "DBMS stands for Database Management System.",
+            "correct_option": 1
+        },
+        {
+            "exam": exams[2],  
+            "time": 2.5,
+            "language": "English",
+            "text": "Which of the following is a type of database model?",
+            "options": ["Hierarchical Model", "Relational Model", "Object-Oriented Model", "All of the above"],
+            "solution": "The correct answer is 'All of the above'. Each of these is a type of database model.",
+            "correct_option": 3
+        },
+        {
+            "exam": exams[3],  
+            "time": 3,
+            "language": "English",
+            "text": "Which SQL command is used to retrieve data from a database?",
+            "options": ["SELECT", "INSERT", "UPDATE", "DELETE"],
+            "solution": "The correct SQL command to retrieve data from a database is 'SELECT'.",
+            "correct_option": 1
+        },
+        
+        {
+            "exam": exams[0],  
+            "time": 3,
+            "language": "English",
+            "text": "What is normalization in DBMS?",
+            "options": ["The process of organizing data to reduce redundancy", "The process of copying data for backup", "The process of making data available online", "The process of encrypting data"],
+            "solution": "Normalization is the process of organizing data in a database to reduce redundancy and improve data integrity.",
+            "correct_option": 1
+        },
+        {
+            "exam": exams[0],  
+            "time": 2.5,
+            "language": "English",
+            "text": "Which of the following is a type of join in SQL?",
+            "options": ["INNER JOIN", "OUTER JOIN", "CROSS JOIN", "All of the above"],
+            "solution": "The correct answer is 'All of the above'. INNER JOIN, OUTER JOIN, and CROSS JOIN are all types of SQL joins.",
+            "correct_option": 3
+        },
+            {
                 "exam": exams[0],
                 "time": 3.0,
                 "language": "Hindi",
@@ -1721,15 +1767,51 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "exam": exams[3],  
+                "exam": exams[1],  
                 "time": 2.5,
                 "language": "Hindi",
                 "text": "भारत में सबसे लंबी नदी कौन सी है?",
                 "options": ["गंगा", "यमुना", "सिंधु", "नर्मदा"],
                 "solution": "गंगा भारत की सबसे लंबी नदी है।",
                 "correct_option": 1
-            }
-        ]
+            },
+            {
+                "exam": exams[2],  
+                "time": 2,
+                "language": "Hindi",
+                "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
+                "options": ["राजस्थान", "उत्तर प्रदेश", "मध्य प्रदेश", "महाराष्ट्र"],
+                "solution": "भारत का सबसे बड़ा राज्य राजस्थान है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[3],  
+                "time": 2,
+                "language": "Hindi",
+                "text": "भारत का पहला प्रधानमंत्री कौन थे?",
+                "options": ["लाल बहादुर शास्त्री", "पंडित नेहरू", "इंदिरा गांधी", "राजीव गांधी"],
+                "solution": "भारत के पहले प्रधानमंत्री पंडित नेहरू थे।",
+                "correct_option": 2
+           },
+           {
+                "exam": exams[3],  
+                "time": 3,
+                "language": "Hindi",
+                "text": "भारत में कितने राज्य हैं?",
+                "options": ["28", "29", "30", "31"],
+                "solution": "भारत में 28 राज्य हैं।",
+                "correct_option": 1
+           },
+           {
+                "exam": exams[1],
+                "time": 2.5,
+                "language": "Hindi",
+                "text": "भारत की सबसे बड़ी झील कौन सी है?",
+                "options": ["वुलर झील", "लोकटक झील", "पचमढ़ी झील", "कृष्ण सागर"],
+                "solution": "भारत की सबसे बड़ी झील वुलर झील है।",
+                "correct_option": 1
+           }
+    ]
 
         # Insert the questions
         question_added_count = 0
