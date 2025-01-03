@@ -330,7 +330,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # representation['exam'] = ExamSerializer(instance.exam).data
+        representation['exam'] = ExamSerializer(instance.exam).data
         options = representation.get('options', [])
         if options and isinstance(options, list):
             representation['options'] = {str(index+1) : option for index, option in enumerate(options)}
