@@ -1812,20 +1812,27 @@ def insert_data(request):
                 "correct_option": 1
            }
     ]
-
-        # Insert the questions
+        
         question_added_count = 0
         for question in questions_data:
-            question_obj = Question.objects.create(
+            existing_question = Question.objects.filter(
                 exam=question["exam"],
-                time=question["time"],
-                language=question["language"],
-                text=question["text"],
-                options=question["options"],
-                solution=question["solution"],
-                correct_option=question["correct_option"]
-            )
-            question_added_count += 1
+                text=question["text"]
+            ).first()
+
+            if not existing_question:
+                Question.objects.create(
+                    exam=question["exam"],
+                    time=question["time"],
+                    language=question["language"],
+                    text=question["text"],
+                    options=question["options"],
+                    solution=question["solution"],
+                    correct_option=question["correct_option"]
+                )
+                question_added_count += 1
+            else:
+                print(f"Question already exists: {question['text']}")
 
         response_data["questions"] = {
             "message": f'{question_added_count} questions added successfully.',
@@ -1833,3 +1840,5 @@ def insert_data(request):
         }
 
     return JsonResponse(response_data)
+
+    
