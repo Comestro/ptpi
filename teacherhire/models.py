@@ -284,7 +284,7 @@ class TeacherExamResult(models.Model):
         total_questions = self.correct_answer + (self.is_unanswered or 0) + (self.incorrect_answer or 0)
         if total_questions == 0:
             return 0
-        return (self.correct_answer / total_questions) * 100
+        return round((self.correct_answer / total_questions) * 100, 2)
 
     def get_(self):
         percentage = self.calculate_percentage()
@@ -294,9 +294,9 @@ class TeacherExamResult(models.Model):
         percentage = self.calculate_percentage()
         if self.isqulified and percentage >= 60:
             return "2nd Level"
-        elif self.isqulified:
-            return "1st Level"
-        return "not_qualified"
+        # elif self.isqulified:
+        return "1st Level"
+        # return "not_qualified"
 
     def save(self, *args, **kwargs):
         self.isqulified = self.get_()
@@ -331,3 +331,4 @@ class Report(models.Model):
 
     class Meta:
         unique_together = ('user', 'question')
+
