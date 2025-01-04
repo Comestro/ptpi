@@ -267,6 +267,7 @@ class Question(models.Model):
        return self.text
 
 class TeacherExamResult(models.Model):
+    examresult_id = models.AutoField(primary_key=True)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
     correct_answer = models.IntegerField(default=0, null=True, blank=True)
@@ -275,28 +276,37 @@ class TeacherExamResult(models.Model):
     isqulified = models.BooleanField(default=False)
     attempt = models.IntegerField(default=3)
     created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
-        return self.exam.name
-    
-    def get_isqualified(self):
-        total_question = self.correct_answer + self.is_unanswered + self.incorrect_answer
-        percentage = (self.correct_answer / total_question) * 100
-        if percentage >= 60:
-            return True
-        return False
-    
+        return f"ExamResult-{self.examresult_id}"
+
+    def calculate_percentage(self):
+        total_questions = self.correct_answer + (self.is_unanswered or 0) + (self.incorrect_answer or 0)
+        if total_questions == 0:
+            return 0
+        return (self.correct_answer / total_questions) * 100
+
+    def get_(self):
+        percentage = self.calculate_percentage()
+        return percentage >= 60
+
+    def get_level(self):
+        percentage = self.calculate_percentage()
+        if self.isqulified and percentage >= 60:
+            return "2nd Level"
+        elif self.isqulified:
+            return "1st Level"
+        return "not_qualified"
+
     def save(self, *args, **kwargs):
-        self.isqulified = self.get_isqualified()
-    
-        if self.pk is None: 
-            last_result = TeacherExamResult.objects.filter(user=self.user, exam=self.exam).order_by('-created_at').first()
-        
-            if last_result:
-                self.attempt = max(0, last_result.attempt - 1)
-            else:
-                self.attempt = max(0, self.attempt - 1)
-    
-        return super().save(*args, **kwargs)
+        self.isqulified = self.get_()
+        if self.pk is None:  # Handle attempts only for new entries
+            last_result = TeacherExamResult.objects.filter(
+                user=self.user
+            ).order_by('-created_at').first()
+            self.attempt = max(0, (last_result.attempt if last_result else self.attempt) - 1)
+
+        super().save(*args, **kwargs)
 
 class JobPreferenceLocation(models.Model):
     preference = models.ForeignKey(Preference, on_delete=models.CASCADE)

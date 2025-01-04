@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from teacherhire.views import *
 from rest_framework import routers
-from .views import ProfilecompletedView
+from .views import ProfilecompletedView,CheckoutView
 
 #access admin
 router = routers.DefaultRouter()
@@ -46,6 +46,8 @@ router.register(r'self/report', SelfReportViewSet, basename='self-report')
 urlpatterns = [
     path('', include(router.urls)),
     path('profile/completed/', ProfilecompletedView.as_view(), name='profile-completed'),
+    path('checkout/<int:examresult_id>/', CheckoutView.as_view(), name='checkout'),
+
 
     path('auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('recruiter/register/', RecruiterRegisterUser.as_view(), name='register'),

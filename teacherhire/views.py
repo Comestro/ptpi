@@ -1458,7 +1458,23 @@ class ProfilecompletedView(APIView):
                 {"error": "An error occurred while calculating profile completed.", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
 
+class CheckoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def get(self, request, examresult_id, *args, **kwargs):
+        try:
+            result = TeacherExamResult.objects.get(examresult_id=examresult_id)
+            level = result.get_level()
+            return Response({
+                "level": level,
+                "percentage": result.calculate_percentage(),
+                "isqualified": result.isqulified
+            })
+        except TeacherExamResult.DoesNotExist:
+            return Response({"error": "Result not found."}, status=404)
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
