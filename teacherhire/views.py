@@ -1509,9 +1509,12 @@ class CheckoutView(APIView):
         user_subjects = user_preference.prefered_subject.all()
         subjects = [subject.subject_name for subject in user_subjects]
 
-        qualified_exam = TeacherExamResult.objects.filter(user=user, isqulified=True).exists()
+        qualified_exam = TeacherExamResult.objects.filter(user=user, isqulified=True).first()
         if qualified_exam:
             level = Level.objects.get(id=2)  
+            level_2_subjects = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__level_id=1)
+            qualified_subjects = level_2_subjects.values_list('exam__subject_id', flat=True)
+            subjects = [subject.subject_name for subject in user_subjects if subject.id in qualified_subjects]
         else:
             level = Level.objects.get(id=1) 
         return Response({
