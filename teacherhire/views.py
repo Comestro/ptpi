@@ -1644,6 +1644,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 exams = exams.filter(level=level_id)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ExamSerializer(exams, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 def insert_data(request):
     data_to_insert = {
