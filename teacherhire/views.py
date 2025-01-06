@@ -1464,9 +1464,37 @@ class CheckoutView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
+        try:
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TeacherQualification.DoesNotExist:
+            return Response(
+                {"message": "Please complete your qualification details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user_subjects = user_preference.prefered_subject.all()
+        subjects = [subject.subject_name for subject in user_subjects]
+
         qualified_exam = TeacherExamResult.objects.filter(user=user, isqulified=True).exists()
-        level = "2nd Level" if qualified_exam else "1st Level"
-        return Response({"level": level})
+        if qualified_exam:
+            level = Level.objects.get(id=2)  
+        else:
+            level = Level.objects.get(id=1) 
+        return Response({
+            "level": level.name,
+            "subjects": subjects
+        })
         
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1569,27 +1597,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def exams(self, request):
         user = request.user
-        # level_id = request.query_params.get('level_id', None)
+        level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        try:
-            user_preference = Preference.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.get(user=user)
-            user_basic_profile = BasicProfile.objects.get(user=user)
-        except BasicProfile.DoesNotExist:
-            return Response(
-                {"message": "Please complete your basic profile first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Preference.DoesNotExist:
-            return Response(
-                {"message": "Please complete your preference details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except TeacherQualification.DoesNotExist:
-            return Response(
-                {"message": "Please complete your qualification details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
         
         exams = Exam.objects.all()
         
@@ -1601,22 +1610,14 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             )
         exams = exams.filter(class_category=teacher_class_category.class_category)
         
-        if not subject_id:
-            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            qualified_exam = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
+        if subject_id:
+            exams = exams.filter(subject=subject_id)
 
-            if qualified_exam and subject_id:
-                exams = exams.filter(level__id=2, subject_id=subject_id)
-            else :
-                exams = exams.filter(level__id=1, subject_id=subject_id)
-                    
-        except Level.DoesNotExist:
-            return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)     
-         
-        serializer = ExamSerializer(exams, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if level_id:
+            try:
+                exams = exams.filter(level=level_id)
+            except Level.DoesNotExist:
+                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
 
 def insert_data(request):
     data_to_insert = {
