@@ -38,7 +38,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-
 class TeachersAddress(models.Model):
     ADDRESS_TYPE_CHOICES = [
         ('current', 'Current'),
@@ -332,3 +331,13 @@ class Report(models.Model):
     class Meta:
         unique_together = ('user', 'question')
 
+class Passkey(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE,null=True)
+    ispassport = models.CharField(max_length=200 ,null=True,blank=True)
+    code = models.CharField(max_length=200,null=True,blank=True,unique=True)
+    status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.exam}"

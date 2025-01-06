@@ -686,6 +686,7 @@ class TeacherExperiencesViewSet(viewsets.ModelViewSet):
     def count(self,request):
         count = get_count(TeacherExperiences)
         return Response({"Count":count}) 
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -780,10 +781,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-   
-    
-        
+        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)       
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1297,8 +1295,8 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Customuser not found."}, status=status.HTTP_404_NOT_FOUND)
     
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]    
-    # authentication_classes = [ExpiringTokenAuthentication]
+    permission_classes = [IsAuthenticated]    
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
 
