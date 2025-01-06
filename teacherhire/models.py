@@ -337,3 +337,6 @@ class Passkey(models.Model):
     ispassport = models.CharField(max_length=200 ,null=True,blank=True)
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.exam}"
