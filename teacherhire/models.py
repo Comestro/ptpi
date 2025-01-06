@@ -337,3 +337,4 @@ class Passkey(models.Model):
     ispassport = models.CharField(max_length=200 ,null=True,blank=True)
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
