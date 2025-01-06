@@ -231,41 +231,64 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
                 {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         # Check if the address already exists for the user
         if TeachersAddress.objects.filter(address_type=address_type, user=request.user).exists():
             return Response(
                 {"detail": f"{address_type.capitalize()} address already exists for this user."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         # Associate the address with the authenticated user
         data['user'] = request.user.id  
+        
         # Serialize and validate data
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        data['user'] = request.user.id
+        address_type = data.get('address_type')  # Get the address type from the request data
+
+        # Ensure address_type is provided and is valid
+        if not address_type or address_type not in ['current', 'permanent']:
+            return Response(
+                {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        address = TeachersAddress.objects.filter(user=request.user).first()
+        # Try to find the address of the given address type for the authenticated user
+        address = TeachersAddress.objects.filter(user=request.user, address_type=address_type).first()
 
         if address:
-           return update_auth_data(
-               serialiazer_class=self.get_serializer_class(),
-               instance=address,
-               request_data=data,
-               user=request.user
-           )
-        else:
-            return create_auth_data(
+            # If the address exists, proceed to update it
+            return self.update_address_data(
                 serializer_class=self.get_serializer_class(),
+                instance=address,
                 request_data=data,
-                user=request.user,
-                model_class=TeachersAddress
+                user=request.user
             )
+        else:
+            # If no address of the specified type exists, return a 404 response
+            return Response(
+                {"detail": f"{address_type.capitalize()} address not found for the user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+    def update_address_data(self, serializer_class, instance, request_data, user):
+        serializer = serializer_class(instance, data=request_data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def get_queryset(self):
         return TeachersAddress.objects.filter(user=self.request.user)
 
@@ -281,7 +304,7 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
             "permanent_address": permanent_address_data
         }
         return Response(data, status=status.HTTP_200_OK)
-    
+
     # def get_object(self):
     #  try:
     #     return TeachersAddress.objects.get(user=self.request.user)
