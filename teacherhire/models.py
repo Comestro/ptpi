@@ -37,6 +37,17 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    def is_complete(self):
+        required_fields = {
+            "email": self.email,
+            "username": self.username,
+            "Fname": self.Fname,
+            "Lname": self.Lname,
+
+        }
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        return not missing_fields, missing_fields
 
 class TeachersAddress(models.Model):
     ADDRESS_TYPE_CHOICES = [
@@ -56,6 +67,19 @@ class TeachersAddress(models.Model):
 
     def __str__(self):
         return f'{self.address_type} address of {self.user.username}'
+    
+    def is_complete(self):
+        required_fields = {
+            "state": self.state,
+            "division": self.division,
+            "district": self.district,
+            "block": self.block,
+            "village": self.village,
+            "area": self.area,
+            "pincode": self.pincode,
+        }
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        return not missing_fields, missing_fields
 
 class Subject(models.Model):
     subject_name = models.CharField(max_length=100, null=True, blank=True)
@@ -120,6 +144,16 @@ class TeacherQualification(models.Model):
         if self.user:
             return f"{self.user.username} - {self.qualification.name} ({self.year_of_passing})"
         return f"Unknown User - {self.qualification.name} ({self.year_of_passing})"
+    
+    def is_complete(self):
+        required_fields = {
+            "qualification": self.qualification,
+            "institution": self.institution,
+            "year_of_passing": self.year_of_passing,
+            "grade_or_percentage": self.grade_or_percentage
+        }
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        return not missing_fields, missing_fields
 
 class Role(models.Model):
     jobrole_name = models.CharField(max_length=400, null=True, blank=True)
@@ -175,6 +209,16 @@ class Preference(models.Model):
 
     def __str__(self):
         return self.user.username
+    
+    def is_complete(self):
+        required_fields = {
+            "job_role": self.job_role,
+            "class_category": self.class_category,
+            "prefered_subject": self.prefered_subject,
+            "teacher_job_type": self.teacher_job_type
+        }
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        return not missing_fields, missing_fields
 class TeacherSubject(models.Model):	
    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)	
    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
@@ -215,6 +259,19 @@ class BasicProfile(models.Model):
     
     def _str_(self):
         return f"Basic Profile of {self.user.username}"
+    
+    def is_complete(self):
+        required_fields = {
+            "profile_picture": self.profile_picture,
+            "phone_number": self.phone_number,
+            "religion": self.religion,
+            "date_of_birth": self.date_of_birth,
+            "marital_status": self.marital_status,
+            "gender": self.gender,
+            "language": self.language
+        }
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        return not missing_fields, missing_fields
    
 class TeacherClassCategory(models.Model):	
   user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)	
@@ -316,8 +373,23 @@ class JobPreferenceLocation(models.Model):
     post_office = models.CharField(max_length=200, null=True, blank=True)
     area = models.TextField(null=True, blank=True)
     pincode = models.CharField(max_length=6, null=True, blank=True)
+
     def __str__(self):
         return self.preference.user.username
+    
+    def is_complete(self):
+        required_fields = {
+            "preference": self.preference,
+            "state": self.state,
+            "city": self.city,
+            "sub_division": self.sub_division,
+            "block": self.block,
+            "post_office": self.post_office,
+            "area": self.area,
+            "pincode": self.pincode
+        }
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        return not missing_fields, missing_fields
     
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
@@ -334,7 +406,7 @@ class Report(models.Model):
 class Passkey(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE,null=True)
-    ispassport = models.CharField(max_length=200 ,null=True,blank=True)
+    ispasscort = models.CharField(max_length=200 ,null=True,blank=True)
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

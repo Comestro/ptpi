@@ -109,31 +109,51 @@ def verified_msg(email):
     except Exception as e:
         print(f"Failed to send verification email to {email}: {e}")
 
-    
-
 def calculate_profile_completed(user):
+    if not user:
+        return 0, ["User not found."]
+
     complete_profile = 0
-    if user:
-        complete_profile += 16 
+    feedback = []
+    if user.Fname and user.Lname:
+        complete_profile += 16
+    else:
+        feedback.append("Name fields (First and Last name) are incomplete.")
 
-    basic_profile = BasicProfile.objects.filter(user=user).exists()
-    if basic_profile:
-        complete_profile += 16  
+    if BasicProfile.objects.filter(user=user).exists():
+        complete_profile += 16
+    else:
+        feedback.append("Basic Profile is incomplete.")
 
-    teacher_address = TeachersAddress.objects.filter(user=user).exists()
-    if teacher_address:
-        complete_profile += 16  
+    # TeachersAddress and validate completeness
+    teacher_address = TeachersAddress.objects.filter(user=user)
+    if teacher_address.exists():
+        address = teacher_address.first()
+        is_complete, missing_fields = address.is_complete()
+        if is_complete:
+            complete_profile += 16
+        else:
+            feedback.append(f"TeachersAddress is incomplete. Missing fields: {', '.join(missing_fields)}")
+    else:
+        feedback.append("No TeachersAddress found for the user.")
 
-    job_preference = Preference.objects.filter(user=user).exists()
-    if job_preference:
-        complete_profile += 16  
 
-    job_pref_location = JobPreferenceLocation.objects.filter(preference__user=user).exists()
-    if job_pref_location:
-        complete_profile += 16  
+    # Check Job Preferences
+    if Preference.objects.filter(user=user).exists():
+        complete_profile += 16
+    else:
+        feedback.append("Job Preferences are incomplete.")
 
-    qualification = TeacherQualification.objects.filter(user=user).exists()
-    if qualification:
-        complete_profile += 20  
+    # Check JobPreferenceLocation
+    if JobPreferenceLocation.objects.filter(preference__user=user).exists():
+        complete_profile += 16
+    else:
+        feedback.append("Job Preference Location is incomplete.")
 
-    return min(complete_profile, 100)
+    # Check TeacherQualification
+    if TeacherQualification.objects.filter(user=user).exists():
+        complete_profile += 20
+    else:
+        feedback.append("Teacher Qualification is incomplete.")
+
+    return min(complete_profile, 100), feedback
