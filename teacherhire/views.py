@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
 from django.db.utils import IntegrityError
-
+from django.db.models import F
 
 
 
@@ -1507,20 +1507,36 @@ class CheckoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         user_subjects = user_preference.prefered_subject.all()
-        subjects = [subject.subject_name for subject in user_subjects]
+        level_1_subjects = [{"subject_id": subject.id, "suject_name":subject.subject_name} for subject in user_subjects]
 
-        qualified_exam = TeacherExamResult.objects.filter(user=user, isqulified=True).first()
-        if qualified_exam:
-            level = Level.objects.get(id=2)  
-            level_2_subjects = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__level_id=1)
-            qualified_subjects = level_2_subjects.values_list('exam__subject_id', flat=True)
-            subjects = [subject.subject_name for subject in user_subjects if subject.id in qualified_subjects]
+        qualified_exams = TeacherExamResult.objects.filter(user=user, isqulified=True)
+
+        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'),subject_name=F('exam__subject__subject_name'))
+        if qualified_exams:
+            levels = [
+                {
+                    "level_id": 1,
+                    "level_name": "Level 1",
+                    "subjects": level_1_subjects
+                },
+                {
+                    "level_id": 2,
+                    "level_name": "Level 2",
+                    "subjects": level_2_subjects
+                }
+            ]
         else:
-            level = Level.objects.get(id=1) 
-        return Response({
-            "level": level.name,
-            "subjects": subjects
-        })
+            levels = [
+                {
+                    "level_id": 1,
+                    "level_name": "Level 1",
+                    "subjects": level_1_subjects
+                }
+            ]
+
+
+        return Response(levels, status=status.HTTP_200_OK)
+
         
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1636,15 +1652,27 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             )
         exams = exams.filter(class_category=teacher_class_category.class_category)
         
-        if subject_id:
-            exams = exams.filter(subject=subject_id)
+        if not subject_id:
+            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
+        exams = exams.filter(subject_id=subject_id)
 
         if level_id:
-            try:
-                exams = exams.filter(level=level_id)
-            except Level.DoesNotExist:
-                return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = ExamSerializer(exams, many=True)
+            qualified_exam = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
+
+            if qualified_exam:
+                exams = exams.filter(level__id=2)
+            else :
+                exams = exams.filter(level__id=1)
+            unqualified_exam_ids = TeacherExamResult.objects.filter(
+            user=user,
+            isqulified=False
+            ).values_list('exam_id', flat=True)
+            exams = exams.exclude(id__in=unqualified_exam_ids)
+
+        exam_set = exams.order_by('created_at').first()
+        if not exam_set:
+            return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 def insert_data(request):
