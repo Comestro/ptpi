@@ -1496,7 +1496,7 @@ class CheckoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         user_subjects = user_preference.prefered_subject.all()
-        level_1_subjects = [{"subject_id": subject.id, "suject_name":subject.subject_name} for subject in user_subjects]
+        level_1_subjects = [{"subject_id": subject.id, "subject_name":subject.subject_name} for subject in user_subjects]
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqulified=True)
 
@@ -1659,7 +1659,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         exam_set = exams.order_by('created_at').first()
         if not exam_set:
-            return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "You have already used all 3 attempts for this exam."}, status=status.HTTP_404_NOT_FOUND)
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1704,11 +1704,21 @@ def insert_data(request):
             "model": Exam,
             "field": "name",
             "data": [
-                {"name": "Final Exam", "total_marks": 100, "duration": 180},
-                {"name": "Mid Term", "total_marks": 50, "duration": 90},
-                {"name": "Quiz", "total_marks": 20, "duration": 30},
-                {"name": "Semester Exam", "total_marks": 200, "duration": 240},
-                {"name": "Practical Exam", "total_marks": 50, "duration": 120}
+                {"name": "Math classcategory 1 level 1 Set A", "total_marks": 100, "duration": 180},
+                {"name": "Math classcategory 1 level 1 Set B", "total_marks": 50, "duration": 90},
+                {"name": "Math classcategory 1 level 1 Set C", "total_marks": 50, "duration": 90},
+                {"name": "Math classcategory 1 level 2 Set A", "total_marks": 20, "duration": 30},
+                {"name": "Math classcategory 1 level 2 Set B", "total_marks": 200, "duration": 240},
+                {"name": "Math classcategory 2 level 1 Set A", "total_marks": 200, "duration": 240},
+                {"name": "Phy classcategory 1 level 1 Set A", "total_marks": 100, "duration": 180},
+                {"name": "Phy classcategory 1 level 1 Set B", "total_marks": 50, "duration": 90},
+                {"name": "Phy classcategory 1 level 1 Set C", "total_marks": 50, "duration": 90},
+                {"name": "Phy classcategory 1 level 2 Set A", "total_marks": 20, "duration": 30},
+                {"name": "Phy classcategory 1 level 2 Set B", "total_marks": 200, "duration": 240},
+                {"name": "Phy classcategory 1 level 2 Set C", "total_marks": 200, "duration": 240},
+                {"name": "Phy classcategory 2 level 1 Set A", "total_marks": 50, "duration": 120},
+                {"name": "Phy classcategory 2 level 1 Set B", "total_marks": 50, "duration": 120},
+                {"name": "Phy classcategory 2 level 1 Set C", "total_marks": 50, "duration": 120},
             ]
         },
         
@@ -1758,7 +1768,7 @@ def insert_data(request):
     if exams.exists():
         questions_data = [
             {
-                "exam": exams[1],
+                "exam": exams[0],
                 "time": 2.5,
                 "language": "English",
                 "text": "What is the capital of India?",
@@ -1767,7 +1777,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-            "exam": exams[1], 
+            "exam": exams[0], 
             "time": 3,
             "language": "English",
             "text": "What is the full form of DBMS?",
@@ -1776,7 +1786,7 @@ def insert_data(request):
             "correct_option": 1
         },
         {
-            "exam": exams[1],  
+            "exam": exams[0],  
             "time": 2.5,
             "language": "English",
             "text": "Which of the following is a type of database model?",
@@ -1813,7 +1823,7 @@ def insert_data(request):
             "correct_option": 3
         },
             {
-                "exam": exams[1],
+                "exam": exams[9],
                 "time": 3.0,
                 "language": "Hindi",
                 "text": "भारत की राजधानी क्या है?",
@@ -1822,7 +1832,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[1],  
+                "exam": exams[9],  
                 "time": 2.0,
                 "language": "English",
                 "text": "What is 5 + 5?",
@@ -1831,7 +1841,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "exam": exams[1],  
+                "exam": exams[9],  
                 "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
@@ -1840,7 +1850,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "exam": exams[1],  
+                "exam": exams[4],  
                 "time": 2.5,
                 "language": "Hindi",
                 "text": "भारत में सबसे लंबी नदी कौन सी है?",
@@ -1849,7 +1859,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[1],  
+                "exam": exams[2],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
@@ -1858,7 +1868,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[1],  
+                "exam": exams[2],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का पहला प्रधानमंत्री कौन थे?",
@@ -1867,7 +1877,7 @@ def insert_data(request):
                 "correct_option": 2
            },
            {
-                "exam": exams[1],  
+                "exam": exams[2],  
                 "time": 3,
                 "language": "Hindi",
                 "text": "भारत में कितने राज्य हैं?",
@@ -1876,7 +1886,7 @@ def insert_data(request):
                 "correct_option": 1
            },
            {
-                "exam": exams[1],
+                "exam": exams[6],
                 "time": 2.5,
                 "language": "Hindi",
                 "text": "भारत की सबसे बड़ी झील कौन सी है?",
