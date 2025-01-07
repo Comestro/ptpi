@@ -20,7 +20,6 @@ from django.db.utils import IntegrityError
 from django.db.models import F
 
 
-
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
     def get(self, request):
@@ -402,7 +401,6 @@ class SkillViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
     permission_classes = [IsAuthenticated]
@@ -418,8 +416,7 @@ class TeacherSkillViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message": "TeacherSkill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
+        return Response({"message": "TeacherSkill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)   
 class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -494,7 +491,6 @@ class SubjectViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 class TeacherViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -571,8 +567,6 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
- 
 class TeacherQualificationViewSet(viewsets.ModelViewSet): 
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -805,6 +799,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)       
+
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -842,9 +837,8 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
             questions = questions.filter(language=language)
 
         serializer = QuestionSerializer(questions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)    
 
-    
 class RoleViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -862,8 +856,6 @@ class RoleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Role deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
 class PreferenceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1119,7 +1111,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def count(self,request):
         count = get_count(TeacherExamResult)
         return Response({"Count":count}) 
-    
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
@@ -1385,7 +1376,6 @@ class VarifyOTP(APIView):
                 'error': 'Server Error',
                 'message': 'An unexpected error occurred'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 class ResendOTP(APIView):
     def post(self, request):
         try:
@@ -1480,7 +1470,6 @@ class ProfilecompletedView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1536,8 +1525,7 @@ class CheckoutView(APIView):
 
 
         return Response(levels, status=status.HTTP_200_OK)
-
-        
+       
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]

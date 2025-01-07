@@ -9,7 +9,6 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
 
-# djnjdnhv jvj
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -26,7 +25,6 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
-
 
 class RecruiterRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
@@ -68,8 +66,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         if len(value) < 8:
             raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
-
-        
+       
 class TeacherRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     Fname = serializers.CharField(required=True)
@@ -333,7 +330,6 @@ class QuestionSerializer(serializers.ModelSerializer):
         # representation['exam'] = ExamSerializer(instance.exam).data
         return representation
         
-
 class ExamSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
@@ -455,7 +451,6 @@ class PreferenceSerializer(serializers.ModelSerializer):
         representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject.all(),many=True).data        
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(),many=True).data        
         return representation
-
 
 class TeacherSubjectSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
