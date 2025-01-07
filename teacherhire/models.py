@@ -155,6 +155,7 @@ class TeacherQualification(models.Model):
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
 
+
 class Role(models.Model):
     jobrole_name = models.CharField(max_length=400, null=True, blank=True)
 
@@ -390,6 +391,7 @@ class JobPreferenceLocation(models.Model):
         }
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
+
     
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)

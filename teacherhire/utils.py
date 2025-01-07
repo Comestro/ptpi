@@ -139,21 +139,40 @@ def calculate_profile_completed(user):
 
 
     # Check Job Preferences
-    if Preference.objects.filter(user=user).exists():
-        complete_profile += 16
+    preference = Preference.objects.filter(user=user).first()
+    if preference:
+        is_complete, missing_fields = preference.is_complete()
+        if is_complete:
+            complete_profile += 16
+        else:
+            feedback.append(f"Job Preferences are incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
-        feedback.append("Job Preferences are incomplete.")
+        feedback.append("Job Preferences are missing entirely.")
+
 
     # Check JobPreferenceLocation
-    if JobPreferenceLocation.objects.filter(preference__user=user).exists():
-        complete_profile += 16
+    job_preference_location = JobPreferenceLocation.objects.filter(preference__user=user).first()
+    if job_preference_location:
+        is_complete, missing_fields = job_preference_location.is_complete()
+        if is_complete:
+            complete_profile += 16
+        else:
+            feedback.append(f"Job Preference Location is incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
         feedback.append("Job Preference Location is incomplete.")
 
+
     # Check TeacherQualification
-    if TeacherQualification.objects.filter(user=user).exists():
-        complete_profile += 20
+    teacher_qualification = TeacherQualification.objects.filter(user=user).first()
+    if teacher_qualification:
+        is_complete, missing_fields = teacher_qualification.is_complete()
+        if is_complete:
+            complete_profile += 20
+        else:
+            feedback.append(f"Teacher Qualification is incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
         feedback.append("Teacher Qualification is incomplete.")
 
+    # Ensure the total does not exceed 100%
     return min(complete_profile, 100), feedback
+
