@@ -17,11 +17,6 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
 from django.utils.crypto import get_random_string
-from django.utils import timezone
-
-
-
-
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
