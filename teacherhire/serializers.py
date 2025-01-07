@@ -614,6 +614,11 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'question', 'status', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
 
+class PasskeySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Passkey
+        fields = "__all__"
+
 
 
 

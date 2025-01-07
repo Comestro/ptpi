@@ -334,7 +334,13 @@ class Report(models.Model):
 class Passkey(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE,null=True)
-    ispassport = models.CharField(max_length=200 ,null=True,blank=True)
+    ispasscode = models.CharField(
+        max_length=20,
+        choices=[
+            ('offline', 'offline'),
+            ('online','online')
+        ],
+        default='online')
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

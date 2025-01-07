@@ -23,6 +23,7 @@ router.register(r'admin/role', RoleViewSet, basename='role')
 router.register(r'admin/teacherjobtype', TeacherJobTypeViewSet, basename='teacherjobtype')
 router.register(r'admin/exam', ExamViewSet)
 router.register(r'admin/report', ReportViewSet, basename='report')
+router.register(r'admin/passkey', PasskeyViewSet, basename='passkey')
 
 
 #access OnlyTeacher
