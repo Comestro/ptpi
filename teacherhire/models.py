@@ -346,13 +346,13 @@ class TeacherExamResult(models.Model):
         percentage = self.calculate_percentage()
         return percentage >= 60
 
-    def get_level(self):
-        percentage = self.calculate_percentage()
-        if self.isqulified and percentage >= 60:
-            return "2nd Level"
-        # elif self.isqulified:
-        return "1st Level"
-        # return "not_qualified"
+    # def get_level(self):
+    #     percentage = self.calculate_percentage()
+    #     if self.isqulified and percentage >= 60:
+    #         return "2nd Level"
+    #     # elif self.isqulified:
+    #     return "1st Level"
+    #     # return "not_qualified"
 
     def save(self, *args, **kwargs):
         self.isqulified = self.get_()

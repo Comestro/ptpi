@@ -231,41 +231,64 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
                 {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         # Check if the address already exists for the user
         if TeachersAddress.objects.filter(address_type=address_type, user=request.user).exists():
             return Response(
                 {"detail": f"{address_type.capitalize()} address already exists for this user."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
         # Associate the address with the authenticated user
         data['user'] = request.user.id  
+        
         # Serialize and validate data
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        data['user'] = request.user.id
+        address_type = data.get('address_type')  # Get the address type from the request data
+
+        # Ensure address_type is provided and is valid
+        if not address_type or address_type not in ['current', 'permanent']:
+            return Response(
+                {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        address = TeachersAddress.objects.filter(user=request.user).first()
+        # Try to find the address of the given address type for the authenticated user
+        address = TeachersAddress.objects.filter(user=request.user, address_type=address_type).first()
 
         if address:
-           return update_auth_data(
-               serialiazer_class=self.get_serializer_class(),
-               instance=address,
-               request_data=data,
-               user=request.user
-           )
-        else:
-            return create_auth_data(
+            # If the address exists, proceed to update it
+            return self.update_address_data(
                 serializer_class=self.get_serializer_class(),
+                instance=address,
                 request_data=data,
-                user=request.user,
-                model_class=TeachersAddress
+                user=request.user
             )
+        else:
+            # If no address of the specified type exists, return a 404 response
+            return Response(
+                {"detail": f"{address_type.capitalize()} address not found for the user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+    def update_address_data(self, serializer_class, instance, request_data, user):
+        serializer = serializer_class(instance, data=request_data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def get_queryset(self):
         return TeachersAddress.objects.filter(user=self.request.user)
 
@@ -281,7 +304,7 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
             "permanent_address": permanent_address_data
         }
         return Response(data, status=status.HTTP_200_OK)
-    
+
     # def get_object(self):
     #  try:
     #     return TeachersAddress.objects.get(user=self.request.user)
@@ -1462,17 +1485,43 @@ class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
 
-    def get(self, request, examresult_id, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
+        user = request.user
         try:
-            result = TeacherExamResult.objects.get(examresult_id=examresult_id)
-            level = result.get_level()
-            return Response({
-                "level": level,
-                "percentage": result.calculate_percentage(),
-                "isqualified": result.isqulified
-            })
-        except TeacherExamResult.DoesNotExist:
-            return Response({"error": "Result not found."}, status=404)
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TeacherQualification.DoesNotExist:
+            return Response(
+                {"message": "Please complete your qualification details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user_subjects = user_preference.prefered_subject.all()
+        subjects = [subject.subject_name for subject in user_subjects]
+
+        qualified_exam = TeacherExamResult.objects.filter(user=user, isqulified=True).first()
+        if qualified_exam:
+            level = Level.objects.get(id=2)  
+            level_2_subjects = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__level_id=1)
+            qualified_subjects = level_2_subjects.values_list('exam__subject_id', flat=True)
+            subjects = [subject.subject_name for subject in user_subjects if subject.id in qualified_subjects]
+        else:
+            level = Level.objects.get(id=1) 
+        return Response({
+            "level": level.name,
+            "subjects": subjects
+        })
+        
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1576,9 +1625,9 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-
+        
         exams = Exam.objects.all()
-
+        
         teacher_class_category = Preference.objects.filter(user=user).first()
         if not teacher_class_category:
             return Response(
@@ -1595,7 +1644,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 exams = exams.filter(level=level_id)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
-        
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
