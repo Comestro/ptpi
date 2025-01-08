@@ -98,8 +98,8 @@ class TeacherJobTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Exam)
 class ExamAdmin(admin.ModelAdmin):
-    list_display = ['subject', 'level', 'class_category', 'duration', 'name', 'description', 'total_marks', 'created_at', 'updated_at']
+    list_display = ['subject', 'level', 'class_category', 'duration', 'name', 'description', 'total_marks','type', 'created_at', 'updated_at']
 
 @admin.register(Passkey)
 class PasskeyAdmin(admin.ModelAdmin):
-    list_display = ['user', 'exam', 'ispasscode', 'code','created_at']
+    list_display = ['user', 'exam', 'code','created_at']
