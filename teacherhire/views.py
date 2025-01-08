@@ -18,6 +18,8 @@ from rest_framework.decorators import action
 from django.http import JsonResponse
 from django.db.models import F
 from django.conf import settings
+from django.shortcuts import get_object_or_404
+
 
 
 class RecruiterView(APIView):
@@ -1107,10 +1109,17 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
     
-    @action (detail=False,methods=['get'])
-    def count(self,request):
-        count = get_count(TeacherExamResult)
-        return Response({"Count":count}) 
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        user = request.user
+
+        if not user.is_authenticated:
+            return Response({"detail": "Authentication credentials were not provided."}, status=401)
+
+        count = TeacherExamResult.objects.filter(user=user).count()
+        return Response({"Count": count})
+
+
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
