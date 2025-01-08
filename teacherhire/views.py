@@ -1853,7 +1853,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-            "exam": exams[0], 
+            "exam": exams[2], 
             "time": 3,
             "language": "English",
             "text": "What is the full form of DBMS?",
@@ -1862,7 +1862,7 @@ def insert_data(request):
             "correct_option": 1
         },
         {
-            "exam": exams[0],  
+            "exam": exams[3],  
             "time": 2.5,
             "language": "English",
             "text": "Which of the following is a type of database model?",
@@ -1871,7 +1871,7 @@ def insert_data(request):
             "correct_option": 3
         },
         {
-            "exam": exams[1],  
+            "exam": exams[4],  
             "time": 3,
             "language": "English",
             "text": "Which SQL command is used to retrieve data from a database?",
@@ -1881,7 +1881,7 @@ def insert_data(request):
         },
         
         {
-            "exam": exams[1],  
+            "exam": exams[5],  
             "time": 3,
             "language": "English",
             "text": "What is normalization in DBMS?",
@@ -1890,7 +1890,7 @@ def insert_data(request):
             "correct_option": 1
         },
         {
-            "exam": exams[1],  
+            "exam": exams[6],  
             "time": 2.5,
             "language": "English",
             "text": "Which of the following is a type of join in SQL?",
@@ -1899,7 +1899,7 @@ def insert_data(request):
             "correct_option": 3
         },
             {
-                "exam": exams[2],
+                "exam": exams[7],
                 "time": 3.0,
                 "language": "Hindi",
                 "text": "भारत की राजधानी क्या है?",
@@ -1908,7 +1908,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[2],  
+                "exam": exams[8],  
                 "time": 2.0,
                 "language": "English",
                 "text": "What is 5 + 5?",
@@ -1917,7 +1917,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "exam": exams[2],  
+                "exam": exams[9],  
                 "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
@@ -1926,16 +1926,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "exam": exams[3],  
-                "time": 2.5,
-                "language": "Hindi",
-                "text": "भारत में सबसे लंबी नदी कौन सी है?",
-                "options": ["गंगा", "यमुना", "सिंधु", "नर्मदा"],
-                "solution": "गंगा भारत की सबसे लंबी नदी है।",
-                "correct_option": 1
-            },
-            {
-                "exam": exams[3],  
+                "exam": exams[9],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
@@ -1944,7 +1935,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[3],  
+                "exam": exams[10],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का पहला प्रधानमंत्री कौन थे?",
@@ -1953,23 +1944,302 @@ def insert_data(request):
                 "correct_option": 2
            },
            {
-                "exam": exams[2],  
-                "time": 3,
+                "exam": exams[11],
+                "time": 2,
                 "language": "Hindi",
-                "text": "भारत में कितने राज्य हैं?",
-                "options": ["28", "29", "30", "31"],
-                "solution": "भारत में 28 राज्य हैं।",
-                "correct_option": 1
-           },
-           {
+                "text": "एक ट्रेन 60 किमी/घंटे की गति से 2 घंटे में कितनी दूरी तय करेगी?",
+                "options": ["60 किमी", "120 किमी", "180 किमी", "240 किमी"],
+                "solution": "ट्रेन 120 किमी की दूरी तय करेगी।",
+                "correct_option": 2
+            },
+            {
                 "exam": exams[5],
                 "time": 2.5,
+                "language": "English",
+                "text": "If a train travels at 60 km/hr for 2 hours, what distance does it cover?",
+                "options": ["60 km", "120 km", "180 km", "240 km"],
+                "solution": "The train covers 120 km.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[0],
+                "time": 2,
                 "language": "Hindi",
-                "text": "भारत की सबसे बड़ी झील कौन सी है?",
-                "options": ["वुलर झील", "लोकटक झील", "पचमढ़ी झील", "कृष्ण सागर"],
-                "solution": "भारत की सबसे बड़ी झील वुलर झील है।",
+                "text": "5 का घनफल क्या है?",
+                "options": ["25", "125", "15", "225"],
+                "solution": "5 का घनफल 125 है।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[1],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the cube of 5?",
+                "options": ["25", "125", "15", "225"],
+                "solution": "The cube of 5 is 125.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[2],
+                "time": 2,
+                "language": "Hindi",
+                "text": "100 और 250 का औसत क्या है?",
+                "options": ["175", "150", "200", "225"],
+                "solution": "100 और 250 का औसत 175 है।",
                 "correct_option": 1
-           }
+            },
+            {
+                "exam": exams[3],
+                "time": 2,
+                "language": "English",
+                "text": "What is the average of 100 and 250?",
+                "options": ["175", "150", "200", "225"],
+                "solution": "The average of 100 and 250 is 175.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[4],
+                "time": 2.5,
+                "language": "Hindi",
+                "text": "प्रकाश की गति क्या है?",
+                "options": ["3 × 10^6 मीटर/सेकेंड", "3 × 10^8 मीटर/सेकेंड", "3 × 10^9 मीटर/सेकेंड", "3 × 10^7 मीटर/सेकेंड"],
+                "solution": "प्रकाश की गति 3 × 10^8 मीटर/सेकेंड है।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[5],
+                "time": 2,
+                "language": "English",
+                "text": "What is the speed of light?",
+                "options": ["3 × 10^6 m/s", "3 × 10^8 m/s", "3 × 10^9 m/s", "3 × 10^7 m/s"],
+                "solution": "The speed of light is 3 × 10^8 m/s.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[6],
+                "time": 2,
+                "language": "Hindi",
+                "text": "न्यूटन के गति का दूसरा नियम क्या है?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "न्यूटन के गति का दूसरा नियम F = ma है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[7],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is Newton's second law of motion?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "Newton's second law of motion is F = ma.",
+                "correct_option": 1
+            },
+            {
+            "exam": exams[8],
+            "time": 2.5,
+            "language": "English",
+            "text": "What is Newton's second law of motion?",
+            "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+            "solution": "Newton's second law of motion is F = ma.",
+            "correct_option": 1
+        },
+        {
+            "exam": exams[9],
+            "time": 3.0,
+            "language": "English",
+            "text": "Which of the following is the largest planet in our solar system?",
+            "options": ["Earth", "Mars", "Jupiter", "Saturn"],
+            "solution": "Jupiter is the largest planet in our solar system.",
+            "correct_option": 3
+        },
+        {
+            "exam": exams[10],
+            "time": 2.0,
+            "language": "English",
+            "text": "Who is the author of the play 'Romeo and Juliet'?",
+            "options": ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"],
+            "solution": "The author of 'Romeo and Juliet' is William Shakespeare.",
+            "correct_option": 1
+        },
+         {
+        "exam": exams[1],
+        "time": 2.0,
+        "language": "English",
+        "text": "What is the chemical symbol for water?",
+        "options": ["H2O", "HO2", "O2H", "H2"],
+        "solution": "The chemical symbol for water is H2O.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[2],
+        "time": 3.0,
+        "language": "English",
+        "text": "Who proposed the theory of relativity?",
+        "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
+        "solution": "The theory of relativity was proposed by Albert Einstein.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[3],
+        "time": 2.5,
+        "language": "English",
+        "text": "What is the powerhouse of the cell?",
+        "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
+        "solution": "The mitochondria are known as the powerhouse of the cell.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[4],
+        "time": 2.0,
+        "language": "English",
+        "text": "What is the capital of France?",
+        "options": ["Berlin", "Madrid", "Paris", "Rome"],
+        "solution": "The capital of France is Paris.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[5],
+        "time": 3.0,
+        "language": "English",
+        "text": "What is the square root of 64?",
+        "options": ["6", "7", "8", "9"],
+        "solution": "The square root of 64 is 8.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[6],
+        "time": 2.5,
+        "language": "English",
+        "text": "Who wrote 'Romeo and Juliet'?",
+        "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+        "solution": "'Romeo and Juliet' was written by William Shakespeare.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[7],
+        "time": 2.0,
+        "language": "English",
+        "text": "What is the boiling point of water at sea level?",
+        "options": ["90°C", "100°C", "110°C", "120°C"],
+        "solution": "The boiling point of water at sea level is 100°C.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[8],
+        "time": 3.0,
+        "language": "English",
+        "text": "Which planet is known as the Red Planet?",
+        "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+        "solution": "Mars is known as the Red Planet.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[9],
+        "time": 2.5,
+        "language": "English",
+        "text": "What is the largest organ in the human body?",
+        "options": ["Liver", "Heart", "Skin", "Lungs"],
+        "solution": "The skin is the largest organ in the human body.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[10],
+        "time": 3.0,
+        "language": "English",
+        "text": "What is the value of π (pi) up to two decimal places?",
+        "options": ["3.12", "3.13", "3.14", "3.15"],
+        "solution": "The value of π (pi) up to two decimal places is 3.14.",
+        "correct_option": 3
+    },
+      {
+        "exam": exams[0],
+        "time": 2.5,
+        "language": "English",
+        "text": "What is the value of π (pi) up to two decimal places?",
+        "options": ["3.12", "3.14", "3.16", "3.18"],
+        "solution": "The value of π up to two decimal places is 3.14.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[1],
+        "time": 3,
+        "language": "English",
+        "text": "What is the square root of 144?",
+        "options": ["10", "11", "12", "13"],
+        "solution": "The square root of 144 is 12.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[2],
+        "time": 3,
+        "language": "English",
+        "text": "Solve: 5 + 3 × 2.",
+        "options": ["11", "16", "21", "13"],
+        "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[3],
+        "time": 3.5,
+        "language": "English",
+        "text": "What is 15% of 200?",
+        "options": ["25", "30", "35", "40"],
+        "solution": "15% of 200 is 30.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[4],
+        "time": 4,
+        "language": "English",
+        "text": "If x + 5 = 12, what is the value of x?",
+        "options": ["5", "6", "7", "8"],
+        "solution": "Subtracting 5 from both sides gives x = 7.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[5],
+        "time": 4,
+        "language": "English",
+        "text": "Solve: 9 × (3 + 2).",
+        "options": ["36", "40", "45", "50"],
+        "solution": "Using BODMAS, 9 × (3 + 2) = 45.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[6],
+        "time": 3.5,
+        "language": "English",
+        "text": "What is the perimeter of a rectangle with length 10 and width 5?",
+        "options": ["20", "25", "30", "35"],
+        "solution": "The perimeter of a rectangle is 2 × (length + width). So, 2 × (10 + 5) = 30.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[7],
+        "time": 4,
+        "language": "English",
+        "text": "What is the value of 2³?",
+        "options": ["6", "8", "9", "12"],
+        "solution": "2³ means 2 × 2 × 2 = 8.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[8],
+        "time": 3.5,
+        "language": "English",
+        "text": "What is the area of a triangle with base 8 and height 5?",
+        "options": ["20", "25", "30", "35"],
+        "solution": "The area of a triangle is ½ × base × height. So, ½ × 8 × 5 = 20.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[9],
+        "time": 3,
+        "language": "English",
+        "text": "What is the value of 100 ÷ 4?",
+        "options": ["20", "25", "30", "40"],
+        "solution": "100 ÷ 4 = 25.",
+        "correct_option": 2
+    }
     ]
         
         question_added_count = 0
