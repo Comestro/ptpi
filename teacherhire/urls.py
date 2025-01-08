@@ -28,6 +28,7 @@ router.register(r'admin/passkey', PasskeyViewSet, basename='passkey')
 
 #access OnlyTeacher
 router.register(r'self/teacher', SingleTeacherViewSet, basename='self-teacher')
+router.register(r'self/passkey', PasscodeViewSet, basename='self-passkey')
 router.register(r'self/customuser', CustomUserViewSet, basename='self-customuser')
 router.register(r"self/teacherexperience", SingleTeacherExperiencesViewSet, basename="self-teacherexperience")
 router.register(r'self/teacherexamresult', TeacherExamResultViewSet, basename='self-teacherexamresult')
@@ -61,6 +62,7 @@ urlpatterns = [
     path('login/', LoginUser.as_view()),
     path('logout/', LogoutUser.as_view()),
     path('insert/data/', insert_data, name='insert_data'),
+    path('api/passcodes/get_exam/', PasscodeViewSet.as_view({'get': 'get_exam_using_passcode'}), name='get_exam_using_passcode')
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
 ]
