@@ -16,9 +16,9 @@ from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
-from django.db.utils import IntegrityError
 from django.db.models import F
-from django.utils.crypto import get_random_string
+from django.conf import settings
+
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
