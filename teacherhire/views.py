@@ -1828,7 +1828,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-            "exam": exams[0], 
+            "exam": exams[2], 
             "time": 3,
             "language": "English",
             "text": "What is the full form of DBMS?",
@@ -1837,7 +1837,7 @@ def insert_data(request):
             "correct_option": 1
         },
         {
-            "exam": exams[0],  
+            "exam": exams[3],  
             "time": 2.5,
             "language": "English",
             "text": "Which of the following is a type of database model?",
@@ -1846,7 +1846,7 @@ def insert_data(request):
             "correct_option": 3
         },
         {
-            "exam": exams[1],  
+            "exam": exams[4],  
             "time": 3,
             "language": "English",
             "text": "Which SQL command is used to retrieve data from a database?",
@@ -1856,7 +1856,7 @@ def insert_data(request):
         },
         
         {
-            "exam": exams[1],  
+            "exam": exams[5],  
             "time": 3,
             "language": "English",
             "text": "What is normalization in DBMS?",
@@ -1865,7 +1865,7 @@ def insert_data(request):
             "correct_option": 1
         },
         {
-            "exam": exams[1],  
+            "exam": exams[6],  
             "time": 2.5,
             "language": "English",
             "text": "Which of the following is a type of join in SQL?",
@@ -1874,7 +1874,7 @@ def insert_data(request):
             "correct_option": 3
         },
             {
-                "exam": exams[2],
+                "exam": exams[7],
                 "time": 3.0,
                 "language": "Hindi",
                 "text": "भारत की राजधानी क्या है?",
@@ -1883,7 +1883,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[2],  
+                "exam": exams[8],  
                 "time": 2.0,
                 "language": "English",
                 "text": "What is 5 + 5?",
@@ -1892,7 +1892,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "exam": exams[2],  
+                "exam": exams[9],  
                 "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
@@ -1901,16 +1901,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "exam": exams[3],  
-                "time": 2.5,
-                "language": "Hindi",
-                "text": "भारत में सबसे लंबी नदी कौन सी है?",
-                "options": ["गंगा", "यमुना", "सिंधु", "नर्मदा"],
-                "solution": "गंगा भारत की सबसे लंबी नदी है।",
-                "correct_option": 1
-            },
-            {
-                "exam": exams[3],  
+                "exam": exams[9],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
@@ -1919,7 +1910,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[3],  
+                "exam": exams[10],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का पहला प्रधानमंत्री कौन थे?",
@@ -1928,23 +1919,122 @@ def insert_data(request):
                 "correct_option": 2
            },
            {
-                "exam": exams[2],  
-                "time": 3,
+                "exam": exams[11],
+                "time": 2,
                 "language": "Hindi",
-                "text": "भारत में कितने राज्य हैं?",
-                "options": ["28", "29", "30", "31"],
-                "solution": "भारत में 28 राज्य हैं।",
-                "correct_option": 1
-           },
-           {
+                "text": "एक ट्रेन 60 किमी/घंटे की गति से 2 घंटे में कितनी दूरी तय करेगी?",
+                "options": ["60 किमी", "120 किमी", "180 किमी", "240 किमी"],
+                "solution": "ट्रेन 120 किमी की दूरी तय करेगी।",
+                "correct_option": 2
+            },
+            {
                 "exam": exams[5],
                 "time": 2.5,
+                "language": "English",
+                "text": "If a train travels at 60 km/hr for 2 hours, what distance does it cover?",
+                "options": ["60 km", "120 km", "180 km", "240 km"],
+                "solution": "The train covers 120 km.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[0],
+                "time": 2,
                 "language": "Hindi",
-                "text": "भारत की सबसे बड़ी झील कौन सी है?",
-                "options": ["वुलर झील", "लोकटक झील", "पचमढ़ी झील", "कृष्ण सागर"],
-                "solution": "भारत की सबसे बड़ी झील वुलर झील है।",
+                "text": "5 का घनफल क्या है?",
+                "options": ["25", "125", "15", "225"],
+                "solution": "5 का घनफल 125 है।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[1],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the cube of 5?",
+                "options": ["25", "125", "15", "225"],
+                "solution": "The cube of 5 is 125.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[2],
+                "time": 2,
+                "language": "Hindi",
+                "text": "100 और 250 का औसत क्या है?",
+                "options": ["175", "150", "200", "225"],
+                "solution": "100 और 250 का औसत 175 है।",
                 "correct_option": 1
-           }
+            },
+            {
+                "exam": exams[3],
+                "time": 2,
+                "language": "English",
+                "text": "What is the average of 100 and 250?",
+                "options": ["175", "150", "200", "225"],
+                "solution": "The average of 100 and 250 is 175.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[4],
+                "time": 2.5,
+                "language": "Hindi",
+                "text": "प्रकाश की गति क्या है?",
+                "options": ["3 × 10^6 मीटर/सेकेंड", "3 × 10^8 मीटर/सेकेंड", "3 × 10^9 मीटर/सेकेंड", "3 × 10^7 मीटर/सेकेंड"],
+                "solution": "प्रकाश की गति 3 × 10^8 मीटर/सेकेंड है।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[5],
+                "time": 2,
+                "language": "English",
+                "text": "What is the speed of light?",
+                "options": ["3 × 10^6 m/s", "3 × 10^8 m/s", "3 × 10^9 m/s", "3 × 10^7 m/s"],
+                "solution": "The speed of light is 3 × 10^8 m/s.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[6],
+                "time": 2,
+                "language": "Hindi",
+                "text": "न्यूटन के गति का दूसरा नियम क्या है?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "न्यूटन के गति का दूसरा नियम F = ma है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[7],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is Newton's second law of motion?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "Newton's second law of motion is F = ma.",
+                "correct_option": 1
+            },
+            {
+            "exam": exams[8],
+            "time": 2.5,
+            "language": "English",
+            "text": "What is Newton's second law of motion?",
+            "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+            "solution": "Newton's second law of motion is F = ma.",
+            "correct_option": 1
+        },
+        {
+            "exam": exams[9],
+            "time": 3.0,
+            "language": "English",
+            "text": "Which of the following is the largest planet in our solar system?",
+            "options": ["Earth", "Mars", "Jupiter", "Saturn"],
+            "solution": "Jupiter is the largest planet in our solar system.",
+            "correct_option": 3
+        },
+        {
+            "exam": exams[10],
+            "time": 2.0,
+            "language": "English",
+            "text": "Who is the author of the play 'Romeo and Juliet'?",
+            "options": ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"],
+            "solution": "The author of 'Romeo and Juliet' is William Shakespeare.",
+            "correct_option": 1
+        }
     ]
         
         question_added_count = 0
