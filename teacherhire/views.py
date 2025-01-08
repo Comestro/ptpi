@@ -1659,7 +1659,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         exam_set = exams.order_by('created_at').first()
         if not exam_set:
-            return Response({"message": "You have already used all 3 attempts for this exam."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1704,28 +1704,27 @@ def insert_data(request):
             "model": Exam,
             "field": "name",
             "data": [
-                {"name": "Math classcategory 1 level 1 Set A", "total_marks": 100, "duration": 180},
-                {"name": "Math classcategory 1 level 1 Set B", "total_marks": 50, "duration": 90},
-                {"name": "Math classcategory 1 level 1 Set C", "total_marks": 50, "duration": 90},
-                {"name": "Math classcategory 1 level 2 Set A", "total_marks": 20, "duration": 30},
-                {"name": "Math classcategory 1 level 2 Set B", "total_marks": 200, "duration": 240},
-                {"name": "Math classcategory 2 level 1 Set A", "total_marks": 200, "duration": 240},
-                {"name": "Phy classcategory 1 level 1 Set A", "total_marks": 100, "duration": 180},
-                {"name": "Phy classcategory 1 level 1 Set B", "total_marks": 50, "duration": 90},
-                {"name": "Phy classcategory 1 level 1 Set C", "total_marks": 50, "duration": 90},
-                {"name": "Phy classcategory 1 level 2 Set A", "total_marks": 20, "duration": 30},
-                {"name": "Phy classcategory 1 level 2 Set B", "total_marks": 200, "duration": 240},
-                {"name": "Phy classcategory 1 level 2 Set C", "total_marks": 200, "duration": 240},
-                {"name": "Phy classcategory 2 level 1 Set A", "total_marks": 50, "duration": 120},
-                {"name": "Phy classcategory 2 level 1 Set B", "total_marks": 50, "duration": 120},
-                {"name": "Phy classcategory 2 level 1 Set C", "total_marks": 50, "duration": 120},
+                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths", "total_marks": 100, "duration": 180},
+                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths", "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths", "total_marks": 200, "duration": 240},
+                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics", "total_marks": 100, "duration": 180},
+                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics", "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics", "total_marks": 50, "duration": 90},
+                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths", "total_marks": 50, "duration": 90},
+                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths", "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths", "total_marks": 200, "duration": 240},
+                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics", "total_marks": 100, "duration": 180},
+                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics", "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics", "total_marks": 50, "duration": 90},
             ]
         },
         
     }
 
     response_data = {}
-
+    class_categories = ClassCategory.objects.all()  
+    levels = Level.objects.all()                 
+    subjects = Subject.objects.all()  
     # Insert class categories, levels, etc.
     for key, config in data_to_insert.items():
         model = config["model"]
@@ -1739,25 +1738,32 @@ def insert_data(request):
                 total_marks = entry.get("total_marks")
                 duration = entry.get("duration")
                 
-                class_category = ClassCategory.objects.first()  
-                
-                level = Level.objects.first()  
-                subject =Subject.objects.first()
+                class_category_name = entry.get("class_category")
+                level_name = entry.get("level") 
+                subject_name = entry.get("subject")
 
-                if not model.objects.filter(name=name).exists():
+                class_category = ClassCategory.objects.get(name=class_category_name)                
+                level = Level.objects.get(name=level_name)  
+                subject =Subject.objects.get(subject_name=subject_name)
+
+                if not model.objects.filter(
+                    name=name,
+                    class_category=class_category,
+                    level=level,
+                    subject=subject,
+                ).exists():
                     model.objects.create(
                         name=name,
                         total_marks=total_marks,
                         duration=duration,
                         class_category=class_category,
-                        level=level ,
+                        level=level,
                         subject=subject
                     )
                     added_count += 1
-            else:  
-                if not model.objects.filter(**{field: entry}).exists():
-                    model.objects.create(**{field: entry})
-                    added_count += 1
+                else:
+                    print(f"Duplicate entry skipped: {name}, {class_category_name}, {level_name}, {subject_name}")
+        response_data[key] = f"{added_count} entries added."
 
         response_data[key] = {
             "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
@@ -1823,7 +1829,7 @@ def insert_data(request):
             "correct_option": 3
         },
             {
-                "exam": exams[9],
+                "exam": exams[2],
                 "time": 3.0,
                 "language": "Hindi",
                 "text": "भारत की राजधानी क्या है?",
@@ -1832,7 +1838,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[9],  
+                "exam": exams[2],  
                 "time": 2.0,
                 "language": "English",
                 "text": "What is 5 + 5?",
@@ -1841,7 +1847,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "exam": exams[9],  
+                "exam": exams[2],  
                 "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
@@ -1850,7 +1856,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "exam": exams[4],  
+                "exam": exams[3],  
                 "time": 2.5,
                 "language": "Hindi",
                 "text": "भारत में सबसे लंबी नदी कौन सी है?",
@@ -1859,7 +1865,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[2],  
+                "exam": exams[3],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
@@ -1868,7 +1874,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[2],  
+                "exam": exams[3],  
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का पहला प्रधानमंत्री कौन थे?",
@@ -1886,7 +1892,7 @@ def insert_data(request):
                 "correct_option": 1
            },
            {
-                "exam": exams[6],
+                "exam": exams[5],
                 "time": 2.5,
                 "language": "Hindi",
                 "text": "भारत की सबसे बड़ी झील कौन सी है?",
