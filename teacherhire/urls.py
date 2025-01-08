@@ -25,7 +25,6 @@ router.register(r'admin/exam', ExamViewSet)
 router.register(r'admin/report', ReportViewSet, basename='report')
 router.register(r'admin/passkey', PasskeyViewSet, basename='passkey')
 
-
 #access OnlyTeacher
 router.register(r'self/teacher', SingleTeacherViewSet, basename='self-teacher')
 router.register(r'self/customuser', CustomUserViewSet, basename='self-customuser')
