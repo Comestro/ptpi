@@ -1721,9 +1721,7 @@ def insert_data(request):
     }
 
     response_data = {}
-    class_categories = ClassCategory.objects.all()  
-    levels = Level.objects.all()                 
-    subjects = Subject.objects.all()  
+   
     # Insert class categories, levels, etc.
     for key, config in data_to_insert.items():
         model = config["model"]
@@ -1760,62 +1758,62 @@ def insert_data(request):
                         subject=subject
                     )
                     added_count += 1
-                else:
-                    print(f"Duplicate entry skipped: {name}, {class_category_name}, {level_name}, {subject_name}")
+                # else:
+                #     print(f"Duplicate entry")
         response_data[key] = f"{added_count} entries added."
 
         response_data[key] = {
             "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
             "added_count": added_count
         }
-        passkey_data = [
-        {
-            "user_id": 1,  
-            "exam_name": "Final Exam",  
-            "ispasscode": "online",
-            "status": False
-        },
-        {
-            "user_id": 2,  
-            "exam_name": "Semester Exam",
-            "ispasscode": "offline",
-            "status": True
-        },
-        {
-            "user_id": 1,  
-            "exam_name": "Mid Term", 
-            "ispasscode": "offline",
-            "status": False
-        },
-    ]
+    #     passkey_data = [
+    #     {
+    #         "user_id": 1,  
+    #         "exam_name": "Final Exam",  
+    #         "ispasscode": "online",
+    #         "status": False
+    #     },
+    #     {
+    #         "user_id": 2,  
+    #         "exam_name": "Semester Exam",
+    #         "ispasscode": "offline",
+    #         "status": True
+    #     },
+    #     {
+    #         "user_id": 1,  
+    #         "exam_name": "Mid Term", 
+    #         "ispasscode": "offline",
+    #         "status": False
+    #     },
+    # ]
         
-    passkey_added_count = 0
-    for pk_data in passkey_data:
-      user = CustomUser.objects.get(id=pk_data["user_id"])
-      exam = Exam.objects.get(name=pk_data["exam_name"])
+#     passkey_added_count = 0
+#     for pk_data in passkey_data:
+#       user = CustomUser.objects.get(id=pk_data["user_id"])
+#       exam = Exam.objects.get(name=pk_data["exam_name"])
 
-    if not Passkey.objects.filter(user=user, exam=exam, ispasscode=pk_data["ispasscode"]).exists():
-        code = get_random_string(length=20)
+#     if not Passkey.objects.filter(user=user, exam=exam, ispasscode=pk_data["ispasscode"]).exists():
+#         code = get_random_string(length=20)
 
-        if not Passkey.objects.filter(code=code).exists():
-            passkey = Passkey.objects.create(
-                user=user,
-                exam=exam,
-                ispasscode=pk_data["ispasscode"],
-                code=code,
-                status=pk_data["status"],
-                created_at=datetime.now()  
-            )
-            passkey_added_count += 1
-        else:
-            print(f"Passkey code already exists for user {user.id} and exam {exam.name}")
-    else:
-        print(f"Passkey already exists for user {user.id} and exam {exam.name} with passcode type {pk_data['ispasscode']}")
+#         if not Passkey.objects.filter(code=code).exists():
+#             passkey = Passkey.objects.create(
+#                 user=user,
+#                 exam=exam,
+#                 ispasscode=pk_data["ispasscode"],
+#                 code=code,
+#                 status=pk_data["status"],
+#                 created_at=datetime.now()  
+#             )
+#             passkey_added_count += 1
+#         else:
+#             print(f"Passkey code already exists for user {user.id} and exam {exam.name}")
+#     else:
+#         print(f"Passkey already exists for user {user.id} and exam {exam.name} with passcode type {pk_data['ispasscode']}")
 
-    response_data["passkeys"] = {
-    "message": f'{passkey_added_count} passkeys added successfully.',
-    "added_count": passkey_added_count
-}
+#     response_data["passkeys"] = {
+#     "message": f'{passkey_added_count} passkeys added successfully.',
+#     "added_count": passkey_added_count
+# }
          # Insert 5 Questions into the database
     exams = Exam.objects.all()  
     if exams.exists():
