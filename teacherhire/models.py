@@ -425,6 +425,5 @@ class Passkey(models.Model):
         expiration_time = self.created_at + timedelta(minutes=10)
         return self.status and now() < expiration_time
 
-
     def __str__(self):
         return f"{self.code} - {self.exam}"

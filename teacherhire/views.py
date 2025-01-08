@@ -1108,7 +1108,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-    
     @action(detail=False, methods=['get'])
     def count(self, request):
         user = request.user
@@ -1116,10 +1115,27 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=401)
 
-        count = TeacherExamResult.objects.filter(user=user).count()
+        # Example counts
+        level1_count = TeacherExamResult.objects.filter(user=user, isqulified=True).count()
+        level2_count = TeacherExamResult.objects.filter(user=user, isqulified=False).count()
+
+        response_data = {
+            "level1": level1_count,
+            "level2": level2_count,
+        }
+
+        return Response(response_data)
+
+
+    # @action(detail=False, methods=['get'])
+    # def count(self, request):
+    #     user = request.user
+
+    #     if not user.is_authenticated:
+    #         return Response({"detail": "Authentication credentials were not provided."}, status=401)
+
+    #     count = TeacherExamResult.objects.filter(user=user).count()
         return Response({"Count": count})
-
-
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
@@ -2088,7 +2104,8 @@ class GeneratePasskeyView(APIView):
         )
 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
-    
+
+
 class VerifyPasscodeView(APIView):
     def post(self, request):
         email = request.data.get('email')
