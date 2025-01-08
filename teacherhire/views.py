@@ -2016,6 +2016,76 @@ class PasskeyViewSet(viewsets.ModelViewSet):
     serializer_class = PasskeySerializer
 
 
+class GeneratePasskeyView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        exam_id = request.data.get('exam_id')
+
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User with this email does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exam = Exam.objects.get(id=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+        passkey = random.randint(1000, 9999)
+
+        passkey_obj = Passkey.objects.create(
+            user=user,
+            exam=exam,
+            code=str(passkey),
+            status=True,  
+        )
+
+        # Email content
+        subject = "Your Exam Access Passcode"
+        message = f"Your passcode for accessing the exam is {passkey}. It is valid for 10 minutes. Please use it to verify your access."
+        html_message = f"""
+        <div style="max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 10px; background-color: #f9f9f9; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
+            <p style="font-size: 16px; margin-bottom: 20px;">Use the passcode below to complete your verification process for the exam.</p>
+            <p style="display: inline-block; padding: 10px 20px; font-size: 36px; font-weight: bold; color: #ffffff; background-color: #008080; border-radius: 8px; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
+                {passkey}
+            </p>
+            <p style="margin-top: 20px; font-size: 14px; color: #555;">This passcode is valid for 10 minutes. Please do not share it with anyone.</p>
+        </div>
+        """
+
+        from_email = os.environ.get('EMAIL_FROM', settings.DEFAULT_FROM_EMAIL)
+
+        send_mail(
+            subject,
+            message,
+            from_email,
+            [email],
+            html_message=html_message
+        )
+
+        return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
+    
+class VerifyPasscodeView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        exam_id = request.data.get('exam_id')
+        entered_passcode = request.data.get('passcode')
+
+        try:
+            # Get the passkey record from the database
+            passkey_obj = Passkey.objects.get(user__email=email, exam__id=exam_id, code=entered_passcode)
+        except Passkey.DoesNotExist:
+            return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if passkey_obj.is_valid():
+            return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)
+        else:
+            passkey_obj.status = False  
+            passkey_obj.save()
+            return Response({"error": "Passcode expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
