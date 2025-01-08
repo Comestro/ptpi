@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils.timezone import timedelta
+from django.utils.timezone import now
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -416,6 +419,11 @@ class Passkey(models.Model):
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_valid(self):
+        # Check if the passkey is still valid (e.g., 10 minutes expiration)
+        expiration_time = self.created_at + timedelta(minutes=10)
+        return self.status and now() < expiration_time
 
     def __str__(self):
         return f"{self.code} - {self.exam}"
