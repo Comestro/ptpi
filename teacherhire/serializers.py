@@ -474,14 +474,18 @@ class TeacherClassCategorySerializer(serializers.ModelSerializer):
 class TeacherExamResultSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    
     class Meta:
         model = TeacherExamResult
         fields = '__all__'
 
     def to_representation(self, instance):
-        return super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.exam).data
+        representation = super().to_representation(instance)        
+        representation['user'] = UserSerializer(instance.user).data        
+        representation['exam'] = ExamSerializer(instance.exam).data
+        
         return representation
+
         
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
     preference = serializers.PrimaryKeyRelatedField(queryset=Preference.objects.all(), required=False)
