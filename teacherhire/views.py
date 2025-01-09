@@ -17,6 +17,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
 from django.db.models import F
+from django.utils.crypto import get_random_string
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings 
+import random
+import string
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 
@@ -1108,7 +1115,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-    
     @action(detail=False, methods=['get'])
     def count(self, request):
         user = request.user
@@ -1116,10 +1122,27 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=401)
 
-        count = TeacherExamResult.objects.filter(user=user).count()
+        # Example counts
+        level1_count = TeacherExamResult.objects.filter(user=user, isqulified=True).count()
+        level2_count = TeacherExamResult.objects.filter(user=user, isqulified=False).count()
+
+        response_data = {
+            "level1": level1_count,
+            "level2": level2_count,
+        }
+
+        return Response(response_data)
+
+
+    # @action(detail=False, methods=['get'])
+    # def count(self, request):
+    #     user = request.user
+
+    #     if not user.is_authenticated:
+    #         return Response({"detail": "Authentication credentials were not provided."}, status=401)
+
+    #     count = TeacherExamResult.objects.filter(user=user).count()
         return Response({"Count": count})
-
-
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
@@ -1324,18 +1347,47 @@ class TeacherJobTypeViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherJobTypeSerializer
 
 class SendPasswordResetEmailViewSet(APIView):
-    def post(self, request, formate=None):
-        serializer = SendPasswordResetEmailSerializer(data=request.data)
+    def post(self, request, format=None):
+        serializer = SendPasswordResetEmailSerializer(data=request.data)        
         if serializer.is_valid(raise_exception=True):
-            return Response({'msg': 'Password reset link send. Please check email.'}, status=status.HTTP_200_OK)
+            email = serializer.validated_data['email']
+            try:
+                user = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                return Response({"msg": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+            token = default_token_generator.make_token(user)
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            reset_password_link = f'http://localhost:5173/reset-password/{uidb64}/{token}'
+            subject = 'Reset Your Password'
+            message = f'Click the following link to reset your password: {reset_password_link}'
+            
+            try:
+                # Send the email
+                send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
+                return Response({'msg': 'Password reset link sent. Please check your email.'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'msg': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ResetPasswordViewSet(APIView):
-    def post(self, request, uidb64, token, fomate=None):
-        serializer = ResetPasswordSerializer(data=request.data, context={'uid': uidb64, 'token': token})
-        if serializer.is_valid(raise_exception=True):
-            return Response({'msg': 'Password reset Successfully.'}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, uidb64, token, format=None):
+        try:
+            # Decode the uidb64 to get the user ID
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = CustomUser.objects.get(pk=uid)
+
+            # Validate the token
+            if default_token_generator.check_token(user, token):
+                # Reset the password
+                new_password = request.data.get('new_password')
+                user.set_password(new_password)
+                user.save()
+                return Response({"msg": "Password reset successful."}, status=status.HTTP_200_OK)
+
+            return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class VarifyOTP(APIView):
     def post(self, request):
@@ -1702,6 +1754,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 def insert_data(request):
     data_to_insert = {
@@ -2339,7 +2392,6 @@ class PasskeyViewSet(viewsets.ModelViewSet):
     queryset = Passkey.objects.all()  
     serializer_class = PasskeySerializer
 
-
 class GeneratePasskeyView(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -2355,18 +2407,22 @@ class GeneratePasskeyView(APIView):
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
+        existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
+        if existing_passkey:
+            return Response({"error": "A passkey has already been generated for this exam."}, status=status.HTTP_400_BAD_REQUEST)
+
         passkey = random.randint(1000, 9999)
 
         passkey_obj = Passkey.objects.create(
             user=user,
             exam=exam,
             code=str(passkey),
-            status=True,  
+            status=True,
         )
 
-        # Email content
         subject = "Your Exam Access Passcode"
         message = f"Your passcode for accessing the exam is {passkey}. It is valid for 10 minutes. Please use it to verify your access."
+
         html_message = f"""
         <div style="max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 10px; background-color: #f9f9f9; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; font-family: Arial, sans-serif; color: #333;">
             <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
@@ -2389,7 +2445,6 @@ class GeneratePasskeyView(APIView):
         )
 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
-    
 class VerifyPasscodeView(APIView):
     def post(self, request):
         email = request.data.get('email')

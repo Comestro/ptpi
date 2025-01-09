@@ -370,7 +370,7 @@ class TeacherExamResult(models.Model):
             last_result = TeacherExamResult.objects.filter(
                 user=self.user
             ).order_by('-created_at').first()
-            self.attempt = max(0, (last_result.attempt if last_result else self.attempt) - 1)
+            self.attempt = max(0, (last_result.attempt if last_result else self.attempt) + 1)
 
         super().save(*args, **kwargs)
 
@@ -424,7 +424,6 @@ class Passkey(models.Model):
         # Check if the passkey is still valid (e.g., 10 minutes expiration)
         expiration_time = self.created_at + timedelta(minutes=10)
         return self.status and now() < expiration_time
-
 
     def __str__(self):
         return f"{self.code} - {self.exam}"
