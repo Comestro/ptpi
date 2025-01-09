@@ -370,7 +370,7 @@ class TeacherExamResult(models.Model):
             last_result = TeacherExamResult.objects.filter(
                 user=self.user
             ).order_by('-created_at').first()
-            self.attempt = max(0, (last_result.attempt if last_result else self.attempt) - 1)
+            self.attempt = max(0, (last_result.attempt if last_result else self.attempt) + 1)
 
         super().save(*args, **kwargs)
 

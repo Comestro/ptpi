@@ -2323,13 +2323,12 @@ class PasskeyViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Passkey.objects.all()  
     serializer_class = PasskeySerializer
-
+    
 class GeneratePasskeyView(APIView):
     def post(self, request):
         email = request.data.get('email')
         exam_id = request.data.get('exam_id')
 
-        # Retrieve user and exam objects
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
@@ -2340,19 +2339,6 @@ class GeneratePasskeyView(APIView):
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check user's score for the exam
-        try:
-            result = TeacherExamResult.objects.get(user=user, exam=exam)
-        except TeacherExamResult.DoesNotExist:
-            return Response({"error": "Exam result for this user and exam does not exist."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Calculate the percentage score
-        percentage = (result.correct_answer * 100) / exam.total_marks
-
-        if percentage < 60:
-            return Response({"error": "User did not score 60% or above."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Generate passkey if criteria met
         passkey = random.randint(1000, 9999)
 
         passkey_obj = Passkey.objects.create(
@@ -2371,7 +2357,7 @@ class GeneratePasskeyView(APIView):
             <p style="font-size: 16px; margin-bottom: 20px;">Use the passcode below to complete your verification process for the exam.</p>
             <p style="display: inline-block; padding: 10px 20px; font-size: 36px; font-weight: bold; color: #ffffff; background-color: #008080; border-radius: 8px; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
                 {passkey}
-            </p>
+            </p>passkey
             <p style="margin-top: 20px; font-size: 14px; color: #555;">This passcode is valid for 10 minutes. Please do not share it with anyone.</p>
         </div>
         """
@@ -2387,8 +2373,6 @@ class GeneratePasskeyView(APIView):
         )
 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
-
-
 class VerifyPasscodeView(APIView):
     def post(self, request):
         email = request.data.get('email')
