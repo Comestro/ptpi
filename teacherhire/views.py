@@ -17,6 +17,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
 from django.db.models import F
+from django.utils.crypto import get_random_string
+from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings 
+import random
+import string
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 
@@ -1340,18 +1347,47 @@ class TeacherJobTypeViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherJobTypeSerializer
 
 class SendPasswordResetEmailViewSet(APIView):
-    def post(self, request, formate=None):
-        serializer = SendPasswordResetEmailSerializer(data=request.data)
+    def post(self, request, format=None):
+        serializer = SendPasswordResetEmailSerializer(data=request.data)        
         if serializer.is_valid(raise_exception=True):
-            return Response({'msg': 'Password reset link send. Please check email.'}, status=status.HTTP_200_OK)
+            email = serializer.validated_data['email']
+            try:
+                user = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                return Response({"msg": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+            token = default_token_generator.make_token(user)
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            reset_password_link = f'http://localhost:5173/reset-password/{uidb64}/{token}'
+            subject = 'Reset Your Password'
+            message = f'Click the following link to reset your password: {reset_password_link}'
+            
+            try:
+                # Send the email
+                send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
+                return Response({'msg': 'Password reset link sent. Please check your email.'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'msg': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ResetPasswordViewSet(APIView):
-    def post(self, request, uidb64, token, fomate=None):
-        serializer = ResetPasswordSerializer(data=request.data, context={'uid': uidb64, 'token': token})
-        if serializer.is_valid(raise_exception=True):
-            return Response({'msg': 'Password reset Successfully.'}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, uidb64, token, format=None):
+        try:
+            # Decode the uidb64 to get the user ID
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = CustomUser.objects.get(pk=uid)
+
+            # Validate the token
+            if default_token_generator.check_token(user, token):
+                # Reset the password
+                new_password = request.data.get('new_password')
+                user.set_password(new_password)
+                user.save()
+                return Response({"msg": "Password reset successful."}, status=status.HTTP_200_OK)
+
+            return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class VarifyOTP(APIView):
     def post(self, request):
@@ -1687,6 +1723,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 def insert_data(request):
     data_to_insert = {
