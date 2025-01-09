@@ -1690,7 +1690,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        exam_type = request.query_params.get('type', None) 
+        type = request.query_params.get('type', None) 
         
         exams = Exam.objects.all()
 
@@ -1716,15 +1716,14 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 if qualified_level_1 and not qualified_level_2:
                     exams = exams.filter(level__id=2, type='online')
                 elif qualified_level_2:
-                    if exam_type:
-                            exams = exams.filter(level__id=2, type=exam_type) 
+                    if type:
+                            exams = exams.filter(level__id=2, type=type) 
                     else:
                         return Response({"message": "Please choose an exam type."}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     return Response({"message": "You must qualify for Level 1 before accessing Level 2."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"message": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
-
 
             unqualified_exam_ids = TeacherExamResult.objects.filter(
             user=user,
