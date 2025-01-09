@@ -1690,7 +1690,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        type = request.query_params.get('type', None) 
+        exam_type = request.query_params.get('type', None)
         
         exams = Exam.objects.all()
 
@@ -1706,18 +1706,34 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
         exams = exams.filter(subject_id=subject_id)
 
+        # Check for qualification status for level 1 and level 2
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
 
+        if qualified_level_1 and qualified_level_2:
+            if exam_type == 'offline':
+                return Response(
+                    {"message": "You cannot take an offline exam for both Level 1 and Level 2 exams."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         if level_id:
             if level_id == '1':
+                # Check if the user is eligible for Level 1
                 exams = exams.filter(level__id=1, type='online')
             elif level_id == '2':
                 if qualified_level_1 and not qualified_level_2:
+                    # If user is qualified for Level 1 but not Level 2
                     exams = exams.filter(level__id=2, type='online')
                 elif qualified_level_2:
-                    if type:
-                            exams = exams.filter(level__id=2, type=type) 
+                    # If user is qualified for Level 2, handle the exam type
+                    if exam_type:
+                        if exam_type == 'offline':
+                            # If they are qualified and choose 'offline', return a message saying they cannot take offline
+                            return Response(
+                                {"message": "You cannot take an offline exam after qualifying for online Level 2 exam."},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        exams = exams.filter(level__id=2, type=exam_type)
                     else:
                         return Response({"message": "Please choose an exam type."}, status=status.HTTP_400_BAD_REQUEST)
                 else:
@@ -1725,21 +1741,18 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             else:
                 return Response({"message": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
 
-            unqualified_exam_ids = TeacherExamResult.objects.filter(
-            user=user,
-            isqulified=False
-            ).values_list('exam_id', flat=True)
-            exams = exams.exclude(id__in=unqualified_exam_ids)
+        # Exclude exams that user is not eligible for (either unqualified or already passed)
+        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=False).values_list('exam_id', flat=True)
+        exams = exams.exclude(id__in=unqualified_exam_ids)
 
-            qualified_exam_ids = TeacherExamResult.objects.filter(
-            user=user,
-            isqulified=True
-            ).values_list('exam_id', flat=True)
-            exams = exams.exclude(id__in=qualified_exam_ids)
+        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=True).values_list('exam_id', flat=True)
+        exams = exams.exclude(id__in=qualified_exam_ids)
 
+        # Check for available exams after filtering
         exam_set = exams.order_by('created_at').first()
         if not exam_set:
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
+
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
