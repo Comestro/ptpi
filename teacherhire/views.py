@@ -2360,7 +2360,7 @@ class PasskeyViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Passkey.objects.all()  
     serializer_class = PasskeySerializer
-    
+
 class GeneratePasskeyView(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -2376,25 +2376,29 @@ class GeneratePasskeyView(APIView):
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
+        existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
+        if existing_passkey:
+            return Response({"error": "A passkey has already been generated for this exam."}, status=status.HTTP_400_BAD_REQUEST)
+
         passkey = random.randint(1000, 9999)
 
         passkey_obj = Passkey.objects.create(
             user=user,
             exam=exam,
             code=str(passkey),
-            status=True,  
+            status=True,
         )
 
-        # Email content
         subject = "Your Exam Access Passcode"
         message = f"Your passcode for accessing the exam is {passkey}. It is valid for 10 minutes. Please use it to verify your access."
+
         html_message = f"""
         <div style="max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 10px; background-color: #f9f9f9; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; font-family: Arial, sans-serif; color: #333;">
             <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
             <p style="font-size: 16px; margin-bottom: 20px;">Use the passcode below to complete your verification process for the exam.</p>
             <p style="display: inline-block; padding: 10px 20px; font-size: 36px; font-weight: bold; color: #ffffff; background-color: #008080; border-radius: 8px; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
                 {passkey}
-            </p>passkey
+            </p>
             <p style="margin-top: 20px; font-size: 14px; color: #555;">This passcode is valid for 10 minutes. Please do not share it with anyone.</p>
         </div>
         """
