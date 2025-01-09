@@ -415,7 +415,7 @@ class Report(models.Model):
 
 class Passkey(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE,null=True)
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE,null=True, related_name='passkeys')
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
