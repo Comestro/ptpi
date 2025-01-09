@@ -27,7 +27,6 @@ router.register(r'admin/passkey', PasskeyViewSet, basename='passkey')
 
 #access OnlyTeacher
 router.register(r'self/teacher', SingleTeacherViewSet, basename='self-teacher')
-router.register(r'self/passkey', PasscodeViewSet, basename='self-passkey')
 router.register(r'self/customuser', CustomUserViewSet, basename='self-customuser')
 router.register(r"self/teacherexperience", SingleTeacherExperiencesViewSet, basename="self-teacherexperience")
 router.register(r'self/teacherexamresult', TeacherExamResultViewSet, basename='self-teacherexamresult')
