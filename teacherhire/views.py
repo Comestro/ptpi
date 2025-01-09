@@ -1690,11 +1690,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        exam_type = request.query_params.get('type', 'online')
-        passkey = request.query_params.get('passkey', None)
+        exam_type = request.query_params.get('type', None) 
         
         exams = Exam.objects.all()
-        
+
         teacher_class_category = Preference.objects.filter(user=user).first()
         if not teacher_class_category:
             return Response(
@@ -1702,52 +1701,42 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         exams = exams.filter(class_category=teacher_class_category.class_category)
-        
+
         if not subject_id:
             return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
         exams = exams.filter(subject_id=subject_id)
+
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
 
         if level_id:
             if level_id == '1':
-                # Fetch Level 1 exams, only online type
                 exams = exams.filter(level__id=1, type='online')
-
             elif level_id == '2':
                 if qualified_level_1 and not qualified_level_2:
                     exams = exams.filter(level__id=2, type='online')
-
                 elif qualified_level_2:
-                    if exam_type == 'offline':
-                        if passkey:
-                            if Passkey.objects.filter(user=user, passkey=passkey).exists():
-                                seen_questions_ids = TeacherExamResult.objects.filter(
-                                    user=user, exam__level_id=2
-                                ).values_list('exam__questions__id', flat=True)
-                                
-                                exams = exams.filter(level__id=2, type='offline').exclude(
-                                    questions__id__in=seen_questions_ids
-                                )
-                            else:
-                                return Response({"message": "Invalid passkey."}, status=status.HTTP_403_FORBIDDEN)
-                        else:
-                            return Response({"message": "Passkey required for offline exams."}, status=status.HTTP_400_BAD_REQUEST)
+                    if exam_type:
+                            exams = exams.filter(level__id=2, type=exam_type) 
                     else:
-                         return Response({"message": "exam type required."}, status=status.HTTP_400_BAD_REQUEST)
-
+                        return Response({"message": "Please choose an exam type."}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     return Response({"message": "You must qualify for Level 1 before accessing Level 2."}, status=status.HTTP_404_NOT_FOUND)
-
             else:
                 return Response({"message": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
 
-            
+
             unqualified_exam_ids = TeacherExamResult.objects.filter(
             user=user,
             isqulified=False
             ).values_list('exam_id', flat=True)
             exams = exams.exclude(id__in=unqualified_exam_ids)
+
+            qualified_exam_ids = TeacherExamResult.objects.filter(
+            user=user,
+            isqulified=True
+            ).values_list('exam_id', flat=True)
+            exams = exams.exclude(id__in=qualified_exam_ids)
 
         exam_set = exams.order_by('created_at').first()
         if not exam_set:
