@@ -2396,10 +2396,22 @@ class GeneratePasskeyView(APIView):
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check if the user has qualified in any attempt
+        results = TeacherExamResult.objects.filter(user=user, exam=exam)
+        if not results.exists():
+            return Response({"error": "No exam results found for this user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check qualification status across all attempts
+        qualified = results.filter(isqulified=True).exists()
+        if not qualified:
+            return Response({"error": "User did not score the required 60% or above in any attempt."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if a passkey already exists
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Generate a new passkey
         passkey = random.randint(1000, 9999)
 
         passkey_obj = Passkey.objects.create(
@@ -2409,9 +2421,9 @@ class GeneratePasskeyView(APIView):
             status=True,
         )
 
+        # Email setup
         subject = "Your Exam Access Passcode"
         message = f"Your passcode for accessing the exam is {passkey}. It is valid for 10 minutes. Please use it to verify your access."
-
         html_message = f"""
         <div style="max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 10px; background-color: #f9f9f9; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; font-family: Arial, sans-serif; color: #333;">
             <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
@@ -2434,6 +2446,7 @@ class GeneratePasskeyView(APIView):
         )
 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
+
 class VerifyPasscodeView(APIView):
     def post(self, request):
         email = request.data.get('email')
