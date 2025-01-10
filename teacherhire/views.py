@@ -26,6 +26,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 
 
 
@@ -1651,12 +1652,12 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
+
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve an Exam instance and filter its questions by language if specified.
         """
         exam = self.get_object()
-
         language = request.query_params.get('language', None)
 
         questions = exam.questions.all()
@@ -1668,7 +1669,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(exam)
         exam_data = serializer.data
-
         exam_data['questions'] = QuestionSerializer(questions, many=True).data
 
         return Response(exam_data, status=status.HTTP_200_OK)
@@ -1678,7 +1678,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        type = request.query_params.get('type', None)
+        exam_type = request.query_params.get('type', None)
 
         exams = Exam.objects.all()
 
@@ -1704,42 +1704,36 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         if level_id:
             if level_id == '1':
-                # User can take Level 1 exam online
-                exams = exams.filter(level__id=1, type='online')
+                # Check if the user is eligible for Level 1
+                exams = exams.filter(level__id=1)
             elif level_id == '2':
                 if qualified_level_1 and not qualified_level_2:
-                    # If the user is qualified for Level 1 but not Level 2, they can take Level 2 online exam
-                    exams = exams.filter(level__id=2, type='online')
-                elif qualified_level_2:
-                    if type == 'offline':
-                        # If the user has passed Level 2, they can now take offline exams for Level 2
-                        exams = exams.filter(level__id=2, type='offline')
-
-                    elif type == 'online':
-                        exams = exams.filter(level__id=2, type='online')
-                    else:
-                        return Response({"message": "Please choose an exam type."}, status=status.HTTP_400_BAD_REQUEST)
+                    # If user is qualified for Level 1 but not Level 2
+                    exams = exams.filter(level__id=2)
+                elif qualified_level_2:                    
+                    exams = exams.filter(
+                        Q(level__id=2) & Q(type=exam_type)
+                        
+                    )
+                   
                 else:
                     return Response({"message": "You must qualify for Level 1 before accessing Level 2."}, status=status.HTTP_404_NOT_FOUND)
             else:
-                return Response({"message": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # If the user has passed Level 2, allow them to take offline exams (but different questions)
-        if qualified_level_2:
-            if type == 'offline':
-                # Fetch the last Level 2 online exam taken by the user
-                last_online_exam = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__level_id=2, exam__type='online').order_by('-exam__created_at').first()
+        # Exclude unqualified exams
+        unqualified_exam_ids = TeacherExamResult.objects.filter(
+            user=user,
+            isqulified=False
+        ).values_list('exam_id', flat=True)
 
-                if last_online_exam:
-                    # Exclude the questions of the last online Level 2 exam
-                    last_exam_questions = last_online_exam.exam.questions.all()
-                    exams = exams.exclude(questions__in=last_exam_questions)
-
-        # Exclude exams that the user has already passed or is not eligible for
-        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=False).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
 
-        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=True).values_list('exam_id', flat=True)
+        qualified_exam_ids = TeacherExamResult.objects.filter(
+            user=user,
+            isqulified=True
+        ).values_list('exam_id', flat=True)
+
         exams = exams.exclude(id__in=qualified_exam_ids)
 
         # Check for available exams after filtering
@@ -1747,10 +1741,9 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         if not exam_set:
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Return only a single exam, without any additional exam-related data.
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 
 def insert_data(request):
     data_to_insert = {
