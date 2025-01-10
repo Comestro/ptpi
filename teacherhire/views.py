@@ -2395,13 +2395,13 @@ class PasskeyViewSet(viewsets.ModelViewSet):
 
 class GeneratePasskeyView(APIView):
     def post(self, request):
-        email = request.data.get('email')
+        user_id = request.data.get('user_id')
         exam_id = request.data.get('exam_id')
 
         try:
-            user = CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(id=user_id)
         except CustomUser.DoesNotExist:
-            return Response({"error": "User with this email does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "User with this Id does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             exam = Exam.objects.get(id=exam_id)
@@ -2453,7 +2453,7 @@ class GeneratePasskeyView(APIView):
             subject,
             message,
             from_email,
-            [email],
+            [user.email],
             html_message=html_message
         )
 
@@ -2461,13 +2461,13 @@ class GeneratePasskeyView(APIView):
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
-        email = request.data.get('email')
+        user_id = request.data.get('user_id')
         exam_id = request.data.get('exam_id')
         entered_passcode = request.data.get('passcode')
 
         try:
             # Get the passkey record from the database
-            passkey_obj = Passkey.objects.get(user__email=email, exam__id=exam_id, code=entered_passcode)
+            passkey_obj = Passkey.objects.get(user_id=user_id, exam__id=exam_id, code=entered_passcode)
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
