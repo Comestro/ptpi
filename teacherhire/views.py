@@ -1704,18 +1704,16 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         if level_id:
             if level_id == '1':
-                # Check if the user is eligible for Level 1
                 exams = exams.filter(level__id=1)
             elif level_id == '2':
                 if qualified_level_1 and not qualified_level_2:
-                    # If user is qualified for Level 1 but not Level 2
                     exams = exams.filter(level__id=2)
-                elif qualified_level_2:                    
+                elif qualified_level_2:
+                    if not exam_type:
+                        return Response({"message": "Please choose an exam type."}, status=status.HTTP_400_BAD_REQUEST)
                     exams = exams.filter(
                         Q(level__id=2) & Q(type=exam_type)
-                        
                     )
-                   
                 else:
                     return Response({"message": "You must qualify for Level 1 before accessing Level 2."}, status=status.HTTP_404_NOT_FOUND)
             else:
@@ -1741,7 +1739,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         if not exam_set:
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Return only a single exam, without any additional exam-related data.
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

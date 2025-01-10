@@ -337,7 +337,7 @@ class ExamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions']
+        fields = ['id', 'name', 'description', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
         depth = 1 
         
     def to_representation(self, instance):
