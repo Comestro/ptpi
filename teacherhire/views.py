@@ -1710,12 +1710,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
 
-        if qualified_level_1 and qualified_level_2:
-            if exam_type == 'offline':
-                return Response(
-                    {"message": "You cannot take an offline exam for both Level 1 and Level 2 exams."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+       
         if level_id:
             if level_id == '1':
                 # Check if the user is eligible for Level 1
@@ -1728,12 +1723,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                     # If user is qualified for Level 2, handle the exam type
                     if exam_type:
                         if exam_type == 'offline':
-                            # If they are qualified and choose 'offline', return a message saying they cannot take offline
-                            return Response(
-                                {"message": "You cannot take an offline exam after qualifying for online Level 2 exam."},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                        exams = exams.filter(level__id=2, type=exam_type)
+                            exams = exams.filter(level__id=2, type=exam_type)
                     else:
                         return Response({"message": "Please choose an exam type."}, status=status.HTTP_400_BAD_REQUEST)
                 else:
@@ -2413,10 +2403,17 @@ class GeneratePasskeyView(APIView):
         if not results.exists():
             return Response({"error": "No exam results found for this user."}, status=status.HTTP_400_BAD_REQUEST)
 
+        
         # Check qualification status across all attempts
         qualified = results.filter(isqulified=True).exists()
         if not qualified:
             return Response({"error": "User did not score the required 60% or above in any attempt."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if user qualifies at level 2 and if the qualification type is 'online'
+        level_2_results = results.filter(isqulified=True, exam__level_id=2)
+        qualified_level_2_offline = level_2_results.filter(exam__type="online").exists()
+        if not qualified_level_2_offline:
+            return Response({"error": "User did not qualify at level 2 online."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if a passkey already exists
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
