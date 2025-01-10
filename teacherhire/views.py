@@ -1130,20 +1130,8 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
             "level1": level1_count,
             "level2": level2_count,
         }
-
         return Response(response_data)
-
-
-    # @action(detail=False, methods=['get'])
-    # def count(self, request):
-    #     user = request.user
-
-    #     if not user.is_authenticated:
-    #         return Response({"detail": "Authentication credentials were not provided."}, status=401)
-
-    #     count = TeacherExamResult.objects.filter(user=user).count()
-        return Response({"Count": count})
-
+    
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
