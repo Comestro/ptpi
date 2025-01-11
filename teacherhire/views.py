@@ -2416,7 +2416,7 @@ class GeneratePasskeyView(APIView):
             user=user,
             exam=exam,
             code=str(passkey),
-            status=True,
+            status=False,
         )
 
         # # Email setup
@@ -2458,7 +2458,12 @@ class VerifyPasscodeView(APIView):
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
         if passkey_obj.is_valid():
-            return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)
+            passkey_obj.status = False  
+            passkey_obj.save()
+            return Response({
+                "message": "Passcode verified successfully.",
+                "status": False
+                }, status=status.HTTP_200_OK)
         else:
             passkey_obj.status = False  
             passkey_obj.save()
