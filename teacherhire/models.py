@@ -153,16 +153,7 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
     
-class Teacher(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill,on_delete=models.CASCADE,null=True)
-    subject = models.ForeignKey(Subject,on_delete=models.CASCADE,null=True)
-    educationalQualification= models.ForeignKey(EducationalQualification,on_delete=models.CASCADE,null=True)
-    role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, related_name='teachers')
-    classCategory = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, null=True, related_name='teachers')
 
-    def __str__(self):
-        return self.user.username
 class Level(models.Model):
     name = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
@@ -208,7 +199,8 @@ class TeacherSubject(models.Model):
 
    def __str__(self): 
         return self.user.username	
-   
+
+ 
 class BasicProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="user_profile", null=True)
     bio = models.TextField(blank=True, null=True)
@@ -381,6 +373,16 @@ class JobPreferenceLocation(models.Model):
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
 
+
+class Teacher(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    location = models.ForeignKey(JobPreferenceLocation, on_delete=models.CASCADE)
+    skill = models.ForeignKey(TeacherSkill,on_delete=models.CASCADE,null=True)
+    educationalQualification= models.ForeignKey(TeacherQualification,on_delete=models.CASCADE,null=True)
+    address = models.ForeignKey(TeachersAddress, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.user.username  
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
