@@ -155,7 +155,6 @@ class Skill(models.Model):
     
 class Teacher(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill,on_delete=models.CASCADE,null=True)
     subject = models.ForeignKey(Subject,on_delete=models.CASCADE,null=True)
     educationalQualification= models.ForeignKey(EducationalQualification,on_delete=models.CASCADE,null=True)
