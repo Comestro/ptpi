@@ -2474,56 +2474,56 @@ class PasskeyViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Passkey.objects.all()
     serializer_class = PasskeySerializer
-
-
+ 
+ 
 class GeneratePasskeyView(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')
         exam_id = request.data.get('exam_id')
-
+ 
         try:
             user = CustomUser.objects.get(id=user_id)
         except CustomUser.DoesNotExist:
             return Response({"error": "User with this Id does not exist."}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         try:
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         # Check if the user has qualified in any attempt
         results = TeacherExamResult.objects.filter(user=user, exam=exam)
         if not results.exists():
             return Response({"error": "No exam results found for this user."}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         # Check qualification status across all attempts
         qualified = results.filter(isqualified=True).exists()
         if not qualified:
             return Response({"error": "User did not score the required 60% or above in any attempt."},
                 status=status.HTTP_400_BAD_REQUEST)
-
+ 
         # Check if user qualifies at level 2 and if the qualification type is 'online'
         level_2_results = results.filter(isqualified=True, exam__level_id=2)
         qualified_level_2_offline = level_2_results.filter(exam__type="online").exists()
         if not qualified_level_2_offline:
             return Response({"error": "User did not qualify at level 2 online."}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
         # Check if a passkey already exists
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
                             status=status.HTTP_400_BAD_REQUEST)
-
+ 
         # Generate a new passkey
         passkey = random.randint(1000, 9999)
-
+ 
         passkey_obj = Passkey.objects.create(
             user=user,
             exam=exam,
             code=str(passkey),
             status=False,
         )
-
+ 
         # # Email setup
         # subject = "Your Exam Access Passcode"
         # message = f"Your passcode for accessing the exam is {passkey}. It is valid for 10 minutes. Please use it to verify your access."
@@ -2537,9 +2537,9 @@ class GeneratePasskeyView(APIView):
         #     <p style="margin-top: 20px; font-size: 14px; color: #555;">This passcode is valid for 10 minutes. Please do not share it with anyone.</p>
         # </div>
         # """
-
+ 
         # from_email = os.environ.get('EMAIL_FROM', settings.DEFAULT_FROM_EMAIL)
-
+ 
         # send_mail(
         #     subject,
         #     message,
@@ -2547,41 +2547,41 @@ class GeneratePasskeyView(APIView):
         #     [user.email],
         #     html_message=html_message
         # )
-
+ 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
-
+ 
 class ApprovePasscodeView(APIView):
     #permission_classes = [IsAdminPermission]  # Only accessible by admin users
-
+ 
     def post(self, request):
         user_id = request.data.get('user_id')
         exam_id = request.data.get('exam_id')
-
+ 
         try:
             # Fetch the passkey object
             passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id)
         except Passkey.DoesNotExist:
             return Response({"error": "Passkey not found."}, status=status.HTTP_404_NOT_FOUND)
-
+ 
         # Approve the passkey
         passkey_obj.status = True
         passkey_obj.save()
-
+ 
         return Response({"message": "Passcode approved successfully."}, status=status.HTTP_200_OK)
-
-
+ 
+ 
 # class VerifyPasscodeView(APIView):
 #     def post(self, request):
 #         user_id = request.data.get('user_id')
 #         exam_id = request.data.get('exam_id')
 #         entered_passcode = request.data.get('passcode')
-
+ 
 #         try:
 #             # Get the passkey record from the database
 #             passkey_obj = Passkey.objects.get(user_id=user_id, exam__id=exam_id, code=entered_passcode)
 #         except Passkey.DoesNotExist:
 #             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
 #         if passkey_obj.is_valid():
 #             passkey_obj.status = False
 #             passkey_obj.save()
@@ -2593,14 +2593,31 @@ class ApprovePasscodeView(APIView):
 #             passkey_obj.status = False
 #             passkey_obj.save()
 #             return Response({"error": "Passcode expired."}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-   
-
-
-
-
-    
+ 
+class VerifyPasscodeView(APIView):
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        exam_id = request.data.get('exam_id')
+        entered_passcode = request.data.get('passcode')
+ 
+        if not user_id or not exam_id or not entered_passcode:
+            return Response({"error": "Missing required fields: user_id, exam_id, or passcode."},
+            status=status.HTTP_400_BAD_REQUEST)
+ 
+        try:
+            # Fetch the passkey objectIsAdminUser
+            passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode)
+        except Passkey.DoesNotExist:
+            return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
+ 
+        # Check if the passkey is approved by the admin
+        if not passkey_obj.status:
+            return Response({"error": "Passcode is not approved by the admin ."},
+            status=status.HTTP_400_BAD_REQUEST)
+ 
+        # Mark the passkey as used after successful validation
+        passkey_obj.status = False
+        passkey_obj.save()
+ 
+        return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)
+ 
