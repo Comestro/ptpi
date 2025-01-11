@@ -6,10 +6,10 @@ from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
 from teacherhire.serializers import *
-from .authentication import ExpiringTokenAuthentication  
+from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
-from .permissions import IsRecruiterPermission, IsAdminPermission 
-import uuid  
+from .permissions import IsRecruiterPermission, IsAdminPermission
+import uuid
 from .utils import *
 from datetime import timedelta
 from django.utils.timezone import now
@@ -19,7 +19,7 @@ from django.http import JsonResponse
 from django.db.models import F
 from django.utils.crypto import get_random_string
 from django.contrib.auth.tokens import default_token_generator
-from django.conf import settings 
+from django.conf import settings
 import random
 import string
 from django.contrib.auth import update_session_auth_hash
@@ -29,11 +29,12 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
 
-
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
+
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
+
 
 class AdminView(APIView):
     permission_classes = [IsAdminPermission]
@@ -45,12 +46,14 @@ class AdminView(APIView):
 def check_for_duplicate(model_class, **kwargs):
     return model_class.objects.filter(**kwargs).exists()
 
+
 def create_object(serializer_class, request_data, model_class):
     serializer = serializer_class(data=request_data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # for authenticated teacher
 def create_auth_data(serializer_class, request_data, model_class, user, *args, **kwargs):
@@ -61,7 +64,7 @@ def create_auth_data(serializer_class, request_data, model_class, user, *args, *
         )
     serializer = serializer_class(data=request_data)
     if serializer.is_valid():
-        serializer.save(user=user)  
+        serializer.save(user=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -73,14 +76,17 @@ def update_auth_data(serialiazer_class, instance, request_data, user):
         return Response({"detail": "Data updated successfully.", "data": serializer.data}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 def get_single_object(viewset):
     queryset = viewset.get_queryset()
     profile = queryset.first()
     serializer = viewset.get_serializer(profile)
     return Response(serializer.data)
 
+
 def get_count(model_class):
     return model_class.objects.count()
+
 
 class RecruiterRegisterUser(APIView):
     def post(self, request):
@@ -92,9 +98,9 @@ class RecruiterRegisterUser(APIView):
                 # Todo
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
-        
+
         serializer.save()
-        email=serializer.data['email']
+        email = serializer.data['email']
         send_otp_via_email(email)
         # request.session['email'] = email
         user = CustomUser.objects.get(email=email)
@@ -102,24 +108,26 @@ class RecruiterRegisterUser(APIView):
         return Response({
             'payload': serializer.data,
             'message': 'Your data is saved. Please check your email and verify your account first.'
-        },status=status.HTTP_200_OK)
+        }, status=status.HTTP_200_OK)
+
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
 
-
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
-            user = request.user 
+            user = request.user
 
             # Set the new password
             user.set_password(serializer.validated_data['new_password'])
             user.save()
             return Response({"message": "Password updated successfully!"}, status=status.HTTP_200_OK)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class TeacherRegisterUser(APIView):
     def post(self, request):
         serializer = TeacherRegisterSerializer(data=request.data)
@@ -130,48 +138,50 @@ class TeacherRegisterUser(APIView):
                 # Todo
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
-        
+
         serializer.save()
         send_otp_via_email(serializer.data['email'])
-        email=serializer.data['email']
+        email = serializer.data['email']
         user = CustomUser.objects.get(email=email)
 
         return Response({
             'payload': serializer.data,
             'message': 'Your data is saved. Please check your email and verify your account first.'
-        },status=status.HTTP_200_OK)
-    
+        }, status=status.HTTP_200_OK)
+
+
 def generate_refresh_token():
     return str(uuid.uuid4())
+
 
 class LoginUser(APIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
-            
+
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
-        if not user.is_verified:  
-            return Response({'message': 'Account is not verified. Please verify your account before logging in.'}, status=status.HTTP_403_FORBIDDEN)
+        if not user.is_verified:
+            return Response({'message': 'Account is not verified. Please verify your account before logging in.'},
+                            status=status.HTTP_403_FORBIDDEN)
         # Check password validity
         if user.check_password(password):
             # Delete old token if it exists
             Token.objects.filter(user=user).delete()
             token = Token.objects.create(user=user)
 
-
             refresh_token = generate_refresh_token()
-      
-            is_admin =  user.is_staff          
-            roles = {                
+
+            is_admin = user.is_staff
+            roles = {
                 'is_admin': user.is_staff,
                 'is_recruiter': user.is_recruiter,
                 'is_user': not (user.is_staff and user.is_recruiter)
-                
+
             }
-            if user.is_staff :
+            if user.is_staff:
                 role = 'admin'
             elif user.is_recruiter:
                 role = 'recruiter'
@@ -180,15 +190,16 @@ class LoginUser(APIView):
             return Response({
                 'access_token': token.key,
                 'refresh_token': refresh_token,
-                'Fname':user.Fname, 
-                'email':user.email, 
+                'Fname': user.Fname,
+                'email': user.email,
                 'role': role,
                 # 'refresh_expires_at': refresh_expires_at,  
                 'message': 'Login successful'
             }, status=status.HTTP_200_OK)
         else:
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
-            
+
+
 class LogoutUser(APIView):
     authentication_classes = [ExpiringTokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -200,8 +211,9 @@ class LogoutUser(APIView):
             return Response({"success": "Logout succesJobsful"}, status=status.HTTP_200_OK)
         except Token.DoesNotExist:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
-        
-#TeacerAddress GET ,CREATE ,DELETE 
+
+
+# TeacerAddress GET ,CREATE ,DELETE
 class TeachersAddressViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -217,22 +229,23 @@ class TeachersAddressViewSet(viewsets.ModelViewSet):
         print(f"User: {request.user}")
         count = get_count(TeachersAddress)
         return Response({"count": count})
-    
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "TeacherAddress deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-        
+
+
 class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    serializer_class = TeachersAddressSerializer 
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = TeachersAddressSerializer
     queryset = TeachersAddress.objects.all().select_related('user')
 
     def create(self, request, *args, **kwargs):
         print("Request data:", request.data)
-        data = request.data.copy()  
-        address_type = data.get('address_type')  
+        data = request.data.copy()
+        address_type = data.get('address_type')
 
         # Validate the `address_type`
         if not address_type or address_type not in ['current', 'permanent']:
@@ -240,23 +253,23 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
                 {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Check if the address already exists for the user
         if TeachersAddress.objects.filter(address_type=address_type, user=request.user).exists():
             return Response(
                 {"detail": f"{address_type.capitalize()} address already exists for this user."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Associate the address with the authenticated user
-        data['user'] = request.user.id  
-        
+        data['user'] = request.user.id
+
         # Serialize and validate data
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
@@ -269,7 +282,7 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
                 {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Try to find the address of the given address type for the authenticated user
         address = TeachersAddress.objects.filter(user=request.user, address_type=address_type).first()
 
@@ -288,14 +301,13 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-
     def update_address_data(self, serializer_class, instance, request_data, user):
         serializer = serializer_class(instance, data=request_data)
-        
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
@@ -309,7 +321,7 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
         permanent_address_data = self.get_serializer(permanent_address).data if permanent_address else None
 
         data = {
-            "current_address" : current_address_data,
+            "current_address": current_address_data,
             "permanent_address": permanent_address_data
         }
         return Response(data, status=status.HTTP_200_OK)
@@ -320,37 +332,40 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     #  except TeachersAddress.DoesNotExist:
     #     return Response({"detail": "This address not found."}, status=status.HTTP_404_NOT_FOUND)
 
-class EducationalQulificationViewSet(viewsets.ModelViewSet):   
-    permission_classes = [IsAuthenticated]    
-    authentication_classes = [ExpiringTokenAuthentication] 
-    serializer_class = EducationalQualificationSerializer 
+
+class EducationalQulificationViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = EducationalQualificationSerializer
     queryset = EducationalQualification.objects.all()
 
     def create(self, request):
         return create_object(EducationalQualificationSerializer, request.data, EducationalQualification)
 
-
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(EducationalQualification)
         return Response({"count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Educationqulification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+
 class LevelViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]    
-    authentication_classes = [ExpiringTokenAuthentication]     
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = Level.objects.all()
     serializer_class = LevelSerializer
-    
+
     @action(detail=False, methods=['get'])
     def count(self):
         count = get_count(Level)
         return Response({"Count": count})
-    
-    @action(detail=True, methods=['get'], url_path=r'classes/(?P<class_category_id>[^/.]+)/?subject/(?P<subject_id>[^/.]+)/?questions')
+
+    @action(detail=True, methods=['get'],
+            url_path=r'classes/(?P<class_category_id>[^/.]+)/?subject/(?P<subject_id>[^/.]+)/?questions')
     def level_questions(self, request, pk=None, subject_id=None, class_category_id=None):
         """
         Custom action to fetch questions by level, optional subject, optional class category, and optional language.
@@ -360,10 +375,10 @@ class LevelViewSet(viewsets.ModelViewSet):
             level = Level.objects.get(pk=pk)
         except Level.DoesNotExist:
             return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
         # Start with filtering by level
         questions = Question.objects.filter(level=level)
-        
+
         # Filter by subject if provided
         if subject_id:
             try:
@@ -383,69 +398,76 @@ class LevelViewSet(viewsets.ModelViewSet):
         language = request.query_params.get('language', None)
         if language:
             if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language, please choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid language, please choose 'Hindi' or 'English'."},
+                                status=status.HTTP_400_BAD_REQUEST)
             questions = questions.filter(language=language)
 
         # Serialize the filtered questions
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def destroy(self, request, *args, **kwargs):    
+    def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
+
+
 class SkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset = Skill.objects.all()    
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Skill.objects.all()
     serializer_class = SkillSerializer
 
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(Skill)
-        return Response({"Count": count})    
-    
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSkillSerializer
-    
+
     def create(self, request):
         return create_object(TeacherSkillSerializer, request.data, TeacherSkill)
-    @action(detail=False, methods=['get'])    
+
+    @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(TeacherSkill)
         return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message": "TeacherSkill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)   
+        return Response({"message": "TeacherSkill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
 class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSkillSerializer
     lookup_field = 'id'
-    
+
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         return create_auth_data(
-                serializer_class=self.get_serializer_class(),
-                request_data=data,
-                user=request.user,
-                model_class=TeacherSkill)
-    
+            serializer_class=self.get_serializer_class(),
+            request_data=data,
+            user=request.user,
+            model_class=TeacherSkill)
+
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         skill_id = kwargs.get('id')
         user = request.user.id
-        
+
         try:
             skill = TeacherSkill.objects.get(id=skill_id, user=user)
         except TeacherSkill.DoesNotExist:
@@ -456,11 +478,11 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
 
         if skill:
             return update_auth_data(
-               serialiazer_class=self.get_serializer_class(),
-               instance=skill,
-               request_data=data,
-               user=request.user
-           )
+                serialiazer_class=self.get_serializer_class(),
+                instance=skill,
+                request_data=data,
+                user=request.user
+            )
         else:
             return create_auth_data(
                 serializer_class=self.get_serializer_class(),
@@ -471,7 +493,7 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return TeacherSkill.objects.filter(user=self.request.user)
-    
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -487,59 +509,65 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     #     except TeacherSkill.DoesNotExist:
     #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
 
-class SubjectViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated] 
-    authentication_classes = [ExpiringTokenAuthentication] 
+
+class SubjectViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
-    
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(Subject)
-        return Response({"Count":count})
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-class TeacherViewSet(viewsets.ModelViewSet):    
+
+
+class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= Teacher.objects.all().select_related('user')
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Teacher.objects.all().select_related('user')
     serializer_class = TeacherSerializer
 
     # def create(self,request):
     #     return create_object(TeacherSerializer,request.data,Teacher)
-    
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(Teacher)
-        return Response({"Count":count})
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacher deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
-class SingleTeacherViewSet(viewsets.ModelViewSet):    
+
+
+class SingleTeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
 
-    def create(self,request,*args, **kwargs):
+    def create(self, request, *args, **kwargs):
         return create_auth_data(self, TeacherSerializer, request.data, Teacher)
-    
+
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         teacher = Teacher.objects.filter(user=request.user).first()
 
         if teacher:
-           return update_auth_data(
-               serialiazer_class=self.get_serializer_class(),
-               instance=teacher,
-               request_data=data,
-               user=request.user
-           )
+            return update_auth_data(
+                serialiazer_class=self.get_serializer_class(),
+                instance=teacher,
+                request_data=data,
+                user=request.user
+            )
         else:
             return create_auth_data(
                 serializer_class=self.get_serializer_class(),
@@ -559,43 +587,49 @@ class SingleTeacherViewSet(viewsets.ModelViewSet):
             return Teacher.objects.get(user=self.request.user)
         except Teacher.DoesNotExist:
             raise Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
-       
-class ClassCategoryViewSet(viewsets.ModelViewSet):    
+
+
+class ClassCategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= ClassCategory.objects.all()
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
 
-    def create(self,request):
-        return create_object(ClassCategorySerializer,request.data,ClassCategory)
-    
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+    def create(self, request):
+        return create_object(ClassCategorySerializer, request.data, ClassCategory)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(ClassCategory)
-        return Response({"Count":count})
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-class TeacherQualificationViewSet(viewsets.ModelViewSet): 
+
+
+class TeacherQualificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherQualification.objects.all()
     serializer_class = TeacherQualificationSerializer
-   
 
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(TeacherQualification)
         return Response({"count": count})
+
     def create(self, request, *args, **kwargs):
         return create_object(TeacherQualificationSerializer, request.data, TeacherQualification)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
-class SingleTeacherQualificationViewSet(viewsets.ModelViewSet): 
+
+
+class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherQualification.objects.all()
@@ -606,9 +640,9 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         qualification_id = kwargs.get('id')
         user = request.user.id
-        
+
         try:
-            qualification= TeacherQualification.objects.get(id=qualification_id, user=user)
+            qualification = TeacherQualification.objects.get(id=qualification_id, user=user)
         except TeacherQualification.DoesNotExist:
             return Response(
                 {"error": "Qualification not found."},
@@ -617,11 +651,11 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
 
         if qualification:
             return update_auth_data(
-               serialiazer_class=self.get_serializer_class(),
-               instance=qualification,
-               request_data=data,
-               user=request.user
-           )
+                serialiazer_class=self.get_serializer_class(),
+                instance=qualification,
+                request_data=data,
+                user=request.user
+            )
         else:
             return create_auth_data(
                 serializer_class=self.get_serializer_class(),
@@ -648,12 +682,13 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
             )
 
         if TeacherQualification.objects.filter(
-            user=request.user,
-            qualification__name=qualification,
-            year_of_passing=year_of_passing
+                user=request.user,
+                qualification__name=qualification,
+                year_of_passing=year_of_passing
         ).exists():
             return Response(
-                {"error": f"A record with qualification '{qualification}' and year of passing '{year_of_passing}' already exists."},
+                {
+                    "error": f"A record with qualification '{qualification}' and year of passing '{year_of_passing}' already exists."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -662,7 +697,7 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
         if qualification == "inter":
             matric = user_qua.filter(qualification__name="matric").first()
             if matric and (year_of_passing - matric.year_of_passing < 2):
-             return Response(
+                return Response(
                     {"error": "There must be at least a 2-year gap between matric and inter."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
@@ -681,12 +716,11 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
             user=request.user,
             model_class=TeacherQualification
         )
-    
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
- 
 
     def get_queryset(self):
         return TeacherQualification.objects.filter(user=self.request.user)
@@ -699,27 +733,29 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     #         return TeacherQualification.objects.get(user=self.request.user)
     #     except TeacherQualification.DoesNotExist:
     #         raise Response({"detail": "Qualification not found."}, status=status.HTTP_404_NOT_FOUND)
-    
+
+
 class TeacherExperiencesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherExperiences.objects.all()
     serializer_class = TeacherExperiencesSerializer
 
-    def create(self,request,*args, **kwargs):
-        return create_object(TeacherExperiencesSerializer,request.data,TeacherExperiences)
-   
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+    def create(self, request, *args, **kwargs):
+        return create_object(TeacherExperiencesSerializer, request.data, TeacherExperiences)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(TeacherExperiences)
-        return Response({"Count":count}) 
-    
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message": "Teacherexperience deleted successfully"}, status=status.HTTP_204_NO_CONTENT)  
+        return Response({"message": "Teacherexperience deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet): 
+
+class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherExperiences.objects.all()
@@ -741,6 +777,7 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
             user=request.user,
             model_class=TeacherExperiences
         )
+
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         experienced_id = kwargs.get('id')
@@ -751,12 +788,12 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
             return Response({"error": "Experience not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if teacher_experienced:
-           return update_auth_data(
-               serialiazer_class=self.get_serializer_class(),
-               instance=teacher_experienced,
-               request_data=data,
-               user=request.user
-           )
+            return update_auth_data(
+                serialiazer_class=self.get_serializer_class(),
+                instance=teacher_experienced,
+                request_data=data,
+                user=request.user
+            )
         else:
             return create_auth_data(
                 serializer_class=self.get_serializer_class(),
@@ -764,18 +801,20 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 model_class=TeacherExperiences
             )
+
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
-   
-class QuestionViewSet(viewsets.ModelViewSet): 
+
+
+class QuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
-    
+
     def create(self, request):
         return create_object(QuestionSerializer, request.data, Question)
-    
+
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(Question)
@@ -803,12 +842,11 @@ class QuestionViewSet(viewsets.ModelViewSet):
         serialized_questions = QuestionSerializer(questions, many=True)
         return Response(serialized_questions.data, status=status.HTTP_200_OK)
 
-
-    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)       
+        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -833,7 +871,7 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "Exam ID is required."},
                 status=status.HTTP_400_BAD_REQUEST
-        )
+            )
         try:
             exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
@@ -847,25 +885,29 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
             questions = questions.filter(language=language)
 
         serializer = QuestionSerializer(questions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)    
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-class RoleViewSet(viewsets.ModelViewSet):    
+
+class RoleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= Role.objects.all()
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    def create(self,request):
-        return create_object(RoleSerializer,request.data,Role)
-    
-    
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+
+    def create(self, request):
+        return create_object(RoleSerializer, request.data, Role)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(Role)
-        return Response({"Count":count})
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Role deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
 class PreferenceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -875,18 +917,17 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         # Check if the user already has a preference
         if Preference.objects.filter(user=request.user).exists():
             return Response({"detail": "Preference already exists."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
             data['teacher_job_type'] = [data['teacher_job_type']]
 
-
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
-       
+
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -895,7 +936,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         # Check if the user has an existing preference
         profile = Preference.objects.filter(user=request.user).first()
 
@@ -906,7 +947,6 @@ class PreferenceViewSet(viewsets.ModelViewSet):
 
         if 'job_role' in data and isinstance(data['job_role'], str):
             data['job_role'] = [data['job_role']]
-
 
         if profile:
             return self.update_auth_data(
@@ -935,6 +975,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
             return Preference.objects.get(user=self.request.user)
         except Preference.DoesNotExist:
             raise NotFound({"detail": "Preference not found."})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -955,23 +996,27 @@ class PreferenceViewSet(viewsets.ModelViewSet):
             serializer.save(user=user)  # Assign the user to the new preference object
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-  
+
+
 class TeacherSubjectViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]    
-    authentication_classes = [ExpiringTokenAuthentication]     
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherSubject.objects.all()
     serializer_class = TeacherSubjectSerializer
-    def create(self,request):
-        return create_object(TeacherSubjectSerializer,request.data,TeacherSubject)
-    
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+
+    def create(self, request):
+        return create_object(TeacherSubjectSerializer, request.data, TeacherSubject)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(TeacherSubject)
-        return Response({"Count":count})
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teachersubject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -993,17 +1038,19 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     # def list(self, request, *args, **kwargs):
     #     return self.retrieve(request, *args, **kwargs)
     def get_object(self):
-        try: 
+        try:
             return TeacherSubject.objects.get(user=self.request.user)
         except TeacherSubject.DoesNotExist:
             raise NotFound({"detail": "TeacherSubject not found."})
+
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         SingleTeacherSubject = TeacherSubject.objects.filter(user=request.user).first()
 
         if SingleTeacherSubject:
@@ -1020,6 +1067,7 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 model_class=TeacherSubject
             )
+
     def delete(self, request, *args, **kwargs):
         try:
             profile = TeacherSubject.objects.get(user=request.user)
@@ -1028,23 +1076,27 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
         except TeacherSubject.DoesNotExist:
             return Response({"detail": "TeacherSubject not found."}, status=status.HTTP_404_NOT_FOUND)
 
+
 class TeacherClassCategoryViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]    
-    authentication_classes = [ExpiringTokenAuthentication]     
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherClassCategory.objects.all()
     serializer_class = TeacherClassCategorySerializer
-    def create(self,request):
-        return create_object(TeacherClassCategorySerializer,request.data,TeacherClassCategory)
-    
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+
+    def create(self, request):
+        return create_object(TeacherClassCategorySerializer, request.data, TeacherClassCategory)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(TeacherClassCategory)
-        return Response({"Count":count})
+        return Response({"Count": count})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherclasscategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
+
+
 class SingleTeacherClassCategory(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1058,24 +1110,27 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
         data = request.data.copy()
         data['user'] = request.user.id
         if TeacherClassCategory.objects.filter(user=request.user).exists():
-            return Response({"detail": "SingleTeacher class category already exists. "}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "SingleTeacher class category already exists. "},
+                            status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     # def list(self, request, *args, **kwargs):
     #     return self.retrieve(request, *args, **kwargs)
     def get_object(self):
-        try: 
+        try:
             return TeacherClassCategory.objects.get(user=self.request.user)
         except TeacherClassCategory.DoesNotExist:
             raise NotFound({"detail": "TeacherClassCategory not found."})
+
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         SingleTeacherClassCategory = TeacherClassCategory.objects.filter(user=request.user).first()
 
         if SingleTeacherClassCategory:
@@ -1092,6 +1147,7 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
                 user=request.user,
                 model_class=TeacherClassCategory
             )
+
     def delete(self, request, *args, **kwargs):
         try:
             profile = TeacherClassCategory.objects.get(user=request.user)
@@ -1100,9 +1156,10 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
         except TeacherClassCategory.DoesNotExist:
             return Response({"detail": "TeacherClassCategory not found."}, status=status.HTTP_404_NOT_FOUND)
 
+
 class TeacherExamResultViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]    
-    authentication_classes = [ExpiringTokenAuthentication]     
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherExamResult.objects.all()
     serializer_class = TeacherExamResultSerializer
 
@@ -1115,7 +1172,7 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
     @action(detail=False, methods=['get'])
     def count(self, request):
         user = request.user
@@ -1132,11 +1189,12 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
             "level2": level2_count,
         }
         return Response(response_data)
-    
-class JobPreferenceLocationViewSet(viewsets.ModelViewSet):    
+
+
+class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= JobPreferenceLocation.objects.all()
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = JobPreferenceLocation.objects.all()
     serializer_class = JobPreferenceLocationSerializer
     lookup_field = 'id'
 
@@ -1144,16 +1202,16 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         user = request.user
 
-        preference = user.preference_set.first() 
+        preference = user.preference_set.first()
 
         if not preference:
             return Response({"error": "No preference found for the user."}, status=status.HTTP_400_BAD_REQUEST)
 
-        data["preference"] = preference.id  
+        data["preference"] = preference.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-    
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
@@ -1163,12 +1221,12 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Job preference location deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
+
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         user = request.user
 
-        user_preference = user.preference_set.first()  
+        user_preference = user.preference_set.first()
 
         if not user_preference:
             return Response({"error": "Create a preference first."}, status=status.HTTP_400_BAD_REQUEST)
@@ -1176,7 +1234,8 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         jobPreferenceLocation = self.get_object()
 
         if jobPreferenceLocation.preference.id != user_preference.id:
-            return Response({"error": "You can only update locations linked to your preference."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "You can only update locations linked to your preference."},
+                            status=status.HTTP_403_FORBIDDEN)
 
         data['preference'] = user_preference.id
 
@@ -1184,8 +1243,9 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        return Response(serializer.data, status=status.HTTP_200_OK) 
-    
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1195,10 +1255,10 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         if BasicProfile.objects.filter(user=request.user).exists():
             return Response({"detail": "Profile already exists."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
@@ -1209,7 +1269,7 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         profile = BasicProfile.objects.filter(user=request.user).first()
 
         if profile:
@@ -1232,7 +1292,7 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
-    
+
     def get_object(self):
         """
         Fetch the BasicProfile object for the logged-in user. 
@@ -1248,10 +1308,10 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 serializer.save()
                 return serializer.instance  # Return the newly created profile
-            
-            # Option 2: Raise an error response if creation fails
-            raise Response({"detail": "Profile not found and could not be created."}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Option 2: Raise an error response if creation fails
+            raise Response({"detail": "Profile not found and could not be created."},
+                           status=status.HTTP_400_BAD_REQUEST)
 
     # def get_object(self):
     #     try:
@@ -1260,27 +1320,26 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
     #         raise Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
     def delete(self, request):
         try:
-            profile = BasicProfile.objects.get(user=request.user)            
-            profile.delete()            
+            profile = BasicProfile.objects.get(user=request.user)
+            profile.delete()
             return Response({"detail": "Profile deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except BasicProfile.DoesNotExist:
             return Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+
+
 class CustomUserViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]    
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
-   
-    
+
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
-        if CustomUser.objects.filter(username=request.user.username).exists():
 
+        if CustomUser.objects.filter(username=request.user.username).exists():
             return Response({"detail": "Customuser already exists."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
@@ -1291,16 +1350,16 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        
+
         profile = CustomUser.objects.filter(username=request.user.username).first()
 
         if profile:
-           return update_auth_data(
-               serialiazer_class=self.get_serializer_class(),
-               instance=profile,
-               request_data=data,
-               user=request.user
-           )
+            return update_auth_data(
+                serialiazer_class=self.get_serializer_class(),
+                instance=profile,
+                request_data=data,
+                user=request.user
+            )
         else:
             return create_auth_data(
                 serializer_class=self.get_serializer_class(),
@@ -1317,27 +1376,30 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         try:
-           return CustomUser.objects.get(id=self.request.user.id)
+            return CustomUser.objects.get(id=self.request.user.id)
 
         except CustomUser.DoesNotExist:
             raise Response({"detail": "Customuser not found."}, status=status.HTTP_404_NOT_FOUND)
+
     def delete(self, request):
         try:
-            profile = CustomUser.objects.get(user=request.user)            
-            profile.delete()            
+            profile = CustomUser.objects.get(user=request.user)
+            profile.delete()
             return Response({"detail": "Customuser deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except CustomUser.DoesNotExist:
             return Response({"detail": "Customuser not found."}, status=status.HTTP_404_NOT_FOUND)
-    
+
+
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]    
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
 
+
 class SendPasswordResetEmailViewSet(APIView):
     def post(self, request, format=None):
-        serializer = SendPasswordResetEmailSerializer(data=request.data)        
+        serializer = SendPasswordResetEmailSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             email = serializer.validated_data['email']
             try:
@@ -1349,15 +1411,17 @@ class SendPasswordResetEmailViewSet(APIView):
             reset_password_link = f'http://localhost:5173/reset-password/{uidb64}/{token}'
             subject = 'Reset Your Password'
             message = f'Click the following link to reset your password: {reset_password_link}'
-            
+
             try:
                 # Send the email
                 send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
-                return Response({'msg': 'Password reset link sent. Please check your email.'}, status=status.HTTP_200_OK)
+                return Response({'msg': 'Password reset link sent. Please check your email.'},
+                                status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({'msg': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ResetPasswordViewSet(APIView):
     def post(self, request, uidb64, token, format=None):
@@ -1378,6 +1442,7 @@ class ResetPasswordViewSet(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class VarifyOTP(APIView):
     def post(self, request):
         try:
@@ -1388,7 +1453,7 @@ class VarifyOTP(APIView):
                     'error': serializer.errors,
                     'message': 'Invalid data provided'
                 }, status=status.HTTP_400_BAD_REQUEST)
-        
+
             email = serializer.data['email']
             otp = serializer.data['otp']
 
@@ -1398,7 +1463,7 @@ class VarifyOTP(APIView):
                     'error': 'Invalid Email',
                     'message': 'User does not exist'
                 }, status=status.HTTP_404_NOT_FOUND)
-            
+
             if user.otp != otp:
                 return Response({
                     'error': 'Invalid OTP',
@@ -1419,13 +1484,15 @@ class VarifyOTP(APIView):
             return Response({
                 'message': 'Account verified successfully'
             }, status=status.HTTP_200_OK)
-        
+
         except Exception as e:
             print(f"Error occurred: {e}")
             return Response({
                 'error': 'Server Error',
                 'message': 'An unexpected error occurred'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class ResendOTP(APIView):
     def post(self, request):
         try:
@@ -1442,7 +1509,7 @@ class ResendOTP(APIView):
                     'error': 'Invalid Email',
                     'message': 'Something went wrong'
                 }, status=status.HTTP_403_FORBIDDEN)
-            
+
             if user.is_verified:
                 return Response({
                     'error': 'User already verified',
@@ -1460,6 +1527,7 @@ class ResendOTP(APIView):
                 'error': 'Something went wrong',
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class UserVerify(APIView):
     def post(self, request):
@@ -1484,7 +1552,7 @@ class UserVerify(APIView):
                     'error': 'User is not verified',
                     'message': 'Please verify your email first'
                 }, status=status.HTTP_400_BAD_REQUEST)
-                
+
             return Response({
                 "verified": True,
                 "email": user.email,
@@ -1501,10 +1569,11 @@ class UserVerify(APIView):
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class ProfilecompletedView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    
+
     @action(detail=False, methods=["get"])
     def get(self, request, *args, **kwargs):
         user = request.user  # Get the logged-in user
@@ -1519,7 +1588,8 @@ class ProfilecompletedView(APIView):
                 {"error": "An error occurred while calculating profile completed.", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
+
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1546,11 +1616,13 @@ class CheckoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         user_subjects = user_preference.prefered_subject.all()
-        level_1_subjects = [{"subject_id": subject.id, "subject_name":subject.subject_name} for subject in user_subjects]
+        level_1_subjects = [{"subject_id": subject.id, "subject_name": subject.subject_name} for subject in
+                            user_subjects]
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
 
-        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'),subject_name=F('exam__subject__subject_name')).distinct()
+        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'),
+                                                  subject_name=F('exam__subject__subject_name')).distinct()
         if qualified_exams:
             levels = [
                 {
@@ -1573,9 +1645,9 @@ class CheckoutView(APIView):
                 }
             ]
 
-
         return Response(levels, status=status.HTTP_200_OK)
-       
+
+
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1584,18 +1656,18 @@ class ExamViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         return create_object(ExamSerializer, request.data, Exam)
-    
+
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(Exam)
         return Response({"Count": count})
-    
+
     @action(detail=False, methods=['get'])
     def exams(self, request):
         level_id = request.query_params.get('level_id', None)
         class_category_id = request.query_params.get('class_category_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        
+
         exams = Exam.objects.all()
 
         if class_category_id:
@@ -1606,7 +1678,7 @@ class ExamViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             exams = exams.filter(class_category=class_category)
-        
+
         if subject_id:
             subject = Subject.objects.filter(pk=subject_id).first()
             if not subject:
@@ -1627,8 +1699,8 @@ class ExamViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
-        exam_id = request.data.get('id', None)  
-        
+        exam_id = request.data.get('id', None)
+
         if exam_id:
             try:
                 exam_instance = Exam.objects.get(id=exam_id)
@@ -1641,11 +1713,12 @@ class ExamViewSet(viewsets.ModelViewSet):
                 return create_object(ExamSerializer, request.data, Exam)
         else:
             return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class SelfExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1678,7 +1751,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        exam_type = request.query_params.get('type', None) 
+        exam_type = request.query_params.get('type', None)
 
         exams = Exam.objects.all()
 
@@ -1698,8 +1771,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         exams = exams.filter(class_category=teacher_class_category.class_category)
 
         # Check qualification for Level 1 and Level 2 exams
-        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
-        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
+        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,
+                                                             exam__level_id=1).exists()
+        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,
+                                                             exam__level_id=2).exists()
 
         # Handle level filter
         if level_id:
@@ -1709,7 +1784,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 if qualified_level_1:
                     exams = exams.filter(level__id=2)
                 else:
-                    return Response({"message": "You must complete Level 1 before accessing Level 2."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"message": "You must complete Level 1 before accessing Level 2."},
+                                    status=status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"error": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1717,14 +1793,17 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             if qualified_level_2:
                 exams = exams.filter(level__id=2, type='offline')
             else:
-                return Response({"message": "You must qualify for Level 2 before taking the offline exam."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"message": "You must qualify for Level 2 before taking the offline exam."},
+                                status=status.HTTP_404_NOT_FOUND)
         elif exam_type:
             exams = exams.filter(type=exam_type)
 
-        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id', flat=True)
+        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id',
+                                                                                                          flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
 
-        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id', flat=True)
+        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id',
+                                                                                                       flat=True)
         exams = exams.exclude(id__in=qualified_exam_ids)
 
         exam_set = exams.order_by('created_at').first()
@@ -1733,7 +1812,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 
 def insert_data(request):
@@ -1777,24 +1855,36 @@ def insert_data(request):
             "model": Exam,
             "field": "name",
             "data": [
-                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths", "total_marks": 100, "duration": 180},
-                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths", "total_marks": 50, "duration": 90},
-                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths", "total_marks": 200, "duration": 240},
-                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics", "total_marks": 100, "duration": 180},
-                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics", "total_marks": 50, "duration": 90},
-                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics", "total_marks": 50, "duration": 90},
-                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths", "total_marks": 50, "duration": 90},
-                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths", "total_marks": 50, "duration": 90},
-                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths", "total_marks": 200, "duration": 240},
-                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics", "total_marks": 100, "duration": 180},
-                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics", "total_marks": 50, "duration": 90},
-                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics", "total_marks": 50, "duration": 90},
+                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 100, "duration": 180},
+                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 200, "duration": 240},
+                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 100, "duration": 180},
+                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90},
+                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90},
+                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 200, "duration": 240},
+                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 100, "duration": 180},
+                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90},
+                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90},
             ]
         },
     }
 
     response_data = {}
-   
+
     # Insert class categories, levels, etc.
     for key, config in data_to_insert.items():
         model = config["model"]
@@ -1803,24 +1893,24 @@ def insert_data(request):
 
         added_count = 0
         for entry in entries:
-            if isinstance(entry, dict):  
+            if isinstance(entry, dict):
                 name = entry.get("name")
                 total_marks = entry.get("total_marks")
                 duration = entry.get("duration")
-                
+
                 class_category_name = entry.get("class_category")
-                level_name = entry.get("level") 
+                level_name = entry.get("level")
                 subject_name = entry.get("subject")
 
-                class_category = ClassCategory.objects.get(name=class_category_name)                
-                level = Level.objects.get(name=level_name)  
-                subject =Subject.objects.get(subject_name=subject_name)
+                class_category, created = ClassCategory.objects.get_or_create(name=class_category_name)
+                level, created = Level.objects.get_or_create(name=level_name)
+                subject, created = Subject.objects.get_or_create(subject_name=subject_name)
 
                 if not model.objects.filter(
-                    name=name,
-                    class_category=class_category,
-                    level=level,
-                    subject=subject,
+                        name=name,
+                        class_category=class_category,
+                        level=level,
+                        subject=subject,
                 ).exists():
                     model.objects.create(
                         name=name,
@@ -1831,64 +1921,17 @@ def insert_data(request):
                         subject=subject
                     )
                     added_count += 1
-                # else:
-                #     print(f"Duplicate entry")
-        response_data[key] = f"{added_count} entries added."
+            else:
+                if not model.objects.filter(**{field: entry}).exists():
+                    model.objects.create(**{field: entry})
+                    added_count += 1
 
         response_data[key] = {
             "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
             "added_count": added_count
         }
-    #     passkey_data = [
-    #     {
-    #         "user_id": 1,  
-    #         "exam_name": "Final Exam",  
-    #         "ispasscode": "online",
-    #         "status": False
-    #     },
-    #     {
-    #         "user_id": 2,  
-    #         "exam_name": "Semester Exam",
-    #         "ispasscode": "offline",
-    #         "status": True
-    #     },
-    #     {
-    #         "user_id": 1,  
-    #         "exam_name": "Mid Term", 
-    #         "ispasscode": "offline",
-    #         "status": False
-    #     },
-    # ]
-        
-#     passkey_added_count = 0
-#     for pk_data in passkey_data:
-#       user = CustomUser.objects.get(id=pk_data["user_id"])
-#       exam = Exam.objects.get(name=pk_data["exam_name"])
 
-#     if not Passkey.objects.filter(user=user, exam=exam, ispasscode=pk_data["ispasscode"]).exists():
-#         code = get_random_string(length=20)
-
-#         if not Passkey.objects.filter(code=code).exists():
-#             passkey = Passkey.objects.create(
-#                 user=user,
-#                 exam=exam,
-#                 ispasscode=pk_data["ispasscode"],
-#                 code=code,
-#                 status=pk_data["status"],
-#                 created_at=datetime.now()  
-#             )
-#             passkey_added_count += 1
-#         else:
-#             print(f"Passkey code already exists for user {user.id} and exam {exam.name}")
-#     else:
-#         print(f"Passkey already exists for user {user.id} and exam {exam.name} with passcode type {pk_data['ispasscode']}")
-
-#     response_data["passkeys"] = {
-#     "message": f'{passkey_added_count} passkeys added successfully.',
-#     "added_count": passkey_added_count
-# }
-         # Insert 5 Questions into the database
-    exams = Exam.objects.all()  
+    exams = Exam.objects.all()
     if exams.exists():
         questions_data = [
             {
@@ -1901,51 +1944,53 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-            "exam": exams[2], 
-            "time": 3,
-            "language": "English",
-            "text": "What is the full form of DBMS?",
-            "options": ["Database Management System", "Data Management System", "Database Maintenance System", "Data Backup Management System"],
-            "solution": "DBMS stands for Database Management System.",
-            "correct_option": 1
-        },
-        {
-            "exam": exams[3],  
-            "time": 2.5,
-            "language": "English",
-            "text": "Which of the following is a type of database model?",
-            "options": ["Hierarchical Model", "Relational Model", "Object-Oriented Model", "All of the above"],
-            "solution": "The correct answer is 'All of the above'. Each of these is a type of database model.",
-            "correct_option": 3
-        },
-        {
-            "exam": exams[4],  
-            "time": 3,
-            "language": "English",
-            "text": "Which SQL command is used to retrieve data from a database?",
-            "options": ["SELECT", "INSERT", "UPDATE", "DELETE"],
-            "solution": "The correct SQL command to retrieve data from a database is 'SELECT'.",
-            "correct_option": 1
-        },
-        
-        {
-            "exam": exams[5],  
-            "time": 3,
-            "language": "English",
-            "text": "What is normalization in DBMS?",
-            "options": ["The process of organizing data to reduce redundancy", "The process of copying data for backup", "The process of making data available online", "The process of encrypting data"],
-            "solution": "Normalization is the process of organizing data in a database to reduce redundancy and improve data integrity.",
-            "correct_option": 1
-        },
-        {
-            "exam": exams[6],  
-            "time": 2.5,
-            "language": "English",
-            "text": "Which of the following is a type of join in SQL?",
-            "options": ["INNER JOIN", "OUTER JOIN", "CROSS JOIN", "All of the above"],
-            "solution": "The correct answer is 'All of the above'. INNER JOIN, OUTER JOIN, and CROSS JOIN are all types of SQL joins.",
-            "correct_option": 3
-        },
+                "exam": exams[2],
+                "time": 3,
+                "language": "English",
+                "text": "What is the full form of DBMS?",
+                "options": ["Database Management System", "Data Management System", "Database Maintenance System",
+                            "Data Backup Management System"],
+                "solution": "DBMS stands for Database Management System.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[3],
+                "time": 2.5,
+                "language": "English",
+                "text": "Which of the following is a type of database model?",
+                "options": ["Hierarchical Model", "Relational Model", "Object-Oriented Model", "All of the above"],
+                "solution": "The correct answer is 'All of the above'. Each of these is a type of database model.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[4],
+                "time": 3,
+                "language": "English",
+                "text": "Which SQL command is used to retrieve data from a database?",
+                "options": ["SELECT", "INSERT", "UPDATE", "DELETE"],
+                "solution": "The correct SQL command to retrieve data from a database is 'SELECT'.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[5],
+                "time": 3,
+                "language": "English",
+                "text": "What is normalization in DBMS?",
+                "options": ["The process of organizing data to reduce redundancy",
+                            "The process of copying data for backup", "The process of making data available online",
+                            "The process of encrypting data"],
+                "solution": "Normalization is the process of organizing data in a database to reduce redundancy and improve data integrity.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[6],
+                "time": 2.5,
+                "language": "English",
+                "text": "Which of the following is a type of join in SQL?",
+                "options": ["INNER JOIN", "OUTER JOIN", "CROSS JOIN", "All of the above"],
+                "solution": "The correct answer is 'All of the above'. INNER JOIN, OUTER JOIN, and CROSS JOIN are all types of SQL joins.",
+                "correct_option": 3
+            },
             {
                 "exam": exams[7],
                 "time": 3.0,
@@ -1956,7 +2001,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[8],  
+                "exam": exams[8],
                 "time": 2.0,
                 "language": "English",
                 "text": "What is 5 + 5?",
@@ -1965,7 +2010,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "exam": exams[9],  
+                "exam": exams[9],
                 "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
@@ -1974,7 +2019,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "exam": exams[9],  
+                "exam": exams[9],
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
@@ -1983,15 +2028,15 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "exam": exams[10],  
+                "exam": exams[10],
                 "time": 2,
                 "language": "Hindi",
                 "text": "भारत का पहला प्रधानमंत्री कौन थे?",
                 "options": ["लाल बहादुर शास्त्री", "पंडित नेहरू", "इंदिरा गांधी", "राजीव गांधी"],
                 "solution": "भारत के पहले प्रधानमंत्री पंडित नेहरू थे।",
                 "correct_option": 2
-           },
-           {
+            },
+            {
                 "exam": exams[11],
                 "time": 2,
                 "language": "Hindi",
@@ -2050,7 +2095,8 @@ def insert_data(request):
                 "time": 2.5,
                 "language": "Hindi",
                 "text": "प्रकाश की गति क्या है?",
-                "options": ["3 × 10^6 मीटर/सेकेंड", "3 × 10^8 मीटर/सेकेंड", "3 × 10^9 मीटर/सेकेंड", "3 × 10^7 मीटर/सेकेंड"],
+                "options": ["3 × 10^6 मीटर/सेकेंड", "3 × 10^8 मीटर/सेकेंड", "3 × 10^9 मीटर/सेकेंड",
+                            "3 × 10^7 मीटर/सेकेंड"],
                 "solution": "प्रकाश की गति 3 × 10^8 मीटर/सेकेंड है।",
                 "correct_option": 2
             },
@@ -2082,214 +2128,268 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-            "exam": exams[8],
-            "time": 2.5,
-            "language": "English",
-            "text": "What is Newton's second law of motion?",
-            "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
-            "solution": "Newton's second law of motion is F = ma.",
-            "correct_option": 1
-        },
-        {
-            "exam": exams[9],
-            "time": 3.0,
-            "language": "English",
-            "text": "Which of the following is the largest planet in our solar system?",
-            "options": ["Earth", "Mars", "Jupiter", "Saturn"],
-            "solution": "Jupiter is the largest planet in our solar system.",
-            "correct_option": 3
-        },
-        {
-            "exam": exams[10],
-            "time": 2.0,
-            "language": "English",
-            "text": "Who is the author of the play 'Romeo and Juliet'?",
-            "options": ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"],
-            "solution": "The author of 'Romeo and Juliet' is William Shakespeare.",
-            "correct_option": 1
-        },
-         {
-        "exam": exams[1],
-        "time": 2.0,
-        "language": "English",
-        "text": "What is the chemical symbol for water?",
-        "options": ["H2O", "HO2", "O2H", "H2"],
-        "solution": "The chemical symbol for water is H2O.",
-        "correct_option": 1
-    },
-    {
-        "exam": exams[2],
-        "time": 3.0,
-        "language": "English",
-        "text": "Who proposed the theory of relativity?",
-        "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
-        "solution": "The theory of relativity was proposed by Albert Einstein.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[3],
-        "time": 2.5,
-        "language": "English",
-        "text": "What is the powerhouse of the cell?",
-        "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
-        "solution": "The mitochondria are known as the powerhouse of the cell.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[4],
-        "time": 2.0,
-        "language": "English",
-        "text": "What is the capital of France?",
-        "options": ["Berlin", "Madrid", "Paris", "Rome"],
-        "solution": "The capital of France is Paris.",
-        "correct_option": 3
-    },
-    {
-        "exam": exams[5],
-        "time": 3.0,
-        "language": "English",
-        "text": "What is the square root of 64?",
-        "options": ["6", "7", "8", "9"],
-        "solution": "The square root of 64 is 8.",
-        "correct_option": 3
-    },
-    {
-        "exam": exams[6],
-        "time": 2.5,
-        "language": "English",
-        "text": "Who wrote 'Romeo and Juliet'?",
-        "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
-        "solution": "'Romeo and Juliet' was written by William Shakespeare.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[7],
-        "time": 2.0,
-        "language": "English",
-        "text": "What is the boiling point of water at sea level?",
-        "options": ["90°C", "100°C", "110°C", "120°C"],
-        "solution": "The boiling point of water at sea level is 100°C.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[8],
-        "time": 3.0,
-        "language": "English",
-        "text": "Which planet is known as the Red Planet?",
-        "options": ["Venus", "Mars", "Jupiter", "Saturn"],
-        "solution": "Mars is known as the Red Planet.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[9],
-        "time": 2.5,
-        "language": "English",
-        "text": "What is the largest organ in the human body?",
-        "options": ["Liver", "Heart", "Skin", "Lungs"],
-        "solution": "The skin is the largest organ in the human body.",
-        "correct_option": 3
-    },
-    {
-        "exam": exams[10],
-        "time": 3.0,
-        "language": "English",
-        "text": "What is the value of π (pi) up to two decimal places?",
-        "options": ["3.12", "3.13", "3.14", "3.15"],
-        "solution": "The value of π (pi) up to two decimal places is 3.14.",
-        "correct_option": 3
-    },
-      {
-        "exam": exams[0],
-        "time": 2.5,
-        "language": "English",
-        "text": "What is the value of π (pi) up to two decimal places?",
-        "options": ["3.12", "3.14", "3.16", "3.18"],
-        "solution": "The value of π up to two decimal places is 3.14.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[1],
-        "time": 3,
-        "language": "English",
-        "text": "What is the square root of 144?",
-        "options": ["10", "11", "12", "13"],
-        "solution": "The square root of 144 is 12.",
-        "correct_option": 3
-    },
-    {
-        "exam": exams[2],
-        "time": 3,
-        "language": "English",
-        "text": "Solve: 5 + 3 × 2.",
-        "options": ["11", "16", "21", "13"],
-        "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
-        "correct_option": 1
-    },
-    {
-        "exam": exams[3],
-        "time": 3.5,
-        "language": "English",
-        "text": "What is 15% of 200?",
-        "options": ["25", "30", "35", "40"],
-        "solution": "15% of 200 is 30.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[4],
-        "time": 4,
-        "language": "English",
-        "text": "If x + 5 = 12, what is the value of x?",
-        "options": ["5", "6", "7", "8"],
-        "solution": "Subtracting 5 from both sides gives x = 7.",
-        "correct_option": 3
-    },
-    {
-        "exam": exams[5],
-        "time": 4,
-        "language": "English",
-        "text": "Solve: 9 × (3 + 2).",
-        "options": ["36", "40", "45", "50"],
-        "solution": "Using BODMAS, 9 × (3 + 2) = 45.",
-        "correct_option": 3
-    },
-    {
-        "exam": exams[6],
-        "time": 3.5,
-        "language": "English",
-        "text": "What is the perimeter of a rectangle with length 10 and width 5?",
-        "options": ["20", "25", "30", "35"],
-        "solution": "The perimeter of a rectangle is 2 × (length + width). So, 2 × (10 + 5) = 30.",
-        "correct_option": 3
-    },
-    {
-        "exam": exams[7],
-        "time": 4,
-        "language": "English",
-        "text": "What is the value of 2³?",
-        "options": ["6", "8", "9", "12"],
-        "solution": "2³ means 2 × 2 × 2 = 8.",
-        "correct_option": 2
-    },
-    {
-        "exam": exams[8],
-        "time": 3.5,
-        "language": "English",
-        "text": "What is the area of a triangle with base 8 and height 5?",
-        "options": ["20", "25", "30", "35"],
-        "solution": "The area of a triangle is ½ × base × height. So, ½ × 8 × 5 = 20.",
-        "correct_option": 1
-    },
-    {
-        "exam": exams[9],
-        "time": 3,
-        "language": "English",
-        "text": "What is the value of 100 ÷ 4?",
-        "options": ["20", "25", "30", "40"],
-        "solution": "100 ÷ 4 = 25.",
-        "correct_option": 2
-    }
-    ]
-        
+                "exam": exams[8],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is Newton's second law of motion?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "Newton's second law of motion is F = ma.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[9],
+                "time": 3.0,
+                "language": "English",
+                "text": "Which of the following is the largest planet in our solar system?",
+                "options": ["Earth", "Mars", "Jupiter", "Saturn"],
+                "solution": "Jupiter is the largest planet in our solar system.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[10],
+                "time": 2.0,
+                "language": "English",
+                "text": "Who is the author of the play 'Romeo and Juliet'?",
+                "options": ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"],
+                "solution": "The author of 'Romeo and Juliet' is William Shakespeare.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[1],
+                "time": 2.0,
+                "language": "English",
+                "text": "What is the chemical symbol for water?",
+                "options": ["H2O", "HO2", "O2H", "H2"],
+                "solution": "The chemical symbol for water is H2O.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[2],
+                "time": 3.0,
+                "language": "English",
+                "text": "Who proposed the theory of relativity?",
+                "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
+                "solution": "The theory of relativity was proposed by Albert Einstein.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[3],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the powerhouse of the cell?",
+                "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
+                "solution": "The mitochondria are known as the powerhouse of the cell.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[4],
+                "time": 2.0,
+                "language": "English",
+                "text": "What is the capital of France?",
+                "options": ["Berlin", "Madrid", "Paris", "Rome"],
+                "solution": "The capital of France is Paris.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[5],
+                "time": 3.0,
+                "language": "English",
+                "text": "What is the square root of 64?",
+                "options": ["6", "7", "8", "9"],
+                "solution": "The square root of 64 is 8.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[6],
+                "time": 2.5,
+                "language": "English",
+                "text": "Who wrote 'Romeo and Juliet'?",
+                "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                "solution": "'Romeo and Juliet'",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[1],
+                "time": 2.0,
+                "language": "English",
+                "text": "What is the chemical symbol for water?",
+                "options": ["H2O", "HO2", "O2H", "H2"],
+                "solution": "The chemical symbol for water is H2O.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[2],
+                "time": 3.0,
+                "language": "English",
+                "text": "Who proposed the theory of relativity?",
+                "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
+                "solution": "The theory of relativity was proposed by Albert Einstein.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[3],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the powerhouse of the cell?",
+                "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
+                "solution": "The mitochondria are known as the powerhouse of the cell.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[4],
+                "time": 2.0,
+                "language": "English",
+                "text": "What is the capital of France?",
+                "options": ["Berlin", "Madrid", "Paris", "Rome"],
+                "solution": "The capital of France is Paris.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[5],
+                "time": 3.0,
+                "language": "English",
+                "text": "What is the square root of 64?",
+                "options": ["6", "7", "8", "9"],
+                "solution": "The square root of 64 is 8.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[6],
+                "time": 2.5,
+                "language": "English",
+                "text": "Who wrote 'Romeo and Juliet'?",
+                "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                "solution": "'Romeo and Juliet' was written by William Shakespeare.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[7],
+                "time": 2.0,
+                "language": "English",
+                "text": "What is the boiling point of water at sea level?",
+                "options": ["90°C", "100°C", "110°C", "120°C"],
+                "solution": "The boiling point of water at sea level is 100°C.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[8],
+                "time": 3.0,
+                "language": "English",
+                "text": "Which planet is known as the Red Planet?",
+                "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+                "solution": "Mars is known as the Red Planet.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[9],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the largest organ in the human body?",
+                "options": ["Liver", "Heart", "Skin", "Lungs"],
+                "solution": "The skin is the largest organ in the human body.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[10],
+                "time": 3.0,
+                "language": "English",
+                "text": "What is the value of π (pi) up to two decimal places?",
+                "options": ["3.12", "3.13", "3.14", "3.15"],
+                "solution": "The value of π (pi) up to two decimal places is 3.14.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[0],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the value of π (pi) up to two decimal places?",
+                "options": ["3.12", "3.14", "3.16", "3.18"],
+                "solution": "The value of π up to two decimal places is 3.14.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[1],
+                "time": 3,
+                "language": "English",
+                "text": "What is the square root of 144?",
+                "options": ["10", "11", "12", "13"],
+                "solution": "The square root of 144 is 12.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[2],
+                "time": 3,
+                "language": "English",
+                "text": "Solve: 5 + 3 × 2.",
+                "options": ["11", "16", "21", "13"],
+                "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[3],
+                "time": 3.5,
+                "language": "English",
+                "text": "What is 15% of 200?",
+                "options": ["25", "30", "35", "40"],
+                "solution": "15% of 200 is 30.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[4],
+                "time": 4,
+                "language": "English",
+                "text": "If x + 5 = 12, what is the value of x?",
+                "options": ["5", "6", "7", "8"],
+                "solution": "Subtracting 5 from both sides gives x = 7.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[5],
+                "time": 4,
+                "language": "English",
+                "text": "Solve: 9 × (3 + 2).",
+                "options": ["36", "40", "45", "50"],
+                "solution": "Using BODMAS, 9 × (3 + 2) = 45.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[6],
+                "time": 3.5,
+                "language": "English",
+                "text": "What is the perimeter of a rectangle with length 10 and width 5?",
+                "options": ["20", "25", "30", "35"],
+                "solution": "The perimeter of a rectangle is 2 × (length + width). So, 2 × (10 + 5) = 30.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[7],
+                "time": 4,
+                "language": "English",
+                "text": "What is the value of 2³?",
+                "options": ["6", "8", "9", "12"],
+                "solution": "2³ means 2 × 2 × 2 = 8.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[8],
+                "time": 3.5,
+                "language": "English",
+                "text": "What is the area of a triangle with base 8 and height 5?",
+                "options": ["20", "25", "30", "35"],
+                "solution": "The area of a triangle is ½ × base × height. So, ½ × 8 × 5 = 20.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[9],
+                "time": 3,
+                "language": "English",
+                "text": "What is the value of 100 ÷ 4?",
+                "options": ["20", "25", "30", "40"],
+                "solution": "100 ÷ 4 = 25.",
+                "correct_option": 2
+            }
+        ]
+
         question_added_count = 0
         for question in questions_data:
             existing_question = Question.objects.filter(
@@ -2317,22 +2417,27 @@ def insert_data(request):
         }
 
     return JsonResponse(response_data)
-class ReportViewSet(viewsets.ModelViewSet):    
+
+
+class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= Report.objects.all()
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Report.objects.all()
     serializer_class = ReportSerializer
 
-    @action (detail=False,methods=['get'])
-    def count(self,request):
+    @action(detail=False, methods=['get'])
+    def count(self, request):
         count = get_count(Report)
-        return Response({"Count":count})
+        return Response({"Count": count})
+
     def create(self, request, *args, **kwargs):
         return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class SelfReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -2342,19 +2447,21 @@ class SelfReportViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def list(self, request, *args, **kwargs):
-        return Response({"error": "GET method is not allowed on this endpoint."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response({"error": "GET method is not allowed on this endpoint."},
+                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request):
         user = request.user
         question_id = request.data.get('question')
-        
+
         try:
             question = Question.objects.get(id=question_id)
         except Question.DoesNotExist:
             return Response({"error": "Question not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         if Report.objects.filter(user=user, question=question).exists():
-            return Response({"error": "You have already submitted a report for this question."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "You have already submitted a report for this question."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()
         data['user'] = user.id
@@ -2366,11 +2473,14 @@ class SelfReportViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class PasskeyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Passkey.objects.all()  
+    queryset = Passkey.objects.all()
     serializer_class = PasskeySerializer
+
 
 class GeneratePasskeyView(APIView):
     def post(self, request):
@@ -2392,12 +2502,12 @@ class GeneratePasskeyView(APIView):
         if not results.exists():
             return Response({"error": "No exam results found for this user."}, status=status.HTTP_400_BAD_REQUEST)
 
-        
         # Check qualification status across all attempts
         qualified = results.filter(isqualified=True).exists()
         if not qualified:
-            return Response({"error": "User did not score the required 60% or above in any attempt."}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({"error": "User did not score the required 60% or above in any attempt."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         # Check if user qualifies at level 2 and if the qualification type is 'online'
         level_2_results = results.filter(isqualified=True, exam__level_id=2)
         qualified_level_2_offline = level_2_results.filter(exam__type="online").exists()
@@ -2407,7 +2517,8 @@ class GeneratePasskeyView(APIView):
         # Check if a passkey already exists
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
-            return Response({"error": "A passkey has already been generated for this exam."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "A passkey has already been generated for this exam."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Generate a new passkey
         passkey = random.randint(1000, 9999)
@@ -2445,6 +2556,7 @@ class GeneratePasskeyView(APIView):
 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
 
+
 class VerifyPasscodeView(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')
@@ -2458,24 +2570,13 @@ class VerifyPasscodeView(APIView):
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
         if passkey_obj.is_valid():
-            passkey_obj.status = False  
+            passkey_obj.status = False
             passkey_obj.save()
             return Response({
                 "message": "Passcode verified successfully.",
                 "status": False
-                }, status=status.HTTP_200_OK)
+            }, status=status.HTTP_200_OK)
         else:
-            passkey_obj.status = False  
+            passkey_obj.status = False
             passkey_obj.save()
             return Response({"error": "Passcode expired."}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-   
-
-
-
-
-    
