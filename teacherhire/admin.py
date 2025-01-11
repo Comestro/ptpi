@@ -102,4 +102,4 @@ class ExamAdmin(admin.ModelAdmin):
 
 @admin.register(Passkey)
 class PasskeyAdmin(admin.ModelAdmin):
-    list_display = ['user', 'exam', 'code','created_at']
+    list_display = ['user', 'exam', 'code','status','created_at']
