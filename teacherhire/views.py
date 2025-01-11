@@ -525,13 +525,10 @@ class SubjectViewSet(viewsets.ModelViewSet):
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 class TeacherViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= Teacher.objects.all().select_related('user')
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset= Teacher.objects.all()
     serializer_class = TeacherSerializer
 
-    # def create(self,request):
-    #     return create_object(TeacherSerializer,request.data,Teacher)
-    
     @action (detail=False,methods=['get'])
     def count(self,request):
         count = get_count(Teacher)
@@ -547,9 +544,6 @@ class SingleTeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
-
-    def create(self, request, *args, **kwargs):
-        return create_auth_data(self, TeacherSerializer, request.data, Teacher)
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
