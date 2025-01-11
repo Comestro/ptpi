@@ -340,7 +340,7 @@ class TeacherExamResult(models.Model):
     is_unanswered = models.IntegerField(null=True, blank=True)
     incorrect_answer = models.IntegerField(default=0, null=True, blank=True)
     isqulified = models.BooleanField(default=False)
-    attempt = models.IntegerField(default=3)
+    attempt = models.IntegerField(default=10)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
