@@ -1739,7 +1739,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        exam_type = request.query_params.get('type', None)
+        type = request.query_params.get('type', None)
 
         exams = Exam.objects.all()
 
@@ -1769,22 +1769,41 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             if level_id == '1':
                 exams = exams.filter(level__id=1)
             elif level_id == '2':
+                if type:
+                    if type not in ['online', 'offline']:
+                        return Response({"message": "Invalid type. Choose 'online' or 'offline'."}, status=status.HTTP_400_BAD_REQUEST)
+
+                    if type == 'offline' and not qualified_level_2:
+                        return Response({"message": "You must qualify Level 2 online exam before taking the offline exam."},
+                                        status=status.HTTP_404_NOT_FOUND)
+
+                    exams = exams.filter(type=type)
                 if qualified_level_1:
-                    exams = exams.filter(level__id=2)
+                    level_2_exams = exams.filter(level__id=2)
+                    attempted_exam_ids = TeacherExamResult.objects.filter(user=user).values_list('exam_id', flat=True)
+                    level_2_exams = level_2_exams.exclude(id__in=attempted_exam_ids)
+
+                    online_exam = level_2_exams.filter(type='online').order_by('created_at').first()
+                    
+                    offline_exam = level_2_exams.filter(type='offline').order_by('created_at').first()
+                    if not online_exam and not offline_exam:
+                        return Response({"message": "No new exams available for Level 2."},
+                                        status=status.HTTP_404_NOT_FOUND)
+
+                    # Serialize exams separately
+                    response_data = {}
+
+                    if online_exam:
+                        response_data['online_exam'] = ExamSerializer(online_exam).data
+                    if offline_exam:
+                        response_data['offline_exam'] = ExamSerializer(offline_exam).data
+
+                    return Response(response_data, status=status.HTTP_200_OK)
                 else:
                     return Response({"message": "You must complete Level 1 before accessing Level 2."},
                                     status=status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"error": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if exam_type == 'offline':
-            if qualified_level_2:
-                exams = exams.filter(level__id=2, type='offline')
-            else:
-                return Response({"message": "You must qualify for Level 2 before taking the offline exam."},
-                                status=status.HTTP_404_NOT_FOUND)
-        elif exam_type:
-            exams = exams.filter(type=exam_type)
 
         unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id',
                                                                                                           flat=True)
