@@ -321,8 +321,8 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     #     return Response({"detail": "This address not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class EducationalQulificationViewSet(viewsets.ModelViewSet):   
-    permission_classes = [IsAuthenticated]    
-    authentication_classes = [ExpiringTokenAuthentication] 
+    # permission_classes = [IsAuthenticated]    
+    # authentication_classes = [ExpiringTokenAuthentication] 
     serializer_class = EducationalQualificationSerializer 
     queryset = EducationalQualification.objects.all()
 
@@ -396,8 +396,8 @@ class LevelViewSet(viewsets.ModelViewSet):
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
 class SkillViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    # permission_classes = [IsAuthenticated]
+    # authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Skill.objects.all()    
     serializer_class = SkillSerializer
 
@@ -488,8 +488,8 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class SubjectViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated] 
-    authentication_classes = [ExpiringTokenAuthentication] 
+    # permission_classes = [IsAuthenticated] 
+    # authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     
@@ -501,15 +501,12 @@ class SubjectViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-class TeacherViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= Teacher.objects.all().select_related('user')
+class TeacherViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated ] 
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
 
-    # def create(self,request):
-    #     return create_object(TeacherSerializer,request.data,Teacher)
-    
     @action (detail=False,methods=['get'])
     def count(self,request):
         count = get_count(Teacher)
@@ -561,8 +558,8 @@ class SingleTeacherViewSet(viewsets.ModelViewSet):
             raise Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
        
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    # permission_classes = [IsAuthenticated]
+    # authentication_classes = [ExpiringTokenAuthentication] 
     queryset= ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
 
@@ -850,8 +847,8 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)    
 
 class RoleViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication] 
+    # permission_classes = [IsAuthenticated]
+    # authentication_classes = [ExpiringTokenAuthentication] 
     queryset= Role.objects.all()
     serializer_class = RoleSerializer
     def create(self,request):
@@ -2468,8 +2465,6 @@ class VerifyPasscodeView(APIView):
             passkey_obj.status = False  
             passkey_obj.save()
             return Response({"error": "Passcode expired."}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 

@@ -228,87 +228,99 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Pincode must be exactly 6 digits.")
         return value
    
-class TeacherSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    aadhar_no = serializers.CharField(max_length=12, required=False, allow_null=True)
-    fullname = serializers.CharField(max_length=20, required=False, allow_null=True)
-    phone = serializers.CharField(max_length=10, required=False, allow_null=True)
-    alternate_phone = serializers.CharField(max_length=10, required=False, allow_null=True)
-    date_of_birth = serializers.DateField(required=False, allow_null=True)
+# serializers.py
 
-    address = serializers.SerializerMethodField()
-    teacher_experience = serializers.SerializerMethodField()
-    teacherQualification = serializers.SerializerMethodField()
-    teacherSkill = serializers.SerializerMethodField()
+class TeacherSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()  
+    skill = serializers.StringRelatedField()
+    subject = serializers.StringRelatedField()
+    educationalQualification = serializers.StringRelatedField()
+    role = serializers.StringRelatedField()
+    classCategory = serializers.StringRelatedField()
 
     class Meta:
         model = Teacher
-        fields = [
-            'id', 'user', 'fullname', 'gender', 'religion', 'nationality',
-            'aadhar_no', 'phone', 'alternate_phone', 'verified',
-            'class_categories', 'rating', 'date_of_birth',
-            'availability_status', 'address', 'teacher_experience', 'teacherQualification', 'teacherSkill'
-        ]
+        fields = ['id', 'user', 'skill', 'subject', 'educationalQualification', 'role', 'classCategory']
 
-    def validate_fullname(self, value):
-        if value is not None:
-            value = value.strip()
-            if len(value) < 3:
-                raise serializers.ValidationError("Full name must be at least 3 characters.")
-        return value
+    # aadhar_no = serializers.CharField(max_length=12, required=False, allow_null=True)
+    # fullname = serializers.CharField(max_length=20, required=False, allow_null=True)
+    # phone = serializers.CharField(max_length=10, required=False, allow_null=True)
+    # alternate_phone = serializers.CharField(max_length=10, required=False, allow_null=True)
+    # date_of_birth = serializers.DateField(required=False, allow_null=True)
 
-    def validate_phone(self, value):
-        return self.validate_phone_number(value)
+    # address = serializers.SerializerMethodField()
+    # teacher_experience = serializers.SerializerMethodField()
+    # teacherQualification = serializers.SerializerMethodField()
+    # teacherSkill = serializers.SerializerMethodField()
 
-    def validate_alternate_phone(self, value):
-        return self.validate_phone_number(value)
+    # class Meta:
+    #     model = Teacher
+    #     fields = [
+    #         'id', 'user', 'fullname', 'gender', 'religion', 'nationality',
+    #         'aadhar_no', 'phone', 'alternate_phone', 'verified',
+    #         'class_categories', 'rating', 'date_of_birth',
+    #         'availability_status', 'address', 'teacher_experience', 'teacherQualification', 'teacherSkill'
+    #     ]
 
-    def validate_phone_number(self, value):
-        if value:
-            cleaned_value = re.sub(r'[^0-9]', '', value)
-            if len(cleaned_value) != 10:
-                raise serializers.ValidationError("Phone number must be exactly 10 digits.")
-            # if Teacher.objects.filter(phone=value).exists():
-            #     raise serializers.ValidationError("This Phone no. is alreary exist.")
-            if not cleaned_value.startswith(('6', '7', '8', '9')):
-                raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
-            return cleaned_value
-        return value
+    # def validate_fullname(self, value):
+    #     if value is not None:
+    #         value = value.strip()
+    #         if len(value) < 3:
+    #             raise serializers.ValidationError("Full name must be at least 3 characters.")
+    #     return value
 
-    def validate_aadhar_no(self, value):
-        if value:
-            if not re.match(r'^\d{12}$', value):
-                raise serializers.ValidationError("Aadhar number must be exactly 12 digits.")
-            # if Teacher.objects.filter(aadhar_no=value).exists():
-            #     raise serializers.ValidationError("This Aadhar no. is alreary exist.")
-        return value
+    # def validate_phone(self, value):
+    #     return self.validate_phone_number(value)
+
+    # def validate_alternate_phone(self, value):
+    #     return self.validate_phone_number(value)
+
+    # def validate_phone_number(self, value):
+    #     if value:
+    #         cleaned_value = re.sub(r'[^0-9]', '', value)
+    #         if len(cleaned_value) != 10:
+    #             raise serializers.ValidationError("Phone number must be exactly 10 digits.")
+    #         # if Teacher.objects.filter(phone=value).exists():
+    #         #     raise serializers.ValidationError("This Phone no. is alreary exist.")
+    #         if not cleaned_value.startswith(('6', '7', '8', '9')):
+    #             raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
+    #         return cleaned_value
+    #     return value
+
+    # def validate_aadhar_no(self, value):
+    #     if value:
+    #         if not re.match(r'^\d{12}$', value):
+    #             raise serializers.ValidationError("Aadhar number must be exactly 12 digits.")
+    #         # if Teacher.objects.filter(aadhar_no=value).exists():
+    #         #     raise serializers.ValidationError("This Aadhar no. is alreary exist.")
+    #     return value
     
-    # def validate(self, data):
-    #     user = data.get('user')
-    #     if user and Teacher.objects.filter(user=user).exists():
-    #         raise serializers.ValidationError({"user": "A teacher entry for this user already exists."})
-    #     return data 
+    # # def validate(self, data):
+    # #     user = data.get('user')
+    # #     if user and Teacher.objects.filter(user=user).exists():
+    # #         raise serializers.ValidationError({"user": "A teacher entry for this user already exists."})
+    # #     return data 
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
-        return representation
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     representation['user'] = UserSerializer(instance.user).data
+    #     return representation
 
-    def get_address(self, obj):
-        addresses = TeachersAddress.objects.filter(user=obj.user)
-        return TeachersAddressSerializer(addresses, many=True).data
+    # def get_address(self, obj):
+    #     addresses = TeachersAddress.objects.filter(user=obj.user)
+    #     return TeachersAddressSerializer(addresses, many=True).data
 
-    def get_teacher_experience(self, obj):
-        teacher_experiences = TeacherExperiences.objects.filter(user=obj.user)
-        return TeacherExperiencesSerializer(teacher_experiences, many=True).data
+    # def get_teacher_experience(self, obj):
+    #     teacher_experiences = TeacherExperiences.objects.filter(user=obj.user)
+    #     return TeacherExperiencesSerializer(teacher_experiences, many=True).data
 
-    def get_teacherQualification(self, obj):
-        teacherQualifications = TeacherQualification.objects.filter(user=obj.user)
-        return TeacherQualificationSerializer(teacherQualifications, many=True).data
+    # def get_teacherQualification(self, obj):
+    #     teacherQualifications = TeacherQualification.objects.filter(user=obj.user)
+    #     return TeacherQualificationSerializer(teacherQualifications, many=True).data
 
-    def get_teacherSkill(self, obj):
-        teacherSkills = TeacherSkill.objects.filter(user=obj.user)
-        return TeacherSkillSerializer(teacherSkills, many=True).data
+    # def get_teacherSkill(self, obj):
+    #     teacherSkills = TeacherSkill.objects.filter(user=obj.user)
+    #     return TeacherSkillSerializer(teacherSkills, many=True).data
 
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)

@@ -97,37 +97,7 @@ class ClassCategory(models.Model):
     def __str__(self):
         return self.name
 
-class Teacher(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    fullname = models.CharField(max_length=255, null=True, blank=True)
-    gender = models.CharField(
-        max_length=10, null=True, blank=True,
-        choices=[
-            ("Female", "Female"),
-            ("Male", "Male"),
-            ("other", "other"),
-        ]
-    )
-    religion = models.CharField(max_length=100, null=True, blank=True)
-    nationality = models.CharField(
-        max_length=100, null=True, blank=True,
-        choices=[
-            ("Indian", "Indian"),
-            ("other", "other"),
-        ]
-    )
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
-    aadhar_no = models.CharField(max_length=12, unique=True, null=True, blank=True)
-    phone = models.CharField(max_length=15, null=True, blank=True)
-    alternate_phone = models.CharField(max_length=15, null=True, blank=True)
-    verified = models.BooleanField(default=False)
-    class_categories = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, null=True, blank=True)
-    rating = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
-    date_of_birth = models.DateField(null=True, blank=True)
-    availability_status = models.CharField(max_length=50, default='Available')
 
-    def __str__(self):
-        return self.user.username
 
 class EducationalQualification(models.Model):
     name = models.CharField(max_length=255, unique=True, null=True, blank=True)
@@ -182,7 +152,18 @@ class Skill(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Teacher(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    skill = models.ForeignKey(Skill,on_delete=models.CASCADE,null=True)
+    subject = models.ForeignKey(Subject,on_delete=models.CASCADE,null=True)
+    educationalQualification= models.ForeignKey(EducationalQualification,on_delete=models.CASCADE,null=True)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, related_name='teachers')
+    classCategory = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, null=True, related_name='teachers')
 
+    def __str__(self):
+        return self.user.username
 class Level(models.Model):
     name = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
