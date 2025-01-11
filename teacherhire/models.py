@@ -339,7 +339,7 @@ class TeacherExamResult(models.Model):
     correct_answer = models.IntegerField(default=0, null=True, blank=True)
     is_unanswered = models.IntegerField(null=True, blank=True)
     incorrect_answer = models.IntegerField(default=0, null=True, blank=True)
-    isqulified = models.BooleanField(default=False)
+    isqualified = models.BooleanField(default=False)
     attempt = models.IntegerField(default=10)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -358,14 +358,14 @@ class TeacherExamResult(models.Model):
 
     # def get_level(self):
     #     percentage = self.calculate_percentage()
-    #     if self.isqulified and percentage >= 60:
+    #     if self.isqualified and percentage >= 60:
     #         return "2nd Level"
-    #     # elif self.isqulified:
+    #     # elif self.isqualified:
     #     return "1st Level"
     #     # return "not_qualified"
 
     def save(self, *args, **kwargs):
-        self.isqulified = self.get_()
+        self.isqualified = self.get_()
         if self.pk is None:  # Handle attempts only for new entries
             last_result = TeacherExamResult.objects.filter(
                 user=self.user

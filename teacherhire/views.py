@@ -1124,8 +1124,8 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Authentication credentials were not provided."}, status=401)
 
         # Example counts
-        level1_count = TeacherExamResult.objects.filter(user=user, isqulified=True).count()
-        level2_count = TeacherExamResult.objects.filter(user=user, isqulified=False).count()
+        level1_count = TeacherExamResult.objects.filter(user=user, isqualified=True).count()
+        level2_count = TeacherExamResult.objects.filter(user=user, isqualified=False).count()
 
         response_data = {
             "level1": level1_count,
@@ -1548,7 +1548,7 @@ class CheckoutView(APIView):
         user_subjects = user_preference.prefered_subject.all()
         level_1_subjects = [{"subject_id": subject.id, "subject_name":subject.subject_name} for subject in user_subjects]
 
-        qualified_exams = TeacherExamResult.objects.filter(user=user, isqulified=True)
+        qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
 
         level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'),subject_name=F('exam__subject__subject_name')).distinct()
         if qualified_exams:
@@ -1698,8 +1698,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         exams = exams.filter(class_category=teacher_class_category.class_category)
 
         # Check qualification for Level 1 and Level 2 exams
-        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
-        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
+        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
+        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
 
         # Handle level filter
         if level_id:
@@ -1721,10 +1721,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         elif exam_type:
             exams = exams.filter(type=exam_type)
 
-        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=False).values_list('exam_id', flat=True)
+        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
 
-        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=True).values_list('exam_id', flat=True)
+        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=qualified_exam_ids)
 
         exam_set = exams.order_by('created_at').first()
@@ -2394,12 +2394,12 @@ class GeneratePasskeyView(APIView):
 
         
         # Check qualification status across all attempts
-        qualified = results.filter(isqulified=True).exists()
+        qualified = results.filter(isqualified=True).exists()
         if not qualified:
             return Response({"error": "User did not score the required 60% or above in any attempt."}, status=status.HTTP_400_BAD_REQUEST)
         
         # Check if user qualifies at level 2 and if the qualification type is 'online'
-        level_2_results = results.filter(isqulified=True, exam__level_id=2)
+        level_2_results = results.filter(isqualified=True, exam__level_id=2)
         qualified_level_2_offline = level_2_results.filter(exam__type="online").exists()
         if not qualified_level_2_offline:
             return Response({"error": "User did not qualify at level 2 online."}, status=status.HTTP_400_BAD_REQUEST)
