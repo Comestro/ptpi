@@ -2569,31 +2569,6 @@ class ApprovePasscodeView(APIView):
  
         return Response({"message": "Passcode approved successfully."}, status=status.HTTP_200_OK)
  
- 
-# class VerifyPasscodeView(APIView):
-#     def post(self, request):
-#         user_id = request.data.get('user_id')
-#         exam_id = request.data.get('exam_id')
-#         entered_passcode = request.data.get('passcode')
- 
-#         try:
-#             # Get the passkey record from the database
-#             passkey_obj = Passkey.objects.get(user_id=user_id, exam__id=exam_id, code=entered_passcode)
-#         except Passkey.DoesNotExist:
-#             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
- 
-#         if passkey_obj.is_valid():
-#             passkey_obj.status = False
-#             passkey_obj.save()
-#             return Response({
-#                 "message": "Passcode verified successfully.",
-#                 "status": False
-#             }, status=status.HTTP_200_OK)
-#         else:
-#             passkey_obj.status = False
-#             passkey_obj.save()
-#             return Response({"error": "Passcode expired."}, status=status.HTTP_400_BAD_REQUEST)
- 
 class VerifyPasscodeView(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')
