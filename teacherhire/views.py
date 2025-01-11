@@ -2506,7 +2506,7 @@ class GeneratePasskeyView(APIView):
         qualified = results.filter(isqualified=True).exists()
         if not qualified:
             return Response({"error": "User did not score the required 60% or above in any attempt."},
-                            status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_400_BAD_REQUEST)
 
         # Check if user qualifies at level 2 and if the qualification type is 'online'
         level_2_results = results.filter(isqualified=True, exam__level_id=2)
@@ -2556,6 +2556,49 @@ class GeneratePasskeyView(APIView):
 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
 
+class ApprovePasscodeView(APIView):
+    #permission_classes = [IsAdminPermission]  # Only accessible by admin users
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        exam_id = request.data.get('exam_id')
+
+        try:
+            # Fetch the passkey object
+            passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id)
+        except Passkey.DoesNotExist:
+            return Response({"error": "Passkey not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Approve the passkey
+        passkey_obj.status = True
+        passkey_obj.save()
+
+        return Response({"message": "Passcode approved successfully."}, status=status.HTTP_200_OK)
+
+
+# class VerifyPasscodeView(APIView):
+#     def post(self, request):
+#         user_id = request.data.get('user_id')
+#         exam_id = request.data.get('exam_id')
+#         entered_passcode = request.data.get('passcode')
+
+#         try:
+#             # Get the passkey record from the database
+#             passkey_obj = Passkey.objects.get(user_id=user_id, exam__id=exam_id, code=entered_passcode)
+#         except Passkey.DoesNotExist:
+#             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if passkey_obj.is_valid():
+#             passkey_obj.status = False
+#             passkey_obj.save()
+#             return Response({
+#                 "message": "Passcode verified successfully.",
+#                 "status": False
+#             }, status=status.HTTP_200_OK)
+#         else:
+#             passkey_obj.status = False
+#             passkey_obj.save()
+#             return Response({"error": "Passcode expired."}, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
@@ -2563,20 +2606,23 @@ class VerifyPasscodeView(APIView):
         exam_id = request.data.get('exam_id')
         entered_passcode = request.data.get('passcode')
 
+        if not user_id or not exam_id or not entered_passcode:
+            return Response({"error": "Missing required fields: user_id, exam_id, or passcode."},
+            status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            # Get the passkey record from the database
-            passkey_obj = Passkey.objects.get(user_id=user_id, exam__id=exam_id, code=entered_passcode)
+            # Fetch the passkey objectIsAdminUser
+            passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode)
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if passkey_obj.is_valid():
-            passkey_obj.status = False
-            passkey_obj.save()
-            return Response({
-                "message": "Passcode verified successfully.",
-                "status": False
-            }, status=status.HTTP_200_OK)
-        else:
-            passkey_obj.status = False
-            passkey_obj.save()
-            return Response({"error": "Passcode expired."}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if the passkey is approved by the admin
+        if not passkey_obj.status:
+            return Response({"error": "Passcode is not approved by the admin ."},
+            status=status.HTTP_400_BAD_REQUEST)
+
+        # Mark the passkey as used after successful validation
+        passkey_obj.status = False
+        passkey_obj.save()
+
+        return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)

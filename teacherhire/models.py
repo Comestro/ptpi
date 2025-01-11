@@ -420,10 +420,6 @@ class Passkey(models.Model):
     status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def is_valid(self):
-        # Check if the passkey is still valid (e.g., 10 minutes expiration)
-        expiration_time = self.created_at + timedelta(minutes=10)
-        return self.status and now() < expiration_time
 
     def __str__(self):
         return f"{self.code} - {self.exam}"

@@ -61,6 +61,8 @@ urlpatterns = [
     path('logout/', LogoutUser.as_view()),
     path('insert/data/', insert_data, name='insert_data'),
     path('generate-passkey/', GeneratePasskeyView.as_view(), name='generate_passkey'),
+    path('approve-passkey/', ApprovePasscodeView.as_view(), name='approve_passkey'),
+
     path('verify-passcode/', VerifyPasscodeView.as_view(), name='verify_passcode'),
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
