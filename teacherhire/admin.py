@@ -36,7 +36,7 @@ class TeacherClassCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherExamResult)
 class TeacherExamResultAdmin(admin.ModelAdmin):
-    list_display = ['user', 'exam', 'correct_answer', 'is_unanswered', 'incorrect_answer', 'isqualified', 'attempt']
+    list_display = ['user', 'exam', 'correct_answer', 'is_unanswered', 'incorrect_answer', 'isqualified']
 
 @admin.register(JobPreferenceLocation)
 class JobPreferenceLocationAdmin(admin.ModelAdmin):
