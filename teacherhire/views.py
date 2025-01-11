@@ -2490,12 +2490,12 @@ class GeneratePasskeyView(APIView):
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
- 
+
         # Check if the user has qualified in any attempt
         results = TeacherExamResult.objects.filter(user=user, exam=exam)
         if not results.exists():
             return Response({"error": "No exam results found for this user."}, status=status.HTTP_400_BAD_REQUEST)
- 
+
         # Check qualification status across all attempts
         qualified = results.filter(isqualified=True).exists()
         if not qualified:
@@ -2589,10 +2589,10 @@ class VerifyPasscodeView(APIView):
         if not passkey_obj.status:
             return Response({"error": "Passcode is not approved by the admin ."},
             status=status.HTTP_400_BAD_REQUEST)
- 
+
         # Mark the passkey as used after successful validation
         passkey_obj.status = False
         passkey_obj.save()
- 
+
         return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)
  
