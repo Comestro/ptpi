@@ -1646,12 +1646,6 @@ class ExamViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework import status
-from django.db.models import F
-import random
 
 class SelfExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1666,8 +1660,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         exam = self.get_object()
         language = request.query_params.get('language', None)
 
-        # Randomize questions for each request
-        questions = list(exam.questions.all())  # Convert to list to shuffle
+        questions = list(exam.questions.all())
 
         if language:
             if language not in ['Hindi', 'English']:
@@ -1685,15 +1678,17 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         user = request.user
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        exam_type = request.query_params.get('type', None)
+        exam_type = request.query_params.get('type', None) 
 
         exams = Exam.objects.all()
 
+        # If no subject_id is provided, return error
         if not subject_id:
             return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
 
         exams = exams.filter(subject_id=subject_id)
 
+        # Get teacher class category preference
         teacher_class_category = Preference.objects.filter(user=user).first()
         if not teacher_class_category:
             return Response(
@@ -1702,9 +1697,11 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             )
         exams = exams.filter(class_category=teacher_class_category.class_category)
 
+        # Check qualification for Level 1 and Level 2 exams
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
 
+        # Handle level filter
         if level_id:
             if level_id == '1':
                 exams = exams.filter(level__id=1)
@@ -1716,29 +1713,28 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             else:
                 return Response({"error": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Exclude exams that the user has already qualified for
-        unqualified_exam_ids = TeacherExamResult.objects.filter(
-            user=user,
-            isqulified=False
-        ).values_list('exam_id', flat=True)
+        if exam_type == 'offline':
+            if qualified_level_2:
+                exams = exams.filter(level__id=2, type='offline')
+            else:
+                return Response({"message": "You must qualify for Level 2 before taking the offline exam."}, status=status.HTTP_404_NOT_FOUND)
+        elif exam_type:
+            exams = exams.filter(type=exam_type)
 
+        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=False).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
 
-        # Ensure the user doesn't retake an exam they've already qualified for
-        qualified_exam_ids = TeacherExamResult.objects.filter(
-            user=user,
-            isqulified=True
-        ).values_list('exam_id', flat=True)
-
+        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqulified=True).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=qualified_exam_ids)
 
-        # Check for available exams after filtering
         exam_set = exams.order_by('created_at').first()
         if not exam_set:
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ExamSerializer(exam_set)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 def insert_data(request):
     data_to_insert = {
