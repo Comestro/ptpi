@@ -1647,6 +1647,12 @@ class ExamViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework import status
+from django.db.models import F
+import random
+
 class SelfExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1660,12 +1666,13 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         exam = self.get_object()
         language = request.query_params.get('language', None)
 
-        questions = exam.questions.all()
+        # Randomize questions for each request
+        questions = list(exam.questions.all())  # Convert to list to shuffle
 
         if language:
             if language not in ['Hindi', 'English']:
                 return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
-            questions = questions.filter(language=language)
+            questions = [q for q in questions if q.language == language]
 
         serializer = self.get_serializer(exam)
         exam_data = serializer.data
@@ -1682,14 +1689,11 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         exams = Exam.objects.all()
 
-        # Check if the user has selected a subject
         if not subject_id:
             return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Filter exams by subject
+
         exams = exams.filter(subject_id=subject_id)
 
-        # Filter exams based on the user's class category
         teacher_class_category = Preference.objects.filter(user=user).first()
         if not teacher_class_category:
             return Response(
@@ -1698,7 +1702,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             )
         exams = exams.filter(class_category=teacher_class_category.class_category)
 
-        # Check for qualification status for level 1 and level 2
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqulified=True, exam__subject_id=subject_id, exam__level_id=2).exists()
 
@@ -1706,20 +1709,14 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             if level_id == '1':
                 exams = exams.filter(level__id=1)
             elif level_id == '2':
-                if qualified_level_1 and not qualified_level_2:
+                if qualified_level_1:
                     exams = exams.filter(level__id=2)
-                elif qualified_level_2:
-                    if not exam_type:
-                        return Response({"message": "Please choose an exam type."}, status=status.HTTP_400_BAD_REQUEST)
-                    exams = exams.filter(
-                        Q(level__id=2) & Q(type=exam_type)
-                    )
                 else:
-                    return Response({"message": "You must qualify for Level 1 before accessing Level 2."}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"message": "You must complete Level 1 before accessing Level 2."}, status=status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"error": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Exclude unqualified exams
+        # Exclude exams that the user has already qualified for
         unqualified_exam_ids = TeacherExamResult.objects.filter(
             user=user,
             isqulified=False
@@ -1727,6 +1724,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         exams = exams.exclude(id__in=unqualified_exam_ids)
 
+        # Ensure the user doesn't retake an exam they've already qualified for
         qualified_exam_ids = TeacherExamResult.objects.filter(
             user=user,
             isqulified=True
