@@ -523,22 +523,63 @@ class SubjectViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-class TeacherViewSet(viewsets.ModelViewSet):    
+class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset= Teacher.objects.all()
+    queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
 
-    @action (detail=False,methods=['get'])
-    def count(self,request):
-        count = get_count(Teacher)
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = Teacher.objects.count()
         return Response({"Count": count})
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
-        return Response({"message": "Teacher deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    @action(detail=False, methods=['get'])
+    def teachers(self, request):
+        skill_id = request.query_params.get('level', None)
+        location_id = request.query_params.get('location', None)
+        educational_qualification = request.query_params.get('educationalQualification', None)
+        address = request.query_params.get('address', None)
+        
+        queryset = Teacher.objects.all()
 
+        if skill_id:
+            queryset = queryset.filter(skill__id=skill_id)
+
+        if educational_qualification:
+            queryset = queryset.filter(educationalQualification__id=educational_qualification)
+
+        if address:
+            queryset = queryset.filter(address__id=address)
+
+        if location_id:
+            queryset = queryset.filter(location__id=location_id)
+
+        state = request.query_params.get('state', None)
+        city = request.query_params.get('city', None)
+        sub_division = request.query_params.get('sub_division', None)
+        block = request.query_params.get('block', None)
+        post_office = request.query_params.get('post_office', None)
+        area = request.query_params.get('area', None)
+        pincode = request.query_params.get('pincode', None)
+
+        if state:
+            queryset = queryset.filter(location__state__icontains=state)
+        if city:
+            queryset = queryset.filter(location__city__icontains=city)
+        if sub_division:
+            queryset = queryset.filter(location__sub_division__icontains=sub_division)
+        if block:
+            queryset = queryset.filter(location__block__icontains=block)
+        if post_office:
+            queryset = queryset.filter(location__post_office__icontains=post_office)
+        if area:
+            queryset = queryset.filter(location__area__icontains=area)
+        if pincode:
+            queryset = queryset.filter(location__pincode__icontains=pincode)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class SingleTeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
