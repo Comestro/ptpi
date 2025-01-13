@@ -1948,34 +1948,40 @@ def insert_data(request):
             "field": "name",
             "data": [
                 {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
-                 "total_marks": 100, "duration": 180},
+                 "total_marks": 100, "duration": 180, "type": "online"},
                 {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
-                 "total_marks": 50, "duration": 90},
+                 "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
-                 "total_marks": 200, "duration": 240},
+                 "total_marks": 200, "duration": 240, "type": "online"},
                 {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
-                 "total_marks": 100, "duration": 180},
+                 "total_marks": 100, "duration": 180, "type": "online"},
                 {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
-                 "total_marks": 50, "duration": 90},
+                 "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
-                 "total_marks": 50, "duration": 90},
+                 "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
-                 "total_marks": 50, "duration": 90},
+                 "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
-                 "total_marks": 50, "duration": 90},
+                 "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
-                 "total_marks": 200, "duration": 240},
+                 "total_marks": 200, "duration": 240, "type": "online"},
                 {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
-                 "total_marks": 100, "duration": 180},
+                 "total_marks": 100, "duration": 180, "type": "online"},
                 {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
-                 "total_marks": 50, "duration": 90},
+                 "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
-                 "total_marks": 50, "duration": 90},
+                 "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Offline Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "offline"},
                 {"name": "Offline Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "offline"},
                 {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Offline Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Offline Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
             ]
         },
@@ -2011,6 +2017,7 @@ def insert_data(request):
                         class_category=class_category,
                         level=level,
                         subject=subject,
+                        type=type
                 ).exists():
                     model.objects.create(
                         name=name,
@@ -2557,7 +2564,61 @@ def insert_data(request):
                 ],
                 "solution": "The speed of light in a vacuum is approximately 3 × 10⁸ meters per second.",
                 "correct_option": 0
-            }
+            },
+            {
+        "exam": exams[15],
+        "time": 3,
+        "language": "English",
+        "text": "Solve: 5 + 3 × 2.",
+        "options": ["11", "16", "21", "13"],
+        "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[15],
+        "time": 3,
+        "language": "English",
+        "text": "What is the square root of 81?",
+        "options": ["7", "8", "9", "10"],
+        "solution": "The square root of 81 is 9.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[16],
+        "time": 3,
+        "language": "English",
+        "text": "Find the value of 12 ÷ 4 × 3.",
+        "options": ["9", "3", "12", "15"],
+        "solution": "Using BODMAS, 12 ÷ 4 × 3 = 3 × 3 = 9.",
+        "correct_option": 0
+    },
+    {
+        "exam": exams[16],
+        "time": 3,
+        "language": "English",
+        "text": "Solve: 7 × (8 - 3).",
+        "options": ["35", "56", "40", "21"],
+        "solution": "First solve inside the brackets: 8 - 3 = 5. Then multiply: 7 × 5 = 35.",
+        "correct_option": 0
+    },
+    {
+        "exam": exams[17],
+        "time": 3,
+        "language": "English",
+        "text": "What is 50% of 200?",
+        "options": ["50", "100", "150", "200"],
+        "solution": "50% of 200 is 100.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[17],
+        "time": 3,
+        "language": "English",
+        "text": "If a rectangle has a length of 10 cm and width of 5 cm, what is its area?",
+        "options": ["50 cm²", "25 cm²", "30 cm²", "20 cm²"],
+        "solution": "The area of a rectangle is calculated as length × width. So, 10 × 5 = 50 cm².",
+        "correct_option": 0
+    }
         ]
 
         question_added_count = 0
