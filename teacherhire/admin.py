@@ -60,7 +60,7 @@ class TeacherSubjectAdmin(admin.ModelAdmin):
 
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ['user', 'skill','location','address','educationalQualification']
+    list_display = ['skill','preference','address','educationalQualification']
 
 @admin.register(Skill)
 class SkillAdmin(admin.ModelAdmin):

@@ -373,14 +373,13 @@ class JobPreferenceLocation(models.Model):
 
 
 class Teacher(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    location = models.ForeignKey(JobPreferenceLocation, on_delete=models.CASCADE)
-    skill = models.ForeignKey(TeacherSkill,on_delete=models.CASCADE,null=True)
-    educationalQualification= models.ForeignKey(TeacherQualification,on_delete=models.CASCADE,null=True)
+    preference = models.ForeignKey(Preference, on_delete=models.CASCADE)
+    skill = models.ForeignKey(Skill,on_delete=models.CASCADE,null=True)
+    educationalQualification= models.ForeignKey(EducationalQualification,on_delete=models.CASCADE,null=True)
     address = models.ForeignKey(TeachersAddress, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
-        return self.user.username  
+        return self.preference.user.username  
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)

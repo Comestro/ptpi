@@ -523,63 +523,103 @@ class SubjectViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 class TeacherViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
+    # authentication_classes = [ExpiringTokenAuthentication]
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
 
     @action(detail=False, methods=['get'])
-    def count(self, request):
-        count = Teacher.objects.count()
-        return Response({"Count": count})
-
-    @action(detail=False, methods=['get'])
     def teachers(self, request):
-        skill_id = request.query_params.get('level', None)
-        location_id = request.query_params.get('location', None)
+        skill_id = request.query_params.get('skill', None)
+        preference = request.query_params.get('preference', None)
         educational_qualification = request.query_params.get('educationalQualification', None)
         address = request.query_params.get('address', None)
-        
-        queryset = Teacher.objects.all()
 
+        # New filters for address-related fields
+        address_state = request.query_params.getlist('state', None)
+        address_division = request.query_params.getlist('division', None)
+        address_district = request.query_params.getlist('district', None)
+        address_block = request.query_params.getlist('block', None)
+        address_village = request.query_params.getlist('village', None)
+
+        # Fix class_category_name filter
+        class_category_name = request.query_params.get('class_category_name', None)
+        job_role_name = request.query_params.getlist('job_role', None) 
+        prefered_subject_name = request.query_params.getlist('prefered_subject', None) 
+        teacher_job_type_name = request.query_params.getlist('teacher_job_type', None)
+
+        queryset = Teacher.objects.all()
+        filter_messages = {}
+
+        # Filter teachers based on provided query parameters
         if skill_id:
-            queryset = queryset.filter(skill__id=skill_id)
+            queryset = queryset.filter(skill_id=skill_id)
+            filter_messages['skill'] = skill_id
+
+        if preference:
+            queryset = queryset.filter(preference_id=preference)
+            filter_messages['preference'] = preference
 
         if educational_qualification:
-            queryset = queryset.filter(educationalQualification__id=educational_qualification)
+            queryset = queryset.filter(educationalQualification_id=educational_qualification)
+            filter_messages['educationalQualification'] = educational_qualification
 
-        if address:
-            queryset = queryset.filter(address__id=address)
+        # Address-based filtering using related TeachersAddress fields
+        if address_state:
+            queryset = queryset.filter(teachersaddress__state__icontains=address_state)
+            filter_messages['state'] = address_state
 
-        if location_id:
-            queryset = queryset.filter(location__id=location_id)
+        if address_division:
+            queryset = queryset.filter(teachersaddress__division__icontains=address_division)
+            filter_messages['division'] = address_division
 
-        state = request.query_params.get('state', None)
-        city = request.query_params.get('city', None)
-        sub_division = request.query_params.get('sub_division', None)
-        block = request.query_params.get('block', None)
-        post_office = request.query_params.get('post_office', None)
-        area = request.query_params.get('area', None)
-        pincode = request.query_params.get('pincode', None)
+        if address_district:
+            queryset = queryset.filter(teachersaddress__district__icontains=address_district)
+            filter_messages['district'] = address_district
 
-        if state:
-            queryset = queryset.filter(location__state__icontains=state)
-        if city:
-            queryset = queryset.filter(location__city__icontains=city)
-        if sub_division:
-            queryset = queryset.filter(location__sub_division__icontains=sub_division)
-        if block:
-            queryset = queryset.filter(location__block__icontains=block)
-        if post_office:
-            queryset = queryset.filter(location__post_office__icontains=post_office)
-        if area:
-            queryset = queryset.filter(location__area__icontains=area)
-        if pincode:
-            queryset = queryset.filter(location__pincode__icontains=pincode)
+        if address_block:
+            queryset = queryset.filter(teachersaddress__block__icontains=address_block)
+            filter_messages['block'] = address_block
 
+        if address_village:
+            queryset = queryset.filter(teachersaddress__village__icontains=address_village)
+            filter_messages['village'] = address_village
+
+        # Class category filter (using class_category_name passed as URL parameter)
+        if class_category_name:
+            queryset = queryset.filter(preference__class_category__name=class_category_name)
+            filter_messages['class_category_name'] = class_category_name
+
+        # Other preference-based filters
+        if job_role_name:
+            queryset = queryset.filter(preference__job_role__name__in=job_role_name)
+            filter_messages['job_role'] = job_role_name
+
+        if prefered_subject_name:
+            queryset = queryset.filter(preference__prefered_subject__name__in=prefered_subject_name)
+            filter_messages['prefered_subject'] = prefered_subject_name
+
+        if teacher_job_type_name:
+            queryset = queryset.filter(preference__teacher_job_type__name__in=teacher_job_type_name)
+            filter_messages['teacher_job_type'] = teacher_job_type_name
+
+        if not queryset.exists():
+            return Response({
+                "filters": filter_messages,
+                "message": "No teachers found matching the given criteria."
+            })
+
+        if not filter_messages:
+            filter_messages["message"] = "No applied filters. Showing all teachers."
+
+        # Serialize the filtered queryset
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({
+            "filters": filter_messages,
+            "data": serializer.data
+        })
 
 class SingleTeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1650,34 +1690,29 @@ class CheckoutView(APIView):
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
 
-        level_2_online_subjects = qualified_exams.filter(
-            exam__level_id=1, exam__type="online", isqualified=True
-        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
-
-        level_2_offline_subjects = qualified_exams.filter(
-            exam__level_id=2, exam__type="online", isqualified=True
-        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
-        
-        levels = [
-            {
-                "level_id": 1,
-                "level_name": "Level 1",
-                "subjects": level_1_subjects,
-            },
-        ]
-
-        # Add Level 2 data only if qualified
-        if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
-            levels.append(
+        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'),
+                                                  subject_name=F('exam__subject__subject_name')).distinct()
+        if qualified_exams:
+            levels = [
+                {
+                    "level_id": 1,
+                    "level_name": "Level 1",
+                    "subjects": level_1_subjects
+                },
                 {
                     "level_id": 2,
                     "level_name": "Level 2",
-                    "subjects_by_type": {
-                        "online": list(level_2_online_subjects),
-                        "offline": list(level_2_offline_subjects),
-                    },
+                    "subjects": level_2_subjects
                 }
-            )
+            ]
+        else:
+            levels = [
+                {
+                    "level_id": 1,
+                    "level_name": "Level 1",
+                    "subjects": level_1_subjects
+                }
+            ]
 
         return Response(levels, status=status.HTTP_200_OK)
 

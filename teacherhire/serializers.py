@@ -230,17 +230,6 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
    
 # serializers.py
 
-class TeacherSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()  
-    skill = serializers.StringRelatedField()
-    subject = serializers.StringRelatedField()
-    educationalQualification = serializers.StringRelatedField()
-    role = serializers.StringRelatedField()
-    classCategory = serializers.StringRelatedField()
-
-    class Meta:
-        model = Teacher
-        fields = ['id', 'user', 'skill', 'subject', 'educationalQualification', 'role', 'classCategory']
 
     # aadhar_no = serializers.CharField(max_length=12, required=False, allow_null=True)
     # fullname = serializers.CharField(max_length=20, required=False, allow_null=True)
@@ -642,7 +631,22 @@ class PasskeySerializer(serializers.ModelSerializer):
         model = Passkey
         fields = "__all__"
 
+class TeacherSerializer(serializers.ModelSerializer):
+    preference = serializers.StringRelatedField()
+    skill = serializers.StringRelatedField() 
+    educationalQualification = serializers.StringRelatedField()
+    address = serializers.StringRelatedField()
+
+    class Meta:
+        model = Teacher
+        fields = ['id', 'preference', 'skill', 'educationalQualification', 'address']
 
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['preference'] = PreferenceSerializer(instance.preference).data
+        representation['skill'] = SkillSerializer(instance.skill).data
+        representation['educationalQualification'] = EducationalQualificationSerializer(instance.educationalQualification).data  # Corrected field name
+        representation['address'] = TeachersAddressSerializer(instance.address).data
 
-
+        return representation
