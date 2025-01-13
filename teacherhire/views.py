@@ -1971,6 +1971,12 @@ def insert_data(request):
                  "total_marks": 50, "duration": 90},
                 {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90},
+                {"name": "Offline Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                {"name": "Offline Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
             ]
         },
     }
@@ -1989,6 +1995,8 @@ def insert_data(request):
                 name = entry.get("name")
                 total_marks = entry.get("total_marks")
                 duration = entry.get("duration")
+                type = entry.get("type")
+
 
                 class_category_name = entry.get("class_category")
                 level_name = entry.get("level")
@@ -2010,7 +2018,8 @@ def insert_data(request):
                         duration=duration,
                         class_category=class_category,
                         level=level,
-                        subject=subject
+                        subject=subject,
+                        type=type
                     )
                     added_count += 1
             else:
@@ -2479,6 +2488,75 @@ def insert_data(request):
                 "options": ["20", "25", "30", "40"],
                 "solution": "100 ÷ 4 = 25.",
                 "correct_option": 2
+            },
+            {
+                "exam": exams[12],
+                "time": 3,
+                "language": "English",
+                "text": "What is the unit of force?",
+                "options": ["Newton", "Pascal", "Joule", "Watt"],
+                "solution": "The SI unit of force is the Newton (N), named after Isaac Newton.",
+                "correct_option": 0
+            },
+            {
+                "exam": exams[12],
+                "time": 3,
+                "language": "English",
+                "text": "What is the acceleration due to gravity on Earth?",
+                "options": ["9.8 m/s²", "8.9 m/s²", "10.2 m/s²", "7.6 m/s²"],
+                "solution": "The acceleration due to gravity on Earth is approximately 9.8 m/s².",
+                "correct_option": 0
+            },
+            {
+                "exam": exams[13],
+                "time": 4,
+                "language": "English",
+                "text": "Which law explains why a rocket moves upward when gases are expelled downward?",
+                "options": [
+                    "Newton's First Law",
+                    "Newton's Second Law",
+                    "Newton's Third Law",
+                    "Law of Gravitation"
+                ],
+                "solution": "Newton's Third Law states that for every action, there is an equal and opposite reaction.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[13],
+                "time": 5,
+                "language": "English",
+                "text": "Which of the following is a scalar quantity?",
+                "options": ["Velocity", "Force", "Speed", "Momentum"],
+                "solution": "Speed is a scalar quantity because it has only magnitude, not direction.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[14],
+                "time": 4,
+                "language": "English",
+                "text": "What is the formula for kinetic energy?",
+                "options": [
+                    "KE = mv",
+                    "KE = 1/2 mv²",
+                    "KE = 2mv",
+                    "KE = m²v"
+                ],
+                "solution": "The formula for kinetic energy is KE = 1/2 mv².",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[14],
+                "time": 3,
+                "language": "English",
+                "text": "What is the speed of light in a vacuum?",
+                "options": [
+                    "3 × 10⁸ m/s",
+                    "2 × 10⁸ m/s",
+                    "1.5 × 10⁸ m/s",
+                    "4 × 10⁸ m/s"
+                ],
+                "solution": "The speed of light in a vacuum is approximately 3 × 10⁸ meters per second.",
+                "correct_option": 0
             }
         ]
 
