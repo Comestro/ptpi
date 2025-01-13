@@ -221,7 +221,7 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
     pincode = serializers.CharField(max_length=6, required=False, allow_null=True)
     class Meta:
         model = TeachersAddress
-        fields = '__all__'
+        fields = ['id','user','address_type','state','division','district','block','village','area','pincode']
 
     def validate_pincode(self, value):
         if value and (len(value) != 6 or not value.isdigit()):

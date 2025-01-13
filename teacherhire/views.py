@@ -532,85 +532,87 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def teachers(self, request):
-        skill_id = request.query_params.get('skill', None)
-        preference = request.query_params.get('preference', None)
+        # Get query parameters from the request
+        skill_name = request.query_params.get('skill', None)
+        preference_id = request.query_params.get('preference', None)
         educational_qualification = request.query_params.get('educationalQualification', None)
-        address = request.query_params.get('address', None)
-
-        # New filters for address-related fields
+        address_id = request.query_params.get('address', None)
         address_state = request.query_params.getlist('state', None)
         address_division = request.query_params.getlist('division', None)
-        address_district = request.query_params.getlist('district', None)
+        address_district = request.query_params.getlist('district', None)  # Handle multiple districts
         address_block = request.query_params.getlist('block', None)
         address_village = request.query_params.getlist('village', None)
-
-        # Fix class_category_name filter
+        job_role_name = request.query_params.getlist('job_role', None)
         class_category_name = request.query_params.get('class_category_name', None)
-        job_role_name = request.query_params.getlist('job_role', None) 
-        prefered_subject_name = request.query_params.getlist('prefered_subject', None) 
+        prefered_subject_name = request.query_params.getlist('prefered_subject', None)
         teacher_job_type_name = request.query_params.getlist('teacher_job_type', None)
 
         queryset = Teacher.objects.all()
         filter_messages = {}
 
-        # Filter teachers based on provided query parameters
-        if skill_id:
-            queryset = queryset.filter(skill_id=skill_id)
-            filter_messages['skill'] = skill_id
-
-        if preference:
-            queryset = queryset.filter(preference_id=preference)
-            filter_messages['preference'] = preference
-
+        if skill_name:
+            queryset = queryset.filter(skill__name__icontains=skill_name)
+            filter_messages['skill'] = skill_name
+        
+        # Filter by preference
+        if preference_id:
+            queryset = queryset.filter(preference_id=preference_id)
+            filter_messages['preference'] = preference_id
+        
+        # Filter by educational qualification
         if educational_qualification:
-            queryset = queryset.filter(educationalQualification_id=educational_qualification)
+            queryset = queryset.filter(educationalQualification__name__icontains=educational_qualification)
             filter_messages['educationalQualification'] = educational_qualification
-
-        # Address-based filtering using related TeachersAddress fields
+        
+        if address_id:
+            queryset = queryset.filter(address_id=address_id)
+            filter_messages['address'] = address_id
+        
+        # Filter by address fields (e.g., state, division, district, etc.)
         if address_state:
-            queryset = queryset.filter(teachersaddress__state__icontains=address_state)
+            queryset = queryset.filter(address__state__icontains='|'.join(address_state))
             filter_messages['state'] = address_state
-
         if address_division:
-            queryset = queryset.filter(teachersaddress__division__icontains=address_division)
+            queryset = queryset.filter(address__division__icontains= '|'.join(address_division))
             filter_messages['division'] = address_division
-
         if address_district:
-            queryset = queryset.filter(teachersaddress__district__icontains=address_district)
+            queryset = queryset.filter(address__district__icontains='|'.join(address_district))
             filter_messages['district'] = address_district
-
         if address_block:
-            queryset = queryset.filter(teachersaddress__block__icontains=address_block)
+            queryset = queryset.filter(address__block__icontains= '|'.join(address_block))
             filter_messages['block'] = address_block
-
         if address_village:
-            queryset = queryset.filter(teachersaddress__village__icontains=address_village)
+            queryset = queryset.filter(address__village__icontains= '|'.join(address_village))
             filter_messages['village'] = address_village
-
-        # Class category filter (using class_category_name passed as URL parameter)
-        if class_category_name:
-            queryset = queryset.filter(preference__class_category__name=class_category_name)
-            filter_messages['class_category_name'] = class_category_name
-
-        # Other preference-based filters
+        
+        # Filter by job role
         if job_role_name:
             queryset = queryset.filter(preference__job_role__name__in=job_role_name)
             filter_messages['job_role'] = job_role_name
-
+        
+        # Filter by class category
+        if class_category_name:
+            queryset = queryset.filter(preference__class_category__name=class_category_name)
+            filter_messages['class_category_name'] = class_category_name
+        
+        # Filter by preferred subject
         if prefered_subject_name:
             queryset = queryset.filter(preference__prefered_subject__name__in=prefered_subject_name)
             filter_messages['prefered_subject'] = prefered_subject_name
-
+        
+        # Filter by teacher job type
         if teacher_job_type_name:
             queryset = queryset.filter(preference__teacher_job_type__name__in=teacher_job_type_name)
             filter_messages['teacher_job_type'] = teacher_job_type_name
-
+        
+        # If no teachers match the filters
         if not queryset.exists():
             return Response({
                 "filters": filter_messages,
                 "message": "No teachers found matching the given criteria."
             })
 
+        # If no filters were applied, show all teachers
         if not filter_messages:
             filter_messages["message"] = "No applied filters. Showing all teachers."
 
@@ -620,6 +622,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
             "filters": filter_messages,
             "data": serializer.data
         })
+
+
 
 class SingleTeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
