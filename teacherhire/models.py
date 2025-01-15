@@ -2,8 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.timezone import timedelta
 from django.utils.timezone import now
-
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
@@ -198,9 +196,7 @@ class TeacherSubject(models.Model):
    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
    def __str__(self): 
-        return self.user.username	
-
- 
+        return self.user.username	 
 class BasicProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="user_profile", null=True)
     bio = models.TextField(blank=True, null=True)
@@ -274,8 +270,7 @@ class Exam(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
-    
+        return self.name   
 class Question(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
     time = models.FloatField(default=2.5)
@@ -297,7 +292,6 @@ class Question(models.Model):
             raise models.ValidationError({
                 'correct_option': f'Correct option must be between 1 and {len(self.options)}.'
             })
-
     class Meta:
         ordering = ['created_at']
 
@@ -326,14 +320,6 @@ class TeacherExamResult(models.Model):
     def get_(self):
         percentage = self.calculate_percentage()
         return percentage >= 60
-
-    # def get_level(self):
-    #     percentage = self.calculate_percentage()
-    #     if self.isqualified and percentage >= 60:
-    #         return "2nd Level"
-    #     # elif self.isqualified:
-    #     return "1st Level"
-    #     # return "not_qualified"
 
     def save(self, *args, **kwargs):
         self.isqualified = self.get_()
