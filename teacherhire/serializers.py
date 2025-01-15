@@ -605,6 +605,11 @@ class PasskeySerializer(serializers.ModelSerializer):
         model = Passkey
         fields = "__all__"
 
+class Interview(serializers.ModelSerializer):
+    class Meta:
+        model = Interview
+        fields = "__all__"
+
 class TeacherSerializer(serializers.ModelSerializer):
     preference = serializers.StringRelatedField()
     skill = serializers.StringRelatedField() 

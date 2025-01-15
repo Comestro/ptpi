@@ -103,3 +103,7 @@ class ExamAdmin(admin.ModelAdmin):
 @admin.register(Passkey)
 class PasskeyAdmin(admin.ModelAdmin):
     list_display = ['user', 'exam', 'code','status','created_at']
+
+@admin.register(Interview)
+class InterviewAdmin(admin.ModelAdmin):
+    list_display = ['user', 'time', 'shedule','link','grade','status','created_at']
