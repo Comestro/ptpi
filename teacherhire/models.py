@@ -15,7 +15,6 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-
         return self.create_user(email, username, password, **extra_fields)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -95,8 +94,6 @@ class ClassCategory(models.Model):
     def __str__(self):
         return self.name
 
-
-
 class EducationalQualification(models.Model):
     name = models.CharField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -151,7 +148,6 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
     
-
 class Level(models.Model):
     name = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
@@ -327,7 +323,6 @@ class TeacherExamResult(models.Model):
             last_result = TeacherExamResult.objects.filter(
                 user=self.user
             ).order_by('-created_at').first()
-
         super().save(*args, **kwargs)
 
 class JobPreferenceLocation(models.Model):
@@ -357,7 +352,6 @@ class JobPreferenceLocation(models.Model):
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
 
-
 class Teacher(models.Model):
     preference = models.ForeignKey(Preference, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill,on_delete=models.CASCADE,null=True)
@@ -366,6 +360,7 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.preference.user.username  
+    
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -384,7 +379,16 @@ class Passkey(models.Model):
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
-
     def __str__(self):
         return f"{self.code} - {self.exam}"
+    
+class Interview(models.Model):
+    user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
+    time = models.DateTimeField(null=True, blank=True)
+    shedule = models.CharField(max_length=200, null=True , blank=True)
+    link = models.CharField(max_length=200,null= True, blank=True)
+    status = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.user.username

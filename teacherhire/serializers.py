@@ -148,7 +148,6 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
         if start_date and end_date:
             if start_date > end_date:
                 raise serializers.ValidationError("End date cannot be earlier than start date.")
-
         return data
 
     def validate_achievements(self, value):
@@ -213,8 +212,6 @@ class SkillSerializer(serializers.ModelSerializer):
         if Skill.objects.filter(name=value).exists():
             raise serializers.ValidationError("A skill with this name already exists.")
         return value
-    
-
 class TeachersAddressSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     pincode = serializers.CharField(max_length=6, required=False, allow_null=True)
@@ -480,7 +477,6 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
         representation['user'] = UserSerializer(instance.user).data
         representation['exam'] = ExamSerializer(instance.exam).data
         return representation
-
 
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
     preference = serializers.PrimaryKeyRelatedField(queryset=Preference.objects.all(), required=False)

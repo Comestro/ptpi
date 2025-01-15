@@ -154,8 +154,7 @@ class LoginUser(APIView):
         except CustomUser.DoesNotExist:
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
         if not user.is_verified:
-            return Response({'message': 'Account is not verified. Please verify your account before logging in.'},
-                            status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Account is not verified. Please verify your account before logging in.'}, status=status.HTTP_403_FORBIDDEN)
         # Check password validity
         if user.check_password(password):
             # Delete old token if it exists
@@ -337,7 +336,6 @@ class EducationalQulificationViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Educationqulification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
 class LevelViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -360,10 +358,8 @@ class LevelViewSet(viewsets.ModelViewSet):
             level = Level.objects.get(pk=pk)
         except Level.DoesNotExist:
             return Response({"error": "Level not found"}, status=status.HTTP_404_NOT_FOUND)
-
         # Start with filtering by level
         questions = Question.objects.filter(level=level)
-
         # Filter by subject if provided
         if subject_id:
             try:
@@ -371,7 +367,6 @@ class LevelViewSet(viewsets.ModelViewSet):
             except Subject.DoesNotExist:
                 return Response({"error": "Subject not found"}, status=status.HTTP_404_NOT_FOUND)
             questions = questions.filter(subject=subject)
-
         # Filter by class category if provided
         if class_category_id:
             try:
@@ -383,8 +378,7 @@ class LevelViewSet(viewsets.ModelViewSet):
         language = request.query_params.get('language', None)
         if language:
             if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language, please choose 'Hindi' or 'English'."},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Invalid language, please choose 'Hindi' or 'English'."}, status=status.HTTP_400_BAD_REQUEST)
             questions = questions.filter(language=language)
 
         # Serialize the filtered questions
@@ -395,7 +389,6 @@ class LevelViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class SkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -412,7 +405,6 @@ class SkillViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
