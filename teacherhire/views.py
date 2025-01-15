@@ -28,13 +28,11 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
-
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
-
 
 class AdminView(APIView):
     permission_classes = [IsAdminPermission]
@@ -83,10 +81,8 @@ def get_single_object(viewset):
     serializer = viewset.get_serializer(profile)
     return Response(serializer.data)
 
-
 def get_count(model_class):
     return model_class.objects.count()
-
 
 class RecruiterRegisterUser(APIView):
     def post(self, request):
@@ -110,7 +106,6 @@ class RecruiterRegisterUser(APIView):
             'message': 'Your data is saved. Please check your email and verify your account first.'
         }, status=status.HTTP_200_OK)
 
-
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -126,8 +121,6 @@ class ChangePasswordView(APIView):
             return Response({"message": "Password updated successfully!"}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class TeacherRegisterUser(APIView):
     def post(self, request):
         serializer = TeacherRegisterSerializer(data=request.data)
@@ -148,12 +141,9 @@ class TeacherRegisterUser(APIView):
             'payload': serializer.data,
             'message': 'Your data is saved. Please check your email and verify your account first.'
         }, status=status.HTTP_200_OK)
-
-
+    
 def generate_refresh_token():
     return str(uuid.uuid4())
-
-
 class LoginUser(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -179,7 +169,6 @@ class LoginUser(APIView):
                 'is_admin': user.is_staff,
                 'is_recruiter': user.is_recruiter,
                 'is_user': not (user.is_staff and user.is_recruiter)
-
             }
             if user.is_staff:
                 role = 'admin'
@@ -199,7 +188,6 @@ class LoginUser(APIView):
         else:
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
 class LogoutUser(APIView):
     authentication_classes = [ExpiringTokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -211,7 +199,6 @@ class LogoutUser(APIView):
             return Response({"success": "Logout succesJobsful"}, status=status.HTTP_200_OK)
         except Token.DoesNotExist:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
-
 
 # TeacerAddress GET ,CREATE ,DELETE
 class TeachersAddressViewSet(viewsets.ModelViewSet):
@@ -234,7 +221,6 @@ class TeachersAddressViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "TeacherAddress deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -622,9 +608,6 @@ class TeacherViewSet(viewsets.ModelViewSet):
             "filters": filter_messages,
             "data": serializer.data
         })
-
-
-
 class SingleTeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
