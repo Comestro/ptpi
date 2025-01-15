@@ -2649,7 +2649,6 @@ def insert_data(request):
 
     return JsonResponse(response_data)
 
-
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2705,7 +2704,6 @@ class SelfReportViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class PasskeyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2749,7 +2747,7 @@ class GeneratePasskeyView(APIView):
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
-                            status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_400_BAD_REQUEST)
  
         # Generate a new passkey
         passkey = random.randint(1000, 9999)
@@ -2760,31 +2758,6 @@ class GeneratePasskeyView(APIView):
             code=str(passkey),
             status=False,
         )
- 
-        # # Email setup
-        # subject = "Your Exam Access Passcode"
-        # message = f"Your passcode for accessing the exam is {passkey}. It is valid for 10 minutes. Please use it to verify your access."
-        # html_message = f"""
-        # <div style="max-width: 600px; margin: 20px auto; padding: 20px; border-radius: 10px; background-color: #f9f9f9; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; font-family: Arial, sans-serif; color: #333;">
-        #     <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
-        #     <p style="font-size: 16px; margin-bottom: 20px;">Use the passcode below to complete your verification process for the exam.</p>
-        #     <p style="display: inline-block; padding: 10px 20px; font-size: 36px; font-weight: bold; color: #ffffff; background-color: #008080; border-radius: 8px; text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
-        #         {passkey}
-        #     </p>
-        #     <p style="margin-top: 20px; font-size: 14px; color: #555;">This passcode is valid for 10 minutes. Please do not share it with anyone.</p>
-        # </div>
-        # """
- 
-        # from_email = os.environ.get('EMAIL_FROM', settings.DEFAULT_FROM_EMAIL)
- 
-        # send_mail(
-        #     subject,
-        #     message,
-        #     from_email,
-        #     [user.email],
-        #     html_message=html_message
-        # )
- 
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
  
 class ApprovePasscodeView(APIView):
