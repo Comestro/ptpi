@@ -701,8 +701,7 @@ class TeacherQualificationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
+    
 class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -737,7 +736,6 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 model_class=TeacherQualification
             )
-
     def create(self, request):
         data = request.data.copy()
         qualification = data.get('qualification')  # Slug value of the qualification
@@ -798,17 +796,6 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return TeacherQualification.objects.filter(user=self.request.user)
-
-    # def list(self, request, *args, **kwargs):
-    #     return self.retrieve(request, *args, **kwargs)
-
-    # def get_object(self):
-    #     try:
-    #         return TeacherQualification.objects.get(user=self.request.user)
-    #     except TeacherQualification.DoesNotExist:
-    #         raise Response({"detail": "Qualification not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
 class TeacherExperiencesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -827,7 +814,6 @@ class TeacherExperiencesViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherexperience deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -875,10 +861,8 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 model_class=TeacherExperiences
             )
-
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
-
 
 class QuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -920,7 +904,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -979,7 +962,6 @@ class RoleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Role deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class PreferenceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1070,7 +1052,6 @@ class PreferenceViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class TeacherSubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1090,7 +1071,6 @@ class TeacherSubjectViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Teachersubject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
 class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1103,17 +1083,12 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        # if TeacherSubject.objects.filter(user=request.user).exists():
-        #     return Response({"detail": "SingleTeacherSubject already exists. "}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # def list(self, request, *args, **kwargs):
-    #     return self.retrieve(request, *args, **kwargs)
     def get_object(self):
         try:
             return TeacherSubject.objects.get(user=self.request.user)
@@ -1168,7 +1143,6 @@ class TeacherClassCategoryViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherclasscategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class SingleTeacherClassCategory(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1228,8 +1202,6 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
             return Response({"detail": "TeacherClassCategory deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except TeacherClassCategory.DoesNotExist:
             return Response({"detail": "TeacherClassCategory not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
 class TeacherExamResultViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1284,8 +1256,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
 
         return Response(response_data)
 
-
-
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1306,7 +1276,6 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
@@ -1339,7 +1308,6 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1403,10 +1371,8 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 serializer.save()
                 return serializer.instance  # Return the newly created profile
-
             # Option 2: Raise an error response if creation fails
-            raise Response({"detail": "Profile not found and could not be created."},
-                           status=status.HTTP_400_BAD_REQUEST)
+            raise Response({"detail": "Profile not found and could not be created."},status=status.HTTP_400_BAD_REQUEST)
 
     # def get_object(self):
     #     try:
@@ -1420,7 +1386,6 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Profile deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except BasicProfile.DoesNotExist:
             return Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 class CustomUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1484,13 +1449,11 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         except CustomUser.DoesNotExist:
             return Response({"detail": "Customuser not found."}, status=status.HTTP_404_NOT_FOUND)
 
-
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
-
 
 class SendPasswordResetEmailViewSet(APIView):
     def post(self, request, format=None):
@@ -1517,7 +1480,6 @@ class SendPasswordResetEmailViewSet(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class ResetPasswordViewSet(APIView):
     def post(self, request, uidb64, token, format=None):
         try:
@@ -1536,7 +1498,6 @@ class ResetPasswordViewSet(APIView):
             return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class VarifyOTP(APIView):
     def post(self, request):
@@ -1587,7 +1548,6 @@ class VarifyOTP(APIView):
                 'message': 'An unexpected error occurred'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class ResendOTP(APIView):
     def post(self, request):
         try:
@@ -1622,7 +1582,6 @@ class ResendOTP(APIView):
                 'error': 'Something went wrong',
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class UserVerify(APIView):
     def post(self, request):
@@ -1664,7 +1623,6 @@ class UserVerify(APIView):
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class ProfilecompletedView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1683,7 +1641,6 @@ class ProfilecompletedView(APIView):
                 {"error": "An error occurred while calculating profile completed.", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1711,13 +1668,11 @@ class CheckoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         user_subjects = user_preference.prefered_subject.all()
-        level_1_subjects = [{"subject_id": subject.id, "subject_name": subject.subject_name} for subject in
-                            user_subjects]
+        level_1_subjects = [{"subject_id": subject.id, "subject_name": subject.subject_name} for subject in user_subjects]
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
 
-        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'),
-                                                  subject_name=F('exam__subject__subject_name')).distinct()
+        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
         if qualified_exams:
             levels = [
                 {
@@ -1814,7 +1769,6 @@ class ExamViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
 class SelfExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1866,10 +1820,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         exams = exams.filter(class_category=teacher_class_category.class_category)
 
         # Check qualification for Level 1 and Level 2 exams
-        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,
-                                                             exam__level_id=1).exists()
-        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,
-                                                             exam__level_id=2).exists()
+        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=1).exists()
+        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=2).exists()
 
         # Handle level filter
         if level_id:
@@ -1912,12 +1864,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             else:
                 return Response({"error": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
 
-        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id',
-                                                                                                          flat=True)
+        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id',flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
 
-        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id',
-                                                                                                       flat=True)
+        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id',flat=True)
         exams = exams.exclude(id__in=qualified_exam_ids)
 
         exam_set = exams.order_by('created_at').first()
