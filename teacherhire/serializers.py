@@ -76,7 +76,6 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
 
-
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -229,8 +228,6 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
         return value
    
 # serializers.py
-
-
     # aadhar_no = serializers.CharField(max_length=12, required=False, allow_null=True)
     # fullname = serializers.CharField(max_length=20, required=False, allow_null=True)
     # phone = serializers.CharField(max_length=10, required=False, allow_null=True)
@@ -459,8 +456,7 @@ class TeacherSubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherSubject
         fields = '__all__'
-
-        
+     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
@@ -471,19 +467,6 @@ class TeacherClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherClassCategory
         fields = '__all__'
-
-# class TeacherExamResultSerializer(serializers.ModelSerializer):
-#     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
-#     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-#     class Meta:
-#         model = TeacherExamResult
-#         fields = '__all__'
-
-#     def to_representation(self, instance):
-#         representation = super().to_representation(instance)        
-#         representation['user'] = UserSerializer(instance.user).data        
-#         representation['exam'] = ExamSerializer(instance.exam(),many=True).data              
-#         return representation
 class TeacherExamResultSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
@@ -496,7 +479,6 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['exam'] = ExamSerializer(instance.exam).data
-
         return representation
 
 
@@ -520,7 +502,6 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
             area_count = JobPreferenceLocation.objects.filter(preference=preference_id).count()
             if area_count >= 5:
                 raise serializers.ValidationError("You can only add up to 5 areas for a single preference.")
-        
         return value
 
 class BasicProfileSerializer(serializers.ModelSerializer):
@@ -546,7 +527,6 @@ class BasicProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
             return cleaned_value
         return value
-    
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -563,7 +543,6 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=200)
     class Meta:
         fields = ['email']
-
     def validate(self, attrs):
         email = attrs.get('email')
         if CustomUser.objects.filter(email=email).exists():
@@ -616,7 +595,6 @@ class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
 
-
 class ReportSerializer(serializers.ModelSerializer):
     # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     # question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
@@ -640,8 +618,6 @@ class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = ['id', 'preference', 'skill', 'educationalQualification', 'address']
-
-
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['preference'] = PreferenceSerializer(instance.preference).data

@@ -2603,7 +2603,7 @@ def insert_data(request):
         "text": "What is the square root of 81?",
         "options": ["7", "8", "9", "10"],
         "solution": "The square root of 81 is 9.",
-        "correct_option": 2
+        "correct_option": 3
     },
     {
         "exam": exams[16],
