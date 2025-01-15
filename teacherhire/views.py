@@ -1253,15 +1253,37 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=401)
 
-        # Example counts
-        level1_count = TeacherExamResult.objects.filter(user=user, isqualified=True).count()
-        level2_count = TeacherExamResult.objects.filter(user=user, isqualified=False).count()
+        preferred_subjects = Subject.objects.filter(preference__user=user).distinct()
+        response_data = {}
 
-        response_data = {
-            "level1": level1_count,
-            "level2": level2_count,
-        }
+        for subject in preferred_subjects:
+            level1_count = TeacherExamResult.objects.filter(
+                user=user,
+                exam__subject=subject,
+                exam__level_id=1
+            ).count()
+
+            level2_count = TeacherExamResult.objects.filter(
+                user=user,
+                exam__subject=subject,
+                exam__level_id=2
+
+            ).count()
+
+            response_data[subject.subject_name] = {
+                "level1": level1_count,
+                "level2": level2_count
+            }
+
+        for subject in preferred_subjects:
+            if subject.subject_name not in response_data:
+                response_data[subject.subject_name] = {
+                    "level1": 0,
+                    "level2": 0
+                }
+
         return Response(response_data)
+
 
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
