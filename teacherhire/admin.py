@@ -82,7 +82,7 @@ class PreferenceAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ['user', 'question', 'created_at', 'status']
+    list_display = ['user', 'question', 'issue_type', 'created_at', 'status']
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
