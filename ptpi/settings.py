@@ -37,7 +37,6 @@ ALLOWED_HOSTS = [
     "localhost",
     "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net",
     "ptpi.tech"
-    "https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net/"
 ]
 
 # Application definition
