@@ -171,7 +171,7 @@ class TeacherJobType(models.Model):
 class Preference(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     job_role = models.ManyToManyField(Role)
-    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE,default=1)
+    class_category = models.ManyToManyField(ClassCategory)
     prefered_subject = models.ManyToManyField(Subject)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
 
