@@ -597,7 +597,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Report
-        fields = ['id', 'user', 'question', 'status', 'created_at']
+        fields = ['id', 'user', 'question','issue_type' ,'status', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
 
 class PasskeySerializer(serializers.ModelSerializer):

@@ -2519,7 +2519,7 @@ def insert_data(request):
         "text": "Solve: 5 + 3 × 2.",
         "options": ["11", "16", "21", "13"],
         "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
-        "correct_option": 1
+        "correct_option": 2
     },
     {
         "exam": exams[15],
@@ -2624,8 +2624,7 @@ class SelfReportViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def list(self, request, *args, **kwargs):
-        return Response({"error": "GET method is not allowed on this endpoint."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response({"error": "GET method is not allowed on this endpoint."},status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request):
         user = request.user
@@ -2637,8 +2636,7 @@ class SelfReportViewSet(viewsets.ModelViewSet):
             return Response({"error": "Question not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         if Report.objects.filter(user=user, question=question).exists():
-            return Response({"error": "You have already submitted a report for this question."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "You have already submitted a report for this question."},status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()
         data['user'] = user.id
