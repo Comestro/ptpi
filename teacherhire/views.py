@@ -1253,15 +1253,37 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=401)
 
-        # Example counts
-        level1_count = TeacherExamResult.objects.filter(user=user, isqualified=True).count()
-        level2_count = TeacherExamResult.objects.filter(user=user, isqualified=False).count()
+        preferred_subjects = Subject.objects.filter(preference__user=user).distinct()
+        response_data = {}
 
-        response_data = {
-            "level1": level1_count,
-            "level2": level2_count,
-        }
+        for subject in preferred_subjects:
+            level1_count = TeacherExamResult.objects.filter(
+                user=user,
+                exam__subject=subject,
+                exam__level_id=1
+            ).count()
+
+            level2_count = TeacherExamResult.objects.filter(
+                user=user,
+                exam__subject=subject,
+                exam__level_id=2
+
+            ).count()
+
+            response_data[subject.subject_name] = {
+                "level1": level1_count,
+                "level2": level2_count
+            }
+
+        for subject in preferred_subjects:
+            if subject.subject_name not in response_data:
+                response_data[subject.subject_name] = {
+                    "level1": 0,
+                    "level2": 0
+                }
+
         return Response(response_data)
+
 
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
@@ -1694,29 +1716,34 @@ class CheckoutView(APIView):
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
 
-        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'),
-                                                  subject_name=F('exam__subject__subject_name')).distinct()
-        if qualified_exams:
-            levels = [
-                {
-                    "level_id": 1,
-                    "level_name": "Level 1",
-                    "subjects": level_1_subjects
-                },
+        level_2_online_subjects = qualified_exams.filter(
+            exam__level_id=1, exam__type="online", isqualified=True
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+
+        level_2_offline_subjects = qualified_exams.filter(
+            exam__level_id=2, exam__type="online", isqualified=True
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+        
+        levels = [
+            {
+                "level_id": 1,
+                "level_name": "Level 1",
+                "subjects": level_1_subjects,
+            },
+        ]
+
+        # Add Level 2 data only if qualified
+        if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
+            levels.append(
                 {
                     "level_id": 2,
                     "level_name": "Level 2",
-                    "subjects": level_2_subjects
+                    "subjects_by_type": {
+                        "online": list(level_2_online_subjects),
+                        "offline": list(level_2_offline_subjects),
+                    },
                 }
-            ]
-        else:
-            levels = [
-                {
-                    "level_id": 1,
-                    "level_name": "Level 1",
-                    "subjects": level_1_subjects
-                }
-            ]
+            )
 
         return Response(levels, status=status.HTTP_200_OK)
 
@@ -1825,7 +1852,25 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
         type = request.query_params.get('type', None)
-
+        try:
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TeacherQualification.DoesNotExist:
+            return Response(
+                {"message": "Please complete your qualification details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         exams = Exam.objects.all()
 
         # If no subject_id is provided, return error
@@ -1976,6 +2021,12 @@ def insert_data(request):
                 {"name": "Offline Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "offline"},
                 {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Offline Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Offline Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
             ]
         },
@@ -2558,7 +2609,61 @@ def insert_data(request):
                 ],
                 "solution": "The speed of light in a vacuum is approximately 3 × 10⁸ meters per second.",
                 "correct_option": 0
-            }
+            },
+            {
+        "exam": exams[15],
+        "time": 3,
+        "language": "English",
+        "text": "Solve: 5 + 3 × 2.",
+        "options": ["11", "16", "21", "13"],
+        "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[15],
+        "time": 3,
+        "language": "English",
+        "text": "What is the square root of 81?",
+        "options": ["7", "8", "9", "10"],
+        "solution": "The square root of 81 is 9.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[16],
+        "time": 3,
+        "language": "English",
+        "text": "Find the value of 12 ÷ 4 × 3.",
+        "options": ["9", "3", "12", "15"],
+        "solution": "Using BODMAS, 12 ÷ 4 × 3 = 3 × 3 = 9.",
+        "correct_option": 0
+    },
+    {
+        "exam": exams[16],
+        "time": 3,
+        "language": "English",
+        "text": "Solve: 7 × (8 - 3).",
+        "options": ["35", "56", "40", "21"],
+        "solution": "First solve inside the brackets: 8 - 3 = 5. Then multiply: 7 × 5 = 35.",
+        "correct_option": 0
+    },
+    {
+        "exam": exams[17],
+        "time": 3,
+        "language": "English",
+        "text": "What is 50% of 200?",
+        "options": ["50", "100", "150", "200"],
+        "solution": "50% of 200 is 100.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[17],
+        "time": 3,
+        "language": "English",
+        "text": "If a rectangle has a length of 10 cm and width of 5 cm, what is its area?",
+        "options": ["50 cm²", "25 cm²", "30 cm²", "20 cm²"],
+        "solution": "The area of a rectangle is calculated as length × width. So, 10 × 5 = 50 cm².",
+        "correct_option": 0
+    }
         ]
 
         question_added_count = 0
