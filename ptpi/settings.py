@@ -164,7 +164,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',      # Localhost Django server
     'http://localhost:5173',      # Localhost frontend (e.g., React/Vue/Vite)
-    'http://192.168.29.2:8000',   # Django server on the local network
+    'http://192.168.29.2:8000',
+    'https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net'# Django server on the local network
 ]
 
 PASSWORD_RESET_TIME_OUT = 900
