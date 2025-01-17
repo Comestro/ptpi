@@ -1676,11 +1676,8 @@ class CheckoutView(APIView):
 
                     },
                 }
-            ]
-
+            )
         return Response(levels, status=status.HTTP_200_OK)
-
-
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2622,8 +2619,6 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
 class SelfReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
