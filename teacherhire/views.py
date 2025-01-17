@@ -970,14 +970,11 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         # Check if the user has an existing preference
         profile = Preference.objects.filter(user=request.user).first()
 
-        if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
-            data['teacher_job_type'] = [data['teacher_job_type']]
-        if 'prefered_subject' in data and isinstance(data['prefered_subject'], str):
-            data['prefered_subject'] = [data['prefered_subject']]
-
-        if 'job_role' in data and isinstance(data['job_role'], str):
-            data['job_role'] = [data['job_role']]
-
+        change_in_str = ['teacher_job_type', 'prefered_subject', 'job_role', 'class_category']
+        for key in change_in_str:
+            if key in data and isinstance(data[key], str):
+                data[key] = [data[key]]
+                
         if profile:
             return self.update_auth_data(
                 serializer_class=self.get_serializer_class(),
