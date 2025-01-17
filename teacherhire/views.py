@@ -21,6 +21,7 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
+from django.utils.html import format_html
 import string
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
@@ -2767,6 +2768,43 @@ class InterviewViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    def send_interview_link(self, interview, recipient_email):
+        subject = f"Your Interview for {interview.subject} has been scheduled!"
+        
+        message = format_html("""
+            <html>
+                <body>
+                    <p>Dear {user},</p>
+                    <p>Your interview for <strong>{subject}</strong> has been scheduled.</p>
+                    <p><strong>Interview Time:</strong> {time}</p>
+                    <p><strong>Interview Link:</strong> <a href="{link}">Join your interview here</a></p>
+                    <p>Please make sure to join at the scheduled time.</p>
+                    <p>Best regards,<br>The Interview Team</p>
+                </body>
+            </html>
+        """, user=interview.user.username, subject=interview.subject, time=interview.time, link=interview.link)
+
+        # Send the email using HTML format
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_email],
+            html_message=message  
+        )
+
+    def update(self, request, *args, **kwargs):
+        interview = self.get_object()
+        serializer = self.get_serializer(interview, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            updated_interview = serializer.save()
+            self.send_interview_link(updated_interview, updated_interview.user.email)
+            return Response({
+                "message": "Interview updated successfully and email with the link has been sent.",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class SelfInterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
