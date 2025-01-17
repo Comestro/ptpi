@@ -1676,7 +1676,7 @@ class CheckoutView(APIView):
 
                     },
                 }
-            )
+            ]
 
         return Response(levels, status=status.HTTP_200_OK)
 
@@ -1784,25 +1784,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
         type = request.query_params.get('type', None)
-        try:
-            user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user)
-        except BasicProfile.DoesNotExist:
-            return Response(
-                {"message": "Please complete your basic profile first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Preference.DoesNotExist:
-            return Response(
-                {"message": "Please complete your preference details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except TeacherQualification.DoesNotExist:
-            return Response(
-                {"message": "Please complete your qualification details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
         exams = Exam.objects.all()
 
         # If no subject_id is provided, return error
