@@ -21,6 +21,7 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
+from django.utils.html import format_html
 import string
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
@@ -1674,10 +1675,7 @@ class CheckoutView(APIView):
                     },
                 }
             )
-
         return Response(levels, status=status.HTTP_200_OK)
-
-
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1781,25 +1779,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
         type = request.query_params.get('type', None)
-        try:
-            user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user)
-        except BasicProfile.DoesNotExist:
-            return Response(
-                {"message": "Please complete your basic profile first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Preference.DoesNotExist:
-            return Response(
-                {"message": "Please complete your preference details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except TeacherQualification.DoesNotExist:
-            return Response(
-                {"message": "Please complete your qualification details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
         exams = Exam.objects.all()
 
         # If no subject_id is provided, return error
@@ -2637,8 +2617,6 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
 class SelfReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2785,10 +2763,45 @@ class InterviewViewSet(viewsets.ModelViewSet):
         count = get_count(Interview)
         return Response({"Count": count})
 
-
     def create(self, request, *args, **kwargs):
         return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+    def send_interview_link(self, interview, recipient_email):
+        subject = f"Your Interview for {interview.subject} has been scheduled!"
+        
+        message = format_html("""
+            <html>
+                <body>
+                    <p>Dear {user},</p>
+                    <p>Your interview for <strong>{subject}</strong> has been scheduled.</p>
+                    <p><strong>Interview Time:</strong> {time}</p>
+                    <p><strong>Interview Link:</strong> <a href="{link}">Join your interview here</a></p>
+                    <p>Please make sure to join at the scheduled time.</p>
+                    <p>Best regards,<br>The Interview Team</p>
+                </body>
+            </html>
+        """, user=interview.user.username, subject=interview.subject, time=interview.time, link=interview.link)
+
+        # Send the email using HTML format
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_email],
+            html_message=message  
+        )
+
+    def update(self, request, *args, **kwargs):
+        interview = self.get_object()
+        serializer = self.get_serializer(interview, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            updated_interview = serializer.save()
+            self.send_interview_link(updated_interview, updated_interview.user.email)
+            return Response({
+                "message": "Interview updated successfully and email with the link has been sent.",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class SelfInterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2796,15 +2809,23 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     serializer_class = InterviewSerializer
     lookup_field = 'id'
 
-    def list(self, request, *args, **kwargs):
-        return Response({"error": "GET method is not allowed on this endpoint."},status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)  
+            user = request.user
+            time = serializer.validated_data.get('time')
+            subject = serializer.validated_data.get('subject') 
+            if isinstance(subject, Subject):  
+                subject = subject.id  
+
+            if Interview.objects.filter(user=user, time=time, subject=subject).exists():
+                return Response({"error": "Interview with the same details already exists."}, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print("Validation errors:", serializer.errors) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
     
 
