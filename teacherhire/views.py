@@ -1647,28 +1647,34 @@ class CheckoutView(APIView):
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
 
-        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
-        if qualified_exams:
-            levels = [
-                {
-                    "level_id": 1,
-                    "level_name": "Level 1",
-                    "subjects": level_1_subjects
-                },
+        level_2_online_subjects = qualified_exams.filter(
+            exam__level_id=1, exam__type="online", isqualified=True
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+
+        level_2_offline_subjects = qualified_exams.filter(
+            exam__level_id=2, exam__type="online", isqualified=True
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+        
+        levels = [
+            {
+                "level_id": 1,
+                "level_name": "Level 1",
+                "subjects": level_1_subjects,
+            },
+        ]
+
+        # Add Level 2 data only if qualified
+        if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
+            levels.append(
                 {
                     "level_id": 2,
                     "level_name": "Level 2",
-                    "subjects": level_2_subjects
+                    "subjects_by_type": {
+                        "online": list(level_2_online_subjects),
+                        "offline": list(level_2_offline_subjects),
+                    },
                 }
-            ]
-        else:
-            levels = [
-                {
-                    "level_id": 1,
-                    "level_name": "Level 1",
-                    "subjects": level_1_subjects
-                }
-            ]
+            )
 
         return Response(levels, status=status.HTTP_200_OK)
 
@@ -1776,7 +1782,25 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
         type = request.query_params.get('type', None)
-
+        try:
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TeacherQualification.DoesNotExist:
+            return Response(
+                {"message": "Please complete your qualification details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         exams = Exam.objects.all()
 
         # If no subject_id is provided, return error
