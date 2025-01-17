@@ -109,4 +109,4 @@ class PasskeyAdmin(admin.ModelAdmin):
 
 @admin.register(Interview)
 class InterviewAdmin(admin.ModelAdmin):
-    list_display = ['user', 'time', 'shedule','link','grade','status','created_at']
+    list_display = ['user', 'time','link','grade','status','created_at']
