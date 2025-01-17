@@ -1672,6 +1672,8 @@ class CheckoutView(APIView):
                     "subjects_by_type": {
                         "online": list(level_2_online_subjects),
                         "offline": list(level_2_offline_subjects),
+                        "interview": list(level_2_offline_subjects),
+
                     },
                 }
             )
