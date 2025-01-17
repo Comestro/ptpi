@@ -420,7 +420,7 @@ class PreferenceSerializer(serializers.ModelSerializer):
     )
     
     class_category = serializers.PrimaryKeyRelatedField(
-        queryset=ClassCategory.objects.all(),
+        queryset=ClassCategory.objects.all(),many=True,
         required=False
     )
     
@@ -442,7 +442,7 @@ class PreferenceSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)        
         representation['user'] = UserSerializer(instance.user).data        
         representation['job_role'] = RoleSerializer(instance.job_role.all(),many=True).data        
-        representation['class_category'] = ClassCategorySerializer(instance.class_category).data                
+        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(),many=True).data                
         representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject.all(),many=True).data        
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(),many=True).data        
         return representation
