@@ -24,6 +24,7 @@ router.register(r'admin/teacherjobtype', TeacherJobTypeViewSet, basename='teache
 router.register(r'admin/exam', ExamViewSet)
 router.register(r'admin/report', ReportViewSet, basename='report')
 router.register(r'admin/passkey', PasskeyViewSet, basename='passkey')
+router.register(r'admin/interview', InterviewViewSet)
 
 #access OnlyTeacher
 router.register(r'self/teacher', SingleTeacherViewSet, basename='self-teacher')
@@ -41,6 +42,7 @@ router.register(r'self/basicProfile', BasicProfileViewSet, basename='teacher-bas
 router.register(r'self/question', SelfQuestionViewSet, basename='teacher-question')
 router.register(r'self/exam', SelfExamViewSet, basename='self-exam')
 router.register(r'self/report', SelfReportViewSet, basename='self-report')
+router.register(r'self/interview', SelfInterviewViewSet, basename='self-interview')
 
 
 urlpatterns = [

@@ -2,8 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.timezone import timedelta
 from django.utils.timezone import now
-
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
@@ -17,7 +15,6 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-
         return self.create_user(email, username, password, **extra_fields)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -97,8 +94,6 @@ class ClassCategory(models.Model):
     def __str__(self):
         return self.name
 
-
-
 class EducationalQualification(models.Model):
     name = models.CharField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -153,7 +148,6 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
     
-
 class Level(models.Model):
     name = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
@@ -177,7 +171,7 @@ class TeacherJobType(models.Model):
 class Preference(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     job_role = models.ManyToManyField(Role)
-    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE,default=1)
+    class_category = models.ManyToManyField(ClassCategory)
     prefered_subject = models.ManyToManyField(Subject)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
 
@@ -198,9 +192,7 @@ class TeacherSubject(models.Model):
    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
    def __str__(self): 
-        return self.user.username	
-
- 
+        return self.user.username	 
 class BasicProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="user_profile", null=True)
     bio = models.TextField(blank=True, null=True)
@@ -274,8 +266,7 @@ class Exam(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
-    
+        return self.name   
 class Question(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
     time = models.FloatField(default=2.5)
@@ -297,7 +288,6 @@ class Question(models.Model):
             raise models.ValidationError({
                 'correct_option': f'Correct option must be between 1 and {len(self.options)}.'
             })
-
     class Meta:
         ordering = ['created_at']
 
@@ -327,21 +317,12 @@ class TeacherExamResult(models.Model):
         percentage = self.calculate_percentage()
         return percentage >= 60
 
-    # def get_level(self):
-    #     percentage = self.calculate_percentage()
-    #     if self.isqualified and percentage >= 60:
-    #         return "2nd Level"
-    #     # elif self.isqualified:
-    #     return "1st Level"
-    #     # return "not_qualified"
-
     def save(self, *args, **kwargs):
         self.isqualified = self.get_()
         if self.pk is None:  # Handle attempts only for new entries
             last_result = TeacherExamResult.objects.filter(
                 user=self.user
             ).order_by('-created_at').first()
-
         super().save(*args, **kwargs)
 
 class JobPreferenceLocation(models.Model):
@@ -371,7 +352,6 @@ class JobPreferenceLocation(models.Model):
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
 
-
 class Teacher(models.Model):
     preference = models.ForeignKey(Preference, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill,on_delete=models.CASCADE,null=True)
@@ -380,12 +360,23 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.preference.user.username  
+    
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-
+    issue_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('question wrong', 'Question Wrong'),
+            ('answer wrong', 'Answer Wrong'),
+            ('spelling mistake', 'Spelling Mistake')
+        ],
+        blank=True,
+        null=True
+    )
+    
     def __str__(self):
         return f"Report by {self.user.username if self.user else 'Anonymous'} on {self.question.id}"
 
@@ -398,7 +389,16 @@ class Passkey(models.Model):
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
-
     def __str__(self):
         return f"{self.code} - {self.exam}"
+    
+class Interview(models.Model):
+    user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
+    time = models.DateTimeField(null=True, blank=True)
+    link = models.CharField(max_length=200,null= True, blank=True)
+    status = models.BooleanField(default=False)
+    grade = models.IntegerField(default=0,null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.user.username
