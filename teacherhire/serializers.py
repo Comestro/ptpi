@@ -605,7 +605,7 @@ class PasskeySerializer(serializers.ModelSerializer):
         model = Passkey
         fields = "__all__"
 
-class Interview(serializers.ModelSerializer):
+class InterviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interview
         fields = "__all__"

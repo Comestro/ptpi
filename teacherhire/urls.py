@@ -24,6 +24,7 @@ router.register(r'admin/teacherjobtype', TeacherJobTypeViewSet, basename='teache
 router.register(r'admin/exam', ExamViewSet)
 router.register(r'admin/report', ReportViewSet, basename='report')
 router.register(r'admin/passkey', PasskeyViewSet, basename='passkey')
+router.register(r'admin/interview', InterviewViewSet)
 
 #access OnlyTeacher
 router.register(r'self/teacher', SingleTeacherViewSet, basename='self-teacher')

@@ -2774,4 +2774,21 @@ class VerifyPasscodeView(APIView):
         passkey_obj.save()
  
         return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)
+    
+class InterviewViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Interview.objects.all()
+    serializer_class = InterviewSerializer
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = get_count(Interview)
+        return Response({"Count": count})
+
+
+    def create(self, request, *args, **kwargs):
+        return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    
  
