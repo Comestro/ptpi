@@ -605,10 +605,18 @@ class PasskeySerializer(serializers.ModelSerializer):
         model = Passkey
         fields = "__all__"
 
+
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interview
-        fields = "__all__"
+        fields = ['time', 'link', 'status', 'grade']  # Exclude 'user' from here
+    def create(self, validated_data):
+        return Interview.objects.create(**validated_data)
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        return representation
+    
 
 class TeacherSerializer(serializers.ModelSerializer):
     preference = serializers.StringRelatedField()
