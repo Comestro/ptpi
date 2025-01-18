@@ -134,7 +134,7 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExperiences
-        fields = "__all__"
+        fields = ['id', 'user', 'institution', 'role', 'start_date', 'end_date', 'achievements']
 
     def validate_institution(self, value):
         if value and len(value) < 3:
@@ -200,7 +200,7 @@ class SkillSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Skill
-        fields = "__all__"
+        fields = ['id', 'name','description']
 
     def validate_name(self, value):
         if value is not None:
@@ -215,15 +215,17 @@ class SkillSerializer(serializers.ModelSerializer):
 class TeachersAddressSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     pincode = serializers.CharField(max_length=6, required=False, allow_null=True)
+    
     class Meta:
         model = TeachersAddress
-        fields = ['id','user','address_type','state','division','district','block','village','area','pincode']
-
+        fields = ['id', 'user', 'address_type', 'state', 'division', 'district', 'block', 'village', 'area', 'pincode']
+    
     def validate_pincode(self, value):
+        # Only validate if the pincode is not empty or null
         if value and (len(value) != 6 or not value.isdigit()):
             raise serializers.ValidationError("Pincode must be exactly 6 digits.")
         return value
-   
+
 # serializers.py
     # aadhar_no = serializers.CharField(max_length=12, required=False, allow_null=True)
     # fullname = serializers.CharField(max_length=20, required=False, allow_null=True)
@@ -367,28 +369,32 @@ class TeacherSkillSerializer(serializers.ModelSerializer):
 class EducationalQualificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationalQualification
-        fields = '__all__'
+        fields = ['id', 'name']
 
 class TeacherQualificationSerializer(serializers.ModelSerializer):
+    # This will allow you to include the user and qualification in the serialized data
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    qualification = serializers.SlugRelatedField(queryset=EducationalQualification.objects.all(),slug_field="name",required=False)
+    qualification = serializers.SlugRelatedField(queryset=EducationalQualification.objects.all(), slug_field="name", required=False)
+    
     class Meta:
         model = TeacherQualification
-        fields = "__all__"
+        fields = ['id', 'user', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        
         representation['user'] = UserSerializer(instance.user).data
         representation['qualification'] = EducationalQualificationSerializer(instance.qualification).data
+        
         return representation
 
-    def validate_year_of_passing(self, value):        
+    def validate_year_of_passing(self, value):
         current_year = datetime.now().year
         if value > current_year:
             raise serializers.ValidationError("Year of passing cannot be in the future.")
         return value
 
-    def validate(self, data):        
+    def validate(self, data):
         user = data.get('user')
         if user:
             previous_qualification = TeacherQualification.objects.filter(user=user).order_by('-year_of_passing').first()
@@ -397,7 +403,7 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         "Year of passing should be greater than the previous qualification's year."
                     )
-        return data   
+        return data
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
@@ -413,38 +419,39 @@ class RoleSerializer(serializers.ModelSerializer):
         return value
 
 class PreferenceSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)    
-    job_role = serializers.PrimaryKeyRelatedField(
-        queryset=Role.objects.all(),
-        many=True
-    )
-    
-    class_category = serializers.PrimaryKeyRelatedField(
-        queryset=ClassCategory.objects.all(),
-        required=False
-    )
-    
-    prefered_subject = serializers.PrimaryKeyRelatedField(
-        queryset=Subject.objects.all(),many=True,
-        required=False
-    )
-    
-    teacher_job_type = serializers.PrimaryKeyRelatedField(
-        queryset=TeacherJobType.objects.all(),many=True,
-        required=False
-    )
-    
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    skills = TeacherSkillSerializer(source='user.teacherskill_set', many=True)
+    qualifications = TeacherQualificationSerializer(source='user.teacherqualification_set', many=True)
+    address = TeachersAddressSerializer(source='user.addresses', many=True)
+    experiences = TeacherExperiencesSerializer(source='user.teacherexperiences_set', many=True)
+    job_role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
+    prefered_subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True, required=False)
+
     class Meta:
         model = Preference
-        fields = ['id', 'user', 'job_role', 'class_category', 'prefered_subject', 'teacher_job_type']
+        fields = [
+            'id', 
+            'user', 
+            'job_role', 
+            'class_category', 
+            'prefered_subject', 
+            'teacher_job_type', 
+            'skills', 
+            'qualifications',
+            'address',
+            'experiences',
+        ]
 
     def to_representation(self, instance):
-        representation = super().to_representation(instance)        
-        representation['user'] = UserSerializer(instance.user).data        
-        representation['job_role'] = RoleSerializer(instance.job_role.all(),many=True).data        
-        representation['class_category'] = ClassCategorySerializer(instance.class_category).data                
-        representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject.all(),many=True).data        
-        representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(),many=True).data        
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        representation['job_role'] = RoleSerializer(instance.job_role.all(), many=True).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category).data if instance.class_category else None
+        representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject.all(), many=True).data
+        representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
+                
         return representation
 
 class TeacherSubjectSerializer(serializers.ModelSerializer):
@@ -610,20 +617,20 @@ class Interview(serializers.ModelSerializer):
         model = Interview
         fields = "__all__"
 
-class TeacherSerializer(serializers.ModelSerializer):
-    preference = serializers.StringRelatedField()
-    skill = serializers.StringRelatedField() 
-    educationalQualification = serializers.StringRelatedField()
-    address = serializers.StringRelatedField()
+# class TeacherSerializer(serializers.ModelSerializer):
+#     preference = serializers.StringRelatedField()
+#     skill = serializers.StringRelatedField() 
+#     educationalQualification = serializers.StringRelatedField()
+#     address = serializers.StringRelatedField()
 
-    class Meta:
-        model = Teacher
-        fields = ['id', 'preference', 'skill', 'educationalQualification', 'address']
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['preference'] = PreferenceSerializer(instance.preference).data
-        representation['skill'] = SkillSerializer(instance.skill).data
-        representation['educationalQualification'] = EducationalQualificationSerializer(instance.educationalQualification).data  # Corrected field name
-        representation['address'] = TeachersAddressSerializer(instance.address).data
+#     class Meta:
+#         model = Teacher
+#         fields = ['id', 'preference', 'skill', 'educationalQualification', 'address']
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['preference'] = PreferenceSerializer(instance.preference).data
+#         representation['skill'] = SkillSerializer(instance.skill).data
+#         representation['educationalQualification'] = EducationalQualificationSerializer(instance.educationalQualification).data  # Corrected field name
+#         representation['address'] = TeachersAddressSerializer(instance.address).data
 
-        return representation
+#         return representation
