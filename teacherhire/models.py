@@ -395,7 +395,7 @@ class Passkey(models.Model):
 class Interview(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    calsscategory = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, null=True, blank=True)
+    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True, blank=True)
     link = models.CharField(max_length=200,null= True, blank=True)
     status = models.BooleanField(default=False)

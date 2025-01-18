@@ -2827,20 +2827,20 @@ class InterviewViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     def send_interview_link(self, interview, recipient_email):
-        subject = f"Your Interview for {interview.subject} has been scheduled!"
+        subject = f"Your Interview for {interview.subject} {interview.class_category} has been scheduled!"
         
         message = format_html("""
             <html>
                 <body>
                     <p>Dear {user},</p>
-                    <p>Your interview for <strong>{subject}</strong> has been scheduled.</p>
+                    <p>Your interview for <strong>{subject} {class_category}</strong> has been scheduled.</p>
                     <p><strong>Interview Time:</strong> {time}</p>
                     <p><strong>Interview Link:</strong> <a href="{link}">Join your interview here</a></p>
                     <p>Please make sure to join at the scheduled time.</p>
                     <p>Best regards,<br>The Interview Team</p>
                 </body>
             </html>
-        """, user=interview.user.username, subject=interview.subject, time=interview.time, link=interview.link)
+        """, user=interview.user.username, subject=interview.subject, class_category=interview.class_category, time=interview.time, link=interview.link)
 
         # Send the email using HTML format
         send_mail(
@@ -2876,10 +2876,13 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             user = request.user
             time = serializer.validated_data.get('time')
             subject = serializer.validated_data.get('subject') 
+            class_category = serializer.validated_data.get('class_category')
             if isinstance(subject, Subject):  
                 subject = subject.id  
+            if isinstance(class_category, ClassCategory):
+                class_category = class_category.id
 
-            if Interview.objects.filter(user=user, time=time, subject=subject).exists():
+            if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
                 return Response({"error": "Interview with the same details already exists."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
