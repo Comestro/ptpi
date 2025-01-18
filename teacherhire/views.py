@@ -1624,10 +1624,12 @@ class CheckoutView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
+        class_category_id = request.query_params.get('class_category_id')  
+        
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
             user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user, class_category=class_category_id) if class_category_id else Preference.objects.get(user=user)
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
@@ -1647,13 +1649,15 @@ class CheckoutView(APIView):
         level_1_subjects = [{"subject_id": subject.id, "subject_name": subject.subject_name} for subject in user_subjects]
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
+        if class_category_id:
+            qualified_exams = qualified_exams.filter(exam__class_category_id=class_category_id)
 
         level_2_online_subjects = qualified_exams.filter(
-            exam__level_id=1, exam__type="online", isqualified=True
+            exam__level_id=1, exam__type="online"
         ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
 
         level_2_offline_subjects = qualified_exams.filter(
-            exam__level_id=2, exam__type="online", isqualified=True
+            exam__level_id=2, exam__type="online"
         ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
         
         levels = [
@@ -1664,7 +1668,6 @@ class CheckoutView(APIView):
             },
         ]
 
-        # Add Level 2 data only if qualified
         if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
             levels.append(
                 {
@@ -1674,7 +1677,6 @@ class CheckoutView(APIView):
                         "online": list(level_2_online_subjects),
                         "offline": list(level_2_offline_subjects),
                         "interview": list(level_2_offline_subjects),
-
                     },
                 }
             )
@@ -1782,27 +1784,59 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
         type = request.query_params.get('type', None)
+        class_category_id = request.query_params.get('class_category_id', None)
 
+        try:
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TeacherQualification.DoesNotExist:
+            return Response(
+                {"message": "Please complete your qualification details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         exams = Exam.objects.all()
 
-        # If no subject_id is provided, return error
-        if not subject_id:
-            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
-
-        exams = exams.filter(subject_id=subject_id)
-
-        # Get teacher class category preference
-        teacher_class_category = Preference.objects.filter(user=user).first()
-        if not teacher_class_category:
+        if not class_category_id:
             return Response(
                 {"message": "Please choose a class category first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        exams = exams.filter(class_category=teacher_class_category.class_category)
+        teacher_class_category = ClassCategory.objects.filter(preference__user=user, id=class_category_id).first()
+        if teacher_class_category:
+            exams = exams.filter(class_category=class_category_id)
+        else:
+            return Response(
+                {"message": "Please choose a valid class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+
+        # If no subject_id is provided, return error
+        if not subject_id:
+            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
+        teacher_subject = Subject.objects.filter(preference__user=user, id=subject_id).first()
+        if teacher_subject:
+            exams = exams.filter(subject=subject_id)
+        else:
+            return Response(
+                {"message": "Please choose a valid subject."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # Check qualification for Level 1 and Level 2 exams
-        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=1).exists()
-        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=2).exists()
+        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__class_category_id=class_category_id,exam__level_id=1).exists()
+        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2).exists()
 
         # Handle level filter
         if level_id:
@@ -1936,6 +1970,30 @@ def insert_data(request):
                  "total_marks": 50, "duration": 90, "type": "offline"},
                  {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
             ]
         },
     }
