@@ -28,7 +28,7 @@ router.register(r'admin/interview', InterviewViewSet)
 
 #access OnlyTeacher
 
-router.register(r"self/", SelfViewSet, basename='self-teacher')
+# router.register(r"self/", SelfViewSet, basename='self-teacher')
 router.register(r'self/customuser', CustomUserViewSet, basename='self-customuser')
 router.register(r"self/teacherexperience", SingleTeacherExperiencesViewSet, basename="self-teacherexperience")
 router.register(r'self/teacherexamresult', TeacherExamResultViewSet, basename='self-teacherexamresult')
