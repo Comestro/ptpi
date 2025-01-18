@@ -11,7 +11,7 @@ from rest_framework.decorators import action
 from .permissions import IsRecruiterPermission, IsAdminPermission
 import uuid
 from .utils import *
-from datetime import timedelta
+from datetime import date, timedelta
 from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -22,7 +22,6 @@ from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
 from django.utils.html import format_html
-import string
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
@@ -503,142 +502,121 @@ class SubjectViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+
+class SelfViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = PreferenceSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return Preference.objects.filter(user=user)
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+
 class TeacherViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated]
-    # authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Teacher.objects.all()
-    serializer_class = TeacherSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = PreferenceSerializer
+
+    def get_queryset(self):
+        return Preference.objects.all()
 
     @action(detail=False, methods=['get'])
     def teachers(self, request):
-        # Get query parameters from the request
-        skill_name = request.query_params.get('skill', None)
-        preference_id = request.query_params.get('preference', None)
-        educational_qualification = request.query_params.get('educationalQualification', None)
-        address_id = request.query_params.get('address', None)
-        address_state = request.query_params.getlist('state', None)
-        address_division = request.query_params.getlist('division', None)
-        address_district = request.query_params.getlist('district', None)  # Handle multiple districts
-        address_block = request.query_params.getlist('block', None)
-        address_village = request.query_params.getlist('village', None)
-        job_role_name = request.query_params.getlist('job_role', None)
-        class_category_name = request.query_params.get('class_category_name', None)
-        prefered_subject_name = request.query_params.getlist('prefered_subject', None)
-        teacher_job_type_name = request.query_params.getlist('teacher_job_type', None)
+        teachers = self.get_queryset()
+        filters = Q()
 
-        queryset = Teacher.objects.all()
-        filter_messages = {}
+        # Skill filter
+        teacher_skill_name = request.query_params.get('skill', None)
+        if teacher_skill_name:
+            skill_filter = Skill.objects.filter(name__icontains=teacher_skill_name)
+            filters &= Q(user__in=TeacherSkill.objects.filter(skill__in=skill_filter).values('user'))
 
-        if skill_name:
-            queryset = queryset.filter(skill__name__icontains=skill_name)
-            filter_messages['skill'] = skill_name
+        # Qualification filter
+        teacher_qualification_name = request.query_params.get('qualification', None)
+        if teacher_qualification_name:
+            qualification_filter = EducationalQualification.objects.filter(name__icontains=teacher_qualification_name)
+            filters &= Q(user__in=TeacherQualification.objects.filter(qualification__in=qualification_filter).values('user'))
+
+        # Experience filter
+        teacher_experience = request.query_params.get('experience', None)
+        if teacher_experience:
+            experience_filter = self.get_experience_filter(teacher_experience)
+            if experience_filter:
+                filters &= experience_filter
+
+        # Address filter
+        teacher_address = request.query_params.get('address', None)
+        if teacher_address:
+            teacher_filter = TeachersAddress.objects.filter()
+            filters &= Q(user__in=teacher_filter.values('user'))
+
+        # Other filters (job role, class category, subject, job type, etc.)
+        job_role_ids = request.query_params.getlist('job_role', [])
+        if job_role_ids:
+            filters &= Q(job_role__jobrole_name__in=job_role_ids)
+
+        class_category = request.query_params.getlist('class_category', [])
+        if class_category:
+            filters &= Q(job_role__name__in=class_category)
+
+        subject_ids = request.query_params.getlist('subject', [])
+        if subject_ids:
+            filters &= Q(prefered_subject__subject_name__in=subject_ids)
+
+        job_type_ids = request.query_params.getlist('job_type', [])
+        if job_type_ids:
+            filters &= Q(job_type__teacher_job_name__in=job_type_ids)
+
+        # Location filters (state, division, district, block, village, pincode)
+        location_filters = Q()
+        state = request.query_params.get('state', None)
+        division = request.query_params.get('division', None)
+        district = request.query_params.get('district', None)
+        block = request.query_params.get('block', None)
+        village = request.query_params.get('village', None)
+        pincode = request.query_params.get('pincode', None)
+
+        if state:
+            location_filters &= Q(user__in=TeachersAddress.objects.filter(state__icontains=state).values('user'))
+        if division:
+            location_filters &= Q(user__in=TeachersAddress.objects.filter(division__icontains=division).values('user'))
+        if district:
+            location_filters &= Q(user__in=TeachersAddress.objects.filter(district__icontains=district).values('user'))
+        if block:
+            location_filters &= Q(user__in=TeachersAddress.objects.filter(block__icontains=block).values('user'))
+        if village:
+            location_filters &= Q(user__in=TeachersAddress.objects.filter(village__icontains=village).values('user'))
+        if pincode:
+            location_filters &= Q(user__in=TeachersAddress.objects.filter(pincode__icontains=pincode).values('user'))
+
+        if location_filters:
+            filters &= location_filters
+
+        teachers = teachers.filter(filters)     
+        if not teachers.exists():
+            return Response({"detail": "Teacher not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize and return the response
+        serializer = PreferenceSerializer(teachers, many=True)
+        return Response(serializer.data)
+
+    def get_experience_filter(self, experience_str):        
+        match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
+        if match:
+            years = int(match.group(1))            
+            threshold_date = date.today().replace(year=date.today().year - years)            
+            start_date_lower_bound = threshold_date
+            start_date_upper_bound = threshold_date.replace(year=threshold_date.year + 1)
+            return Q(user__in=TeacherExperiences.objects.filter(start_date__gte=start_date_lower_bound, start_date__lt=start_date_upper_bound).values('user'))
         
-        # Filter by preference
-        if preference_id:
-            queryset = queryset.filter(preference_id=preference_id)
-            filter_messages['preference'] = preference_id
-        
-        # Filter by educational qualification
-        if educational_qualification:
-            queryset = queryset.filter(educationalQualification__name__icontains=educational_qualification)
-            filter_messages['educationalQualification'] = educational_qualification
-        
-        if address_id:
-            queryset = queryset.filter(address_id=address_id)
-            filter_messages['address'] = address_id
-        
-        # Filter by address fields (e.g., state, division, district, etc.)
-        if address_state:
-            queryset = queryset.filter(address__state__icontains='|'.join(address_state))
-            filter_messages['state'] = address_state
-        if address_division:
-            queryset = queryset.filter(address__division__icontains= '|'.join(address_division))
-            filter_messages['division'] = address_division
-        if address_district:
-            queryset = queryset.filter(address__district__icontains='|'.join(address_district))
-            filter_messages['district'] = address_district
-        if address_block:
-            queryset = queryset.filter(address__block__icontains= '|'.join(address_block))
-            filter_messages['block'] = address_block
-        if address_village:
-            queryset = queryset.filter(address__village__icontains= '|'.join(address_village))
-            filter_messages['village'] = address_village
-        
-        # Filter by job role
-        if job_role_name:
-            queryset = queryset.filter(preference__job_role__name__in=job_role_name)
-            filter_messages['job_role'] = job_role_name
-        
-        # Filter by class category
-        if class_category_name:
-            queryset = queryset.filter(preference__class_category__name=class_category_name)
-            filter_messages['class_category_name'] = class_category_name
-        
-        # Filter by preferred subject
-        if prefered_subject_name:
-            queryset = queryset.filter(preference__prefered_subject__name__in=prefered_subject_name)
-            filter_messages['prefered_subject'] = prefered_subject_name
-        
-        # Filter by teacher job type
-        if teacher_job_type_name:
-            queryset = queryset.filter(preference__teacher_job_type__name__in=teacher_job_type_name)
-            filter_messages['teacher_job_type'] = teacher_job_type_name
-        
-        # If no teachers match the filters
-        if not queryset.exists():
-            return Response({
-                "filters": filter_messages,
-                "message": "No teachers found matching the given criteria."
-            })
+        return None
 
-        # If no filters were applied, show all teachers
-        if not filter_messages:
-            filter_messages["message"] = "No applied filters. Showing all teachers."
 
-        # Serialize the filtered queryset
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({
-            "filters": filter_messages,
-            "data": serializer.data
-        })
-class SingleTeacherViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication]
-    serializer_class = TeacherSerializer
-
-    def put(self, request, *args, **kwargs):
-        data = request.data.copy()
-        data['user'] = request.user.id
-
-        teacher = Teacher.objects.filter(user=request.user).first()
-
-        if teacher:
-            return update_auth_data(
-                serialiazer_class=self.get_serializer_class(),
-                instance=teacher,
-                request_data=data,
-                user=request.user
-            )
-        else:
-            return create_auth_data(
-                serializer_class=self.get_serializer_class(),
-                request_data=data,
-                user=request.user,
-                model_class=Teacher
-            )
-
-    def get_queryset(self):
-        return Teacher.objects.filter(user=self.request.user)
-
-    def list(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def get_object(self):
-        try:
-            return Teacher.objects.get(user=self.request.user)
-        except Teacher.DoesNotExist:
-            raise Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
-       
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
@@ -949,7 +927,6 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['user'] = request.user.id
 
-        # Check if the user already has a preference
         if Preference.objects.filter(user=request.user).exists():
             return Response({"detail": "Preference already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1621,10 +1598,12 @@ class CheckoutView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
+        class_category_id = request.query_params.get('class_category_id')  
+        
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
             user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user, class_category=class_category_id) if class_category_id else Preference.objects.get(user=user)
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
@@ -1644,13 +1623,15 @@ class CheckoutView(APIView):
         level_1_subjects = [{"subject_id": subject.id, "subject_name": subject.subject_name} for subject in user_subjects]
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
+        if class_category_id:
+            qualified_exams = qualified_exams.filter(exam__class_category_id=class_category_id)
 
         level_2_online_subjects = qualified_exams.filter(
-            exam__level_id=1, exam__type="online", isqualified=True
+            exam__level_id=1, exam__type="online"
         ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
 
         level_2_offline_subjects = qualified_exams.filter(
-            exam__level_id=2, exam__type="online", isqualified=True
+            exam__level_id=2, exam__type="online"
         ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
         
         levels = [
@@ -1661,7 +1642,6 @@ class CheckoutView(APIView):
             },
         ]
 
-        # Add Level 2 data only if qualified
         if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
             levels.append(
                 {
@@ -1671,7 +1651,6 @@ class CheckoutView(APIView):
                         "online": list(level_2_online_subjects),
                         "offline": list(level_2_offline_subjects),
                         "interview": list(level_2_offline_subjects),
-
                     },
                 }
             )
@@ -1779,27 +1758,59 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
         type = request.query_params.get('type', None)
+        class_category_id = request.query_params.get('class_category_id', None)
 
+        try:
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TeacherQualification.DoesNotExist:
+            return Response(
+                {"message": "Please complete your qualification details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         exams = Exam.objects.all()
 
-        # If no subject_id is provided, return error
-        if not subject_id:
-            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
-
-        exams = exams.filter(subject_id=subject_id)
-
-        # Get teacher class category preference
-        teacher_class_category = Preference.objects.filter(user=user).first()
-        if not teacher_class_category:
+        if not class_category_id:
             return Response(
                 {"message": "Please choose a class category first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        exams = exams.filter(class_category=teacher_class_category.class_category)
+        teacher_class_category = ClassCategory.objects.filter(preference__user=user, id=class_category_id).first()
+        if teacher_class_category:
+            exams = exams.filter(class_category=class_category_id)
+        else:
+            return Response(
+                {"message": "Please choose a valid class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+
+        # If no subject_id is provided, return error
+        if not subject_id:
+            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
+        teacher_subject = Subject.objects.filter(preference__user=user, id=subject_id).first()
+        if teacher_subject:
+            exams = exams.filter(subject=subject_id)
+        else:
+            return Response(
+                {"message": "Please choose a valid subject."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # Check qualification for Level 1 and Level 2 exams
-        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=1).exists()
-        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=2).exists()
+        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__class_category_id=class_category_id,exam__level_id=1).exists()
+        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2).exists()
 
         # Handle level filter
         if level_id:
@@ -1933,6 +1944,30 @@ def insert_data(request):
                  "total_marks": 50, "duration": 90, "type": "offline"},
                  {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
             ]
         },
     }
@@ -2766,20 +2801,20 @@ class InterviewViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     def send_interview_link(self, interview, recipient_email):
-        subject = f"Your Interview for {interview.subject} has been scheduled!"
+        subject = f"Your Interview for {interview.subject} {interview.class_category} has been scheduled!"
         
         message = format_html("""
             <html>
                 <body>
                     <p>Dear {user},</p>
-                    <p>Your interview for <strong>{subject}</strong> has been scheduled.</p>
+                    <p>Your interview for <strong>{subject} {class_category}</strong> has been scheduled.</p>
                     <p><strong>Interview Time:</strong> {time}</p>
                     <p><strong>Interview Link:</strong> <a href="{link}">Join your interview here</a></p>
                     <p>Please make sure to join at the scheduled time.</p>
                     <p>Best regards,<br>The Interview Team</p>
                 </body>
             </html>
-        """, user=interview.user.username, subject=interview.subject, time=interview.time, link=interview.link)
+        """, user=interview.user.username, subject=interview.subject, class_category=interview.class_category, time=interview.time, link=interview.link)
 
         # Send the email using HTML format
         send_mail(
@@ -2815,10 +2850,13 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             user = request.user
             time = serializer.validated_data.get('time')
             subject = serializer.validated_data.get('subject') 
+            class_category = serializer.validated_data.get('class_category')
             if isinstance(subject, Subject):  
                 subject = subject.id  
+            if isinstance(class_category, ClassCategory):
+                class_category = class_category.id
 
-            if Interview.objects.filter(user=user, time=time, subject=subject).exists():
+            if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
                 return Response({"error": "Interview with the same details already exists."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

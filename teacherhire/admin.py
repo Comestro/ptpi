@@ -58,9 +58,6 @@ class TeacherSkillAdmin(admin.ModelAdmin):
 class TeacherSubjectAdmin(admin.ModelAdmin):
     list_display = ['user', 'subject']
 
-@admin.register(Teacher)
-class TeacherAdmin(admin.ModelAdmin):
-    list_display = ['skill','preference','address','educationalQualification']
 
 @admin.register(Skill)
 class SkillAdmin(admin.ModelAdmin):

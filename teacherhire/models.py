@@ -55,7 +55,7 @@ class TeachersAddress(models.Model):
         ('permanent', 'Permanent'),
     ]
 
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='addresses')
     address_type = models.CharField(max_length=10, choices=ADDRESS_TYPE_CHOICES, null=True, blank=True)
     state = models.CharField(max_length=100, default='Bihar', null=True, blank=True)
     division = models.CharField(max_length=100, null=True, blank=True)
@@ -352,15 +352,7 @@ class JobPreferenceLocation(models.Model):
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
 
-class Teacher(models.Model):
-    preference = models.ForeignKey(Preference, on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill,on_delete=models.CASCADE,null=True)
-    educationalQualification= models.ForeignKey(EducationalQualification,on_delete=models.CASCADE,null=True)
-    address = models.ForeignKey(TeachersAddress, on_delete=models.CASCADE, null=True)
 
-    def __str__(self):
-        return self.preference.user.username  
-    
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -395,7 +387,7 @@ class Passkey(models.Model):
 class Interview(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    calsscategory = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, null=True, blank=True)
+    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True, blank=True)
     link = models.CharField(max_length=200,null= True, blank=True)
     status = models.BooleanField(default=False)

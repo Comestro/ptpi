@@ -11,7 +11,6 @@ router.register(r"admin/skill", SkillViewSet)
 router.register(r"admin/teacherskill", TeacherSkillViewSet)
 router.register(r"admin/subject", SubjectViewSet)
 router.register(r"admin/classcategory", ClassCategoryViewSet)
-router.register(r"admin/teacher", TeacherViewSet)
 router.register(r'admin/question', QuestionViewSet)
 router.register(r'admin/educationalQulification', EducationalQulificationViewSet)
 router.register(r'admin/teacherclasscategory', TeacherClassCategoryViewSet, basename='teacherclasscategory')
@@ -24,10 +23,12 @@ router.register(r'admin/teacherjobtype', TeacherJobTypeViewSet, basename='teache
 router.register(r'admin/exam', ExamViewSet)
 router.register(r'admin/report', ReportViewSet, basename='report')
 router.register(r'admin/passkey', PasskeyViewSet, basename='passkey')
+router.register(r'admin/teacher', TeacherViewSet, basename='admin-teacher')
 router.register(r'admin/interview', InterviewViewSet)
 
 #access OnlyTeacher
-router.register(r'self/teacher', SingleTeacherViewSet, basename='self-teacher')
+
+# router.register(r"self/", SelfViewSet, basename='self-teacher')
 router.register(r'self/customuser', CustomUserViewSet, basename='self-customuser')
 router.register(r"self/teacherexperience", SingleTeacherExperiencesViewSet, basename="self-teacherexperience")
 router.register(r'self/teacherexamresult', TeacherExamResultViewSet, basename='self-teacherexamresult')
