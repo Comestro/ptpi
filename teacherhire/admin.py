@@ -66,16 +66,19 @@ class SkillAdmin(admin.ModelAdmin):
     
 @admin.register(Preference)
 class PreferenceAdmin(admin.ModelAdmin):
-    list_display = ['user', 'get_job_role', 'class_category', 'get_prefered_subject', 'get_teacher_job_type']
+    list_display = ['user', 'get_job_role', 'get_class_category', 'get_prefered_subject', 'get_teacher_job_type']
 
     def get_prefered_subject(self, obj):
         return ", ".join([str(subject) for subject in obj.prefered_subject.all()])
 
     def get_teacher_job_type(self, obj):
         return ", ".join([str(job_type) for job_type in obj.teacher_job_type.all()])
+    
+    def get_class_category(self, obj):
+        return ", ".join([str(class_category) for class_category in obj.class_category.all()])
 
     def get_job_role(self, obj):
-        return ", ".join([str(job_role) for job_role in obj.teacher_job_type.all()])  # Changed teacher_job_role to teacher_job_type
+        return ", ".join([str(job_role) for job_role in obj.job_role.all()])  # Changed teacher_job_role to teacher_job_type
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
@@ -103,4 +106,4 @@ class PasskeyAdmin(admin.ModelAdmin):
 
 @admin.register(Interview)
 class InterviewAdmin(admin.ModelAdmin):
-    list_display = ['user', 'time', 'shedule','link','grade','status','created_at']
+    list_display = ['user', 'time','link','grade','status','created_at']

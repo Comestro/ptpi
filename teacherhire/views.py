@@ -21,6 +21,7 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
+from django.utils.html import format_html
 import string
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
@@ -1601,10 +1602,12 @@ class CheckoutView(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
+        class_category_id = request.query_params.get('class_category_id')  
+        
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
             user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user, class_category=class_category_id) if class_category_id else Preference.objects.get(user=user)
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
@@ -1624,33 +1627,38 @@ class CheckoutView(APIView):
         level_1_subjects = [{"subject_id": subject.id, "subject_name": subject.subject_name} for subject in user_subjects]
 
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
+        if class_category_id:
+            qualified_exams = qualified_exams.filter(exam__class_category_id=class_category_id)
 
-        level_2_subjects = qualified_exams.values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
-        if qualified_exams:
-            levels = [
-                {
-                    "level_id": 1,
-                    "level_name": "Level 1",
-                    "subjects": level_1_subjects
-                },
+        level_2_online_subjects = qualified_exams.filter(
+            exam__level_id=1, exam__type="online"
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+
+        level_2_offline_subjects = qualified_exams.filter(
+            exam__level_id=2, exam__type="online"
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+        
+        levels = [
+            {
+                "level_id": 1,
+                "level_name": "Level 1",
+                "subjects": level_1_subjects,
+            },
+        ]
+
+        if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
+            levels.append(
                 {
                     "level_id": 2,
                     "level_name": "Level 2",
-                    "subjects": level_2_subjects
+                    "subjects_by_type": {
+                        "online": list(level_2_online_subjects),
+                        "offline": list(level_2_offline_subjects),
+                        "interview": list(level_2_offline_subjects),
+                    },
                 }
-            ]
-        else:
-            levels = [
-                {
-                    "level_id": 1,
-                    "level_name": "Level 1",
-                    "subjects": level_1_subjects
-                }
-            ]
-
+            )
         return Response(levels, status=status.HTTP_200_OK)
-
-
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1754,27 +1762,59 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
         type = request.query_params.get('type', None)
+        class_category_id = request.query_params.get('class_category_id', None)
 
+        try:
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except TeacherQualification.DoesNotExist:
+            return Response(
+                {"message": "Please complete your qualification details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         exams = Exam.objects.all()
 
-        # If no subject_id is provided, return error
-        if not subject_id:
-            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
-
-        exams = exams.filter(subject_id=subject_id)
-
-        # Get teacher class category preference
-        teacher_class_category = Preference.objects.filter(user=user).first()
-        if not teacher_class_category:
+        if not class_category_id:
             return Response(
                 {"message": "Please choose a class category first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        exams = exams.filter(class_category=teacher_class_category.class_category)
+        teacher_class_category = ClassCategory.objects.filter(preference__user=user, id=class_category_id).first()
+        if teacher_class_category:
+            exams = exams.filter(class_category=class_category_id)
+        else:
+            return Response(
+                {"message": "Please choose a valid class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+
+        # If no subject_id is provided, return error
+        if not subject_id:
+            return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
+        teacher_subject = Subject.objects.filter(preference__user=user, id=subject_id).first()
+        if teacher_subject:
+            exams = exams.filter(subject=subject_id)
+        else:
+            return Response(
+                {"message": "Please choose a valid subject."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # Check qualification for Level 1 and Level 2 exams
-        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=1).exists()
-        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__level_id=2).exists()
+        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__class_category_id=class_category_id,exam__level_id=1).exists()
+        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2).exists()
 
         # Handle level filter
         if level_id:
@@ -1908,6 +1948,30 @@ def insert_data(request):
                  "total_marks": 50, "duration": 90, "type": "offline"},
                  {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 "total_marks": 50, "duration": 90, "type": "online"},
             ]
         },
     }
@@ -2497,7 +2561,7 @@ def insert_data(request):
         "text": "Solve: 5 + 3 × 2.",
         "options": ["11", "16", "21", "13"],
         "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
-        "correct_option": 1
+        "correct_option": 2
     },
     {
         "exam": exams[15],
@@ -2592,8 +2656,6 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
 class SelfReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2602,8 +2664,7 @@ class SelfReportViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def list(self, request, *args, **kwargs):
-        return Response({"error": "GET method is not allowed on this endpoint."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response({"error": "GET method is not allowed on this endpoint."},status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request):
         user = request.user
@@ -2615,8 +2676,7 @@ class SelfReportViewSet(viewsets.ModelViewSet):
             return Response({"error": "Question not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         if Report.objects.filter(user=user, question=question).exists():
-            return Response({"error": "You have already submitted a report for this question."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "You have already submitted a report for this question."},status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()
         data['user'] = user.id
@@ -2730,4 +2790,87 @@ class VerifyPasscodeView(APIView):
         passkey_obj.save()
  
         return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)
+    
+class InterviewViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Interview.objects.all()
+    serializer_class = InterviewSerializer
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = get_count(Interview)
+        return Response({"Count": count})
+
+    def create(self, request, *args, **kwargs):
+        return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    def send_interview_link(self, interview, recipient_email):
+        subject = f"Your Interview for {interview.subject} {interview.class_category} has been scheduled!"
+        
+        message = format_html("""
+            <html>
+                <body>
+                    <p>Dear {user},</p>
+                    <p>Your interview for <strong>{subject} {class_category}</strong> has been scheduled.</p>
+                    <p><strong>Interview Time:</strong> {time}</p>
+                    <p><strong>Interview Link:</strong> <a href="{link}">Join your interview here</a></p>
+                    <p>Please make sure to join at the scheduled time.</p>
+                    <p>Best regards,<br>The Interview Team</p>
+                </body>
+            </html>
+        """, user=interview.user.username, subject=interview.subject, class_category=interview.class_category, time=interview.time, link=interview.link)
+
+        # Send the email using HTML format
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient_email],
+            html_message=message  
+        )
+
+    def update(self, request, *args, **kwargs):
+        interview = self.get_object()
+        serializer = self.get_serializer(interview, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            updated_interview = serializer.save()
+            self.send_interview_link(updated_interview, updated_interview.user.email)
+            return Response({
+                "message": "Interview updated successfully and email with the link has been sent.",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class SelfInterviewViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Interview.objects.all()
+    serializer_class = InterviewSerializer
+    lookup_field = 'id'
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            time = serializer.validated_data.get('time')
+            subject = serializer.validated_data.get('subject') 
+            class_category = serializer.validated_data.get('class_category')
+            if isinstance(subject, Subject):  
+                subject = subject.id  
+            if isinstance(class_category, ClassCategory):
+                class_category = class_category.id
+
+            if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
+                return Response({"error": "Interview with the same details already exists."}, status=status.HTTP_400_BAD_REQUEST)
+            serializer.save(user=user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print("Validation errors:", serializer.errors) 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    
+
+
+    
  

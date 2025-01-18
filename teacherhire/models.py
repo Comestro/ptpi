@@ -171,7 +171,7 @@ class TeacherJobType(models.Model):
 class Preference(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     job_role = models.ManyToManyField(Role)
-    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE,default=1)
+    class_category = models.ManyToManyField(ClassCategory)
     prefered_subject = models.ManyToManyField(Subject)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
 
@@ -386,11 +386,12 @@ class Passkey(models.Model):
     
 class Interview(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True, blank=True)
-    shedule = models.CharField(max_length=200, null=True , blank=True)
     link = models.CharField(max_length=200,null= True, blank=True)
     status = models.BooleanField(default=False)
-    grade = models.IntegerField(default=0 )
+    grade = models.IntegerField(default=0,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

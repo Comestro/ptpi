@@ -604,7 +604,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Report
-        fields = ['id', 'user', 'question', 'status', 'created_at']
+        fields = ['id', 'user', 'question','issue_type' ,'status', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
 
 class PasskeySerializer(serializers.ModelSerializer):
@@ -612,10 +612,18 @@ class PasskeySerializer(serializers.ModelSerializer):
         model = Passkey
         fields = "__all__"
 
-class Interview(serializers.ModelSerializer):
-    class Meta:
+
+class InterviewSerializer(serializers.ModelSerializer):
+    class Meta:                    
+
         model = Interview
-        fields = "__all__"
+        fields = ['id','time', 'link', 'status','class_category', 'subject', 'grade']  # Exclude 'user' from here
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        return representation
+    
 
 # class TeacherSerializer(serializers.ModelSerializer):
 #     preference = serializers.StringRelatedField()
