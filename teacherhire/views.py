@@ -22,7 +22,6 @@ from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
 from django.utils.html import format_html
-import string
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings

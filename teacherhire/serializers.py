@@ -603,11 +603,8 @@ class PasskeySerializer(serializers.ModelSerializer):
     class Meta:
         model = Passkey
         fields = "__all__"
-
-
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:                    
-
         model = Interview
         fields = ['id','time', 'link', 'status','class_category', 'subject', 'grade']  # Exclude 'user' from here
     
