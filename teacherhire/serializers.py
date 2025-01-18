@@ -420,10 +420,6 @@ class RoleSerializer(serializers.ModelSerializer):
 
 class PreferenceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    skills = TeacherSkillSerializer(source='user.teacherskill_set', many=True)
-    qualifications = TeacherQualificationSerializer(source='user.teacherqualification_set', many=True)
-    address = TeachersAddressSerializer(source='user.addresses', many=True)
-    experiences = TeacherExperiencesSerializer(source='user.teacherexperiences_set', many=True)
     job_role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
     prefered_subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
@@ -438,10 +434,6 @@ class PreferenceSerializer(serializers.ModelSerializer):
             'class_category', 
             'prefered_subject', 
             'teacher_job_type', 
-            'skills', 
-            'qualifications',
-            'address',
-            'experiences',
         ]
 
     def to_representation(self, instance):
