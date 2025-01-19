@@ -2855,7 +2855,8 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
                 subject = subject.id  
             if isinstance(class_category, ClassCategory):
                 class_category = class_category.id
-
+            if Interview.objects.filter(user=user, status=False).exists():
+                return Response({"error": "You already have a pending interview. Please complete it before scheduling another."}, status=status.HTTP_400_BAD_REQUEST)
             if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
                 return Response({"error": "Interview with the same details already exists."}, status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
