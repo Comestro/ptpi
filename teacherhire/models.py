@@ -270,7 +270,6 @@ class Exam(models.Model):
         return self.name   
 class Question(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
-    time = models.FloatField(default=2.5)
     language = models.CharField(
         max_length=20,
         choices=[

@@ -86,7 +86,7 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ['exam', 'time', 'text', 'options', 'correct_option','language', 'created_at']
+    list_display = ['exam', 'text', 'options', 'correct_option','language', 'created_at']
 
 @admin.register(Level)
 class LevelAdmin(admin.ModelAdmin):
