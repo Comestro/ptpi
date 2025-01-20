@@ -558,10 +558,9 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
         # Removing duplicates
         queryset = queryset.distinct()
-        if not queryset.exists():
-            return Response({"error": "No teachers found."}, status=status.HTTP_404_NOT_FOUND)
+        
         return queryset
-
+        
     def get_experience_filter(self, experience_str):    
         if experience_str:
             match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
