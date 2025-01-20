@@ -185,14 +185,14 @@ class ClassCategorySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A classcategory with this name already exists.")
         return value
 
-class RegionSerializer(serializers.ModelSerializer):
+class ReasonSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Region
+        model = Reason
         fields = ['id', 'issue_type']
 
     def validate_issue_type(self, value):
-        if Region.objects.filter(issue_type=value).exists():
-            raise serializers.ValidationError("A Region with this issue_type already exists.")
+        if Reason.objects.filter(issue_type=value).exists():
+            raise serializers.ValidationError("A Reason with this issue_type already exists.")
         return value
 
 class LevelSerializer(serializers.ModelSerializer):
@@ -603,11 +603,19 @@ class VerifyOTPSerializer(serializers.Serializer):
 class ReportSerializer(serializers.ModelSerializer):
     # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     # question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    issue_type = serializers.PrimaryKeyRelatedField(queryset=Reason.objects.all(), many=True)
 
     class Meta:
         model = Report
-        fields = ['id', 'user', 'question','status', 'created_at']
+        fields = ['id', 'user', 'question','issue_type','status', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
+        return representation
 
 class PasskeySerializer(serializers.ModelSerializer):
     class Meta:

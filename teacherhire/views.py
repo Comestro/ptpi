@@ -599,24 +599,24 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-class RegionViewSet(viewsets.ModelViewSet):    
+class ReasonViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication] 
-    queryset= Region.objects.all()
-    serializer_class = RegionSerializer
+    queryset= Reason.objects.all()
+    serializer_class = ReasonSerializer
 
     def create(self, request):
-        return create_object(RegionSerializer, request.data, Region)
+        return create_object(ReasonSerializer, request.data, Reason)
 
     @action(detail=False, methods=['get'])
     def count(self, request):
-        count = get_count(Region)
+        count = get_count(Reason)
         return Response({"Count": count})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message": "Region deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Reason deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class TeacherQualificationViewSet(viewsets.ModelViewSet):

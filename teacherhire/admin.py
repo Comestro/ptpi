@@ -26,8 +26,8 @@ class SubjectAdmin(admin.ModelAdmin):
 class RoleAdmin(admin.ModelAdmin):
     list_display = ['jobrole_name']
 
-@admin.register(Region)
-class RegionAdmin(admin.ModelAdmin):
+@admin.register(Reason)
+class ReasonAdmin(admin.ModelAdmin):
     list_display = ['issue_type']
 
 @admin.register(ClassCategory)
