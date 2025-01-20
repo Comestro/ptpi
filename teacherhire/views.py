@@ -2018,7 +2018,6 @@ def insert_data(request):
         questions_data = [
             {
                 "exam": exams[0],
-                "time": 2.5,
                 "language": "English",
                 "text": "What is the capital of India?",
                 "options": ["New Delhi", "Mumbai", "Kolkata", "Chennai"],
@@ -2027,7 +2026,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[2],
-                "time": 3,
                 "language": "English",
                 "text": "What is the full form of DBMS?",
                 "options": ["Database Management System", "Data Management System", "Database Maintenance System",
@@ -2037,7 +2035,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[3],
-                "time": 2.5,
                 "language": "English",
                 "text": "Which of the following is a type of database model?",
                 "options": ["Hierarchical Model", "Relational Model", "Object-Oriented Model", "All of the above"],
@@ -2046,7 +2043,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[4],
-                "time": 3,
                 "language": "English",
                 "text": "Which SQL command is used to retrieve data from a database?",
                 "options": ["SELECT", "INSERT", "UPDATE", "DELETE"],
@@ -2055,7 +2051,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[5],
-                "time": 3,
                 "language": "English",
                 "text": "What is normalization in DBMS?",
                 "options": ["The process of organizing data to reduce redundancy",
@@ -2066,7 +2061,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[6],
-                "time": 2.5,
                 "language": "English",
                 "text": "Which of the following is a type of join in SQL?",
                 "options": ["INNER JOIN", "OUTER JOIN", "CROSS JOIN", "All of the above"],
@@ -2075,7 +2069,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[7],
-                "time": 3.0,
                 "language": "Hindi",
                 "text": "भारत की राजधानी क्या है?",
                 "options": ["नई दिल्ली", "मुंबई", "कोलकाता", "चेन्नई"],
@@ -2084,7 +2077,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[8],
-                "time": 2.0,
                 "language": "English",
                 "text": "What is 5 + 5?",
                 "options": ["8", "9", "10", "11"],
@@ -2093,7 +2085,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[9],
-                "time": 1.5,
                 "language": "English",
                 "text": "What is the boiling point of water?",
                 "options": ["90°C", "100°C", "110°C", "120°C"],
@@ -2102,7 +2093,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[9],
-                "time": 2,
                 "language": "Hindi",
                 "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
                 "options": ["राजस्थान", "उत्तर प्रदेश", "मध्य प्रदेश", "महाराष्ट्र"],
@@ -2111,7 +2101,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[10],
-                "time": 2,
                 "language": "Hindi",
                 "text": "भारत का पहला प्रधानमंत्री कौन थे?",
                 "options": ["लाल बहादुर शास्त्री", "पंडित नेहरू", "इंदिरा गांधी", "राजीव गांधी"],
@@ -2120,7 +2109,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[11],
-                "time": 2,
                 "language": "Hindi",
                 "text": "एक ट्रेन 60 किमी/घंटे की गति से 2 घंटे में कितनी दूरी तय करेगी?",
                 "options": ["60 किमी", "120 किमी", "180 किमी", "240 किमी"],
@@ -2129,7 +2117,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[5],
-                "time": 2.5,
                 "language": "English",
                 "text": "If a train travels at 60 km/hr for 2 hours, what distance does it cover?",
                 "options": ["60 km", "120 km", "180 km", "240 km"],
@@ -2138,7 +2125,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[0],
-                "time": 2,
                 "language": "Hindi",
                 "text": "5 का घनफल क्या है?",
                 "options": ["25", "125", "15", "225"],
@@ -2147,7 +2133,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[1],
-                "time": 1.5,
                 "language": "English",
                 "text": "What is the cube of 5?",
                 "options": ["25", "125", "15", "225"],
@@ -2156,7 +2141,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[2],
-                "time": 2,
                 "language": "Hindi",
                 "text": "100 और 250 का औसत क्या है?",
                 "options": ["175", "150", "200", "225"],
@@ -2165,7 +2149,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[3],
-                "time": 2,
                 "language": "English",
                 "text": "What is the average of 100 and 250?",
                 "options": ["175", "150", "200", "225"],
@@ -2174,7 +2157,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[4],
-                "time": 2.5,
                 "language": "Hindi",
                 "text": "प्रकाश की गति क्या है?",
                 "options": ["3 × 10^6 मीटर/सेकेंड", "3 × 10^8 मीटर/सेकेंड", "3 × 10^9 मीटर/सेकेंड",
@@ -2184,7 +2166,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[5],
-                "time": 2,
                 "language": "English",
                 "text": "What is the speed of light?",
                 "options": ["3 × 10^6 m/s", "3 × 10^8 m/s", "3 × 10^9 m/s", "3 × 10^7 m/s"],
@@ -2193,7 +2174,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[6],
-                "time": 2,
                 "language": "Hindi",
                 "text": "न्यूटन के गति का दूसरा नियम क्या है?",
                 "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
@@ -2202,7 +2182,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[7],
-                "time": 2.5,
                 "language": "English",
                 "text": "What is Newton's second law of motion?",
                 "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
@@ -2211,7 +2190,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[8],
-                "time": 2.5,
                 "language": "English",
                 "text": "What is Newton's second law of motion?",
                 "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
@@ -2220,7 +2198,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[9],
-                "time": 3.0,
                 "language": "English",
                 "text": "Which of the following is the largest planet in our solar system?",
                 "options": ["Earth", "Mars", "Jupiter", "Saturn"],
@@ -2229,7 +2206,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[10],
-                "time": 2.0,
                 "language": "English",
                 "text": "Who is the author of the play 'Romeo and Juliet'?",
                 "options": ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"],
@@ -2238,7 +2214,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[1],
-                "time": 2.0,
                 "language": "English",
                 "text": "What is the chemical symbol for water?",
                 "options": ["H2O", "HO2", "O2H", "H2"],
@@ -2247,7 +2222,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[2],
-                "time": 3.0,
                 "language": "English",
                 "text": "Who proposed the theory of relativity?",
                 "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
@@ -2256,7 +2230,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[3],
-                "time": 2.5,
                 "language": "English",
                 "text": "What is the powerhouse of the cell?",
                 "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
@@ -2265,7 +2238,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[4],
-                "time": 2.0,
                 "language": "English",
                 "text": "What is the capital of France?",
                 "options": ["Berlin", "Madrid", "Paris", "Rome"],
@@ -2274,7 +2246,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[5],
-                "time": 3.0,
                 "language": "English",
                 "text": "What is the square root of 64?",
                 "options": ["6", "7", "8", "9"],
@@ -2283,7 +2254,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[6],
-                "time": 2.5,
                 "language": "English",
                 "text": "Who wrote 'Romeo and Juliet'?",
                 "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
@@ -2292,7 +2262,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[1],
-                "time": 2.0,
                 "language": "English",
                 "text": "What is the chemical symbol for water?",
                 "options": ["H2O", "HO2", "O2H", "H2"],
@@ -2301,7 +2270,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[2],
-                "time": 3.0,
                 "language": "English",
                 "text": "Who proposed the theory of relativity?",
                 "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
@@ -2310,7 +2278,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[3],
-                "time": 2.5,
                 "language": "English",
                 "text": "What is the powerhouse of the cell?",
                 "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
@@ -2319,7 +2286,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[4],
-                "time": 2.0,
                 "language": "English",
                 "text": "What is the capital of France?",
                 "options": ["Berlin", "Madrid", "Paris", "Rome"],
@@ -2328,7 +2294,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[5],
-                "time": 3.0,
                 "language": "English",
                 "text": "What is the square root of 64?",
                 "options": ["6", "7", "8", "9"],
@@ -2337,7 +2302,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[6],
-                "time": 2.5,
                 "language": "English",
                 "text": "Who wrote 'Romeo and Juliet'?",
                 "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
@@ -2346,7 +2310,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[7],
-                "time": 2.0,
                 "language": "English",
                 "text": "What is the boiling point of water at sea level?",
                 "options": ["90°C", "100°C", "110°C", "120°C"],
@@ -2355,7 +2318,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[8],
-                "time": 3.0,
                 "language": "English",
                 "text": "Which planet is known as the Red Planet?",
                 "options": ["Venus", "Mars", "Jupiter", "Saturn"],
@@ -2364,7 +2326,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[9],
-                "time": 2.5,
                 "language": "English",
                 "text": "What is the largest organ in the human body?",
                 "options": ["Liver", "Heart", "Skin", "Lungs"],
@@ -2373,7 +2334,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[10],
-                "time": 3.0,
                 "language": "English",
                 "text": "What is the value of π (pi) up to two decimal places?",
                 "options": ["3.12", "3.13", "3.14", "3.15"],
@@ -2382,7 +2342,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[0],
-                "time": 2.5,
                 "language": "English",
                 "text": "What is the value of π (pi) up to two decimal places?",
                 "options": ["3.12", "3.14", "3.16", "3.18"],
@@ -2391,7 +2350,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[1],
-                "time": 3,
                 "language": "English",
                 "text": "What is the square root of 144?",
                 "options": ["10", "11", "12", "13"],
@@ -2400,7 +2358,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[2],
-                "time": 3,
                 "language": "English",
                 "text": "Solve: 5 + 3 × 2.",
                 "options": ["11", "16", "21", "13"],
@@ -2409,7 +2366,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[3],
-                "time": 3.5,
                 "language": "English",
                 "text": "What is 15% of 200?",
                 "options": ["25", "30", "35", "40"],
@@ -2418,7 +2374,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[4],
-                "time": 4,
                 "language": "English",
                 "text": "If x + 5 = 12, what is the value of x?",
                 "options": ["5", "6", "7", "8"],
@@ -2427,7 +2382,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[5],
-                "time": 4,
                 "language": "English",
                 "text": "Solve: 9 × (3 + 2).",
                 "options": ["36", "40", "45", "50"],
@@ -2436,7 +2390,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[6],
-                "time": 3.5,
                 "language": "English",
                 "text": "What is the perimeter of a rectangle with length 10 and width 5?",
                 "options": ["20", "25", "30", "35"],
@@ -2445,7 +2398,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[7],
-                "time": 4,
                 "language": "English",
                 "text": "What is the value of 2³?",
                 "options": ["6", "8", "9", "12"],
@@ -2454,7 +2406,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[8],
-                "time": 3.5,
                 "language": "English",
                 "text": "What is the area of a triangle with base 8 and height 5?",
                 "options": ["20", "25", "30", "35"],
@@ -2463,7 +2414,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[9],
-                "time": 3,
                 "language": "English",
                 "text": "What is the value of 100 ÷ 4?",
                 "options": ["20", "25", "30", "40"],
@@ -2472,7 +2422,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[12],
-                "time": 3,
                 "language": "English",
                 "text": "What is the unit of force?",
                 "options": ["Newton", "Pascal", "Joule", "Watt"],
@@ -2481,7 +2430,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[12],
-                "time": 3,
                 "language": "English",
                 "text": "What is the acceleration due to gravity on Earth?",
                 "options": ["9.8 m/s²", "8.9 m/s²", "10.2 m/s²", "7.6 m/s²"],
@@ -2490,7 +2438,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[13],
-                "time": 4,
                 "language": "English",
                 "text": "Which law explains why a rocket moves upward when gases are expelled downward?",
                 "options": [
@@ -2504,7 +2451,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[13],
-                "time": 5,
                 "language": "English",
                 "text": "Which of the following is a scalar quantity?",
                 "options": ["Velocity", "Force", "Speed", "Momentum"],
@@ -2513,7 +2459,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[14],
-                "time": 4,
                 "language": "English",
                 "text": "What is the formula for kinetic energy?",
                 "options": [
@@ -2527,7 +2472,6 @@ def insert_data(request):
             },
             {
                 "exam": exams[14],
-                "time": 3,
                 "language": "English",
                 "text": "What is the speed of light in a vacuum?",
                 "options": [
@@ -2541,7 +2485,6 @@ def insert_data(request):
             },
             {
         "exam": exams[15],
-        "time": 3,
         "language": "English",
         "text": "Solve: 5 + 3 × 2.",
         "options": ["11", "16", "21", "13"],
@@ -2550,7 +2493,6 @@ def insert_data(request):
     },
     {
         "exam": exams[15],
-        "time": 3,
         "language": "English",
         "text": "What is the square root of 81?",
         "options": ["7", "8", "9", "10"],
@@ -2559,7 +2501,6 @@ def insert_data(request):
     },
     {
         "exam": exams[16],
-        "time": 3,
         "language": "English",
         "text": "Find the value of 12 ÷ 4 × 3.",
         "options": ["9", "3", "12", "15"],
@@ -2568,7 +2509,6 @@ def insert_data(request):
     },
     {
         "exam": exams[16],
-        "time": 3,
         "language": "English",
         "text": "Solve: 7 × (8 - 3).",
         "options": ["35", "56", "40", "21"],
@@ -2577,7 +2517,6 @@ def insert_data(request):
     },
     {
         "exam": exams[17],
-        "time": 3,
         "language": "English",
         "text": "What is 50% of 200?",
         "options": ["50", "100", "150", "200"],
@@ -2586,7 +2525,6 @@ def insert_data(request):
     },
     {
         "exam": exams[17],
-        "time": 3,
         "language": "English",
         "text": "If a rectangle has a length of 10 cm and width of 5 cm, what is its area?",
         "options": ["50 cm²", "25 cm²", "30 cm²", "20 cm²"],
@@ -2605,7 +2543,6 @@ def insert_data(request):
             if not existing_question:
                 Question.objects.create(
                     exam=question["exam"],
-                    time=question["time"],
                     language=question["language"],
                     text=question["text"],
                     options=question["options"],
