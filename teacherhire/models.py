@@ -95,7 +95,7 @@ class ClassCategory(models.Model):
         return self.name
     
 class Reason(models.Model):
-    issue_type = models.CharField(max_length=100,unique=True, null=True, blank=True)
+    issue_type = models.CharField(max_length=200,unique=True, null=True, blank=True)
 
     def __str__(self):
         return self.issue_type
@@ -362,10 +362,10 @@ class JobPreferenceLocation(models.Model):
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    issue_type = models.ForeignKey(Reason,on_delete=models.CASCADE)
+    issue_type = models.ManyToManyField(Reason)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-
+    
     def __str__(self):
         return f"Report by {self.user.username if self.user else 'Anonymous'} on {self.question.id}"
 

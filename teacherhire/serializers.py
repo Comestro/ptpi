@@ -601,8 +601,6 @@ class VerifyOTPSerializer(serializers.Serializer):
     otp = serializers.CharField()
 
 class ReportSerializer(serializers.ModelSerializer):
-    # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
-    # question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     issue_type = serializers.PrimaryKeyRelatedField(queryset=Reason.objects.all(), many=True)
 

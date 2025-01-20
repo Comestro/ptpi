@@ -1863,6 +1863,11 @@ def insert_data(request):
             "field": "name",
             "data": ["1 to 5", "6 to 10", "11 to 12", "BCA", "MCA"]
         },
+        "reason": {
+            "model": Reason,
+            "field": "issue_type",
+            "data": ["answer worng", "question worng", "spelling mistake", "question and answer worng ", "number mistake"]
+        },
         "levels": {
             "model": Level,
             "field": "name",
@@ -2578,6 +2583,7 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
 class SelfReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2588,23 +2594,23 @@ class SelfReportViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return Response({"error": "GET method is not allowed on this endpoint."},status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
     def create(self, request):
         user = request.user
         question_id = request.data.get('question')
-
         try:
             question = Question.objects.get(id=question_id)
         except Question.DoesNotExist:
             return Response({"error": "Question not found."}, status=status.HTTP_400_BAD_REQUEST)
-
         if Report.objects.filter(user=user, question=question).exists():
-            return Response({"error": "You have already submitted a report for this question."},status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"error": "You have already submitted a report for this question."}, status=status.HTTP_400_BAD_REQUEST)
         data = request.data.copy()
+
+        if 'issue_type' in data and isinstance(data['issue_type'], str):
+            data['issue_type'] = [data['issue_type']]  
+
         data['user'] = user.id
-
         serializer = self.serializer_class(data=data)
-
         if serializer.is_valid():
             serializer.save(user=user, question=question)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

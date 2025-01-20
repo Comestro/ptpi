@@ -74,19 +74,19 @@ class PreferenceAdmin(admin.ModelAdmin):
 
     def get_prefered_subject(self, obj):
         return ", ".join([str(subject) for subject in obj.prefered_subject.all()])
-
     def get_teacher_job_type(self, obj):
-        return ", ".join([str(job_type) for job_type in obj.teacher_job_type.all()])
-    
+        return ", ".join([str(job_type) for job_type in obj.teacher_job_type.all()])   
     def get_class_category(self, obj):
         return ", ".join([str(class_category) for class_category in obj.class_category.all()])
-
     def get_job_role(self, obj):
         return ", ".join([str(job_role) for job_role in obj.job_role.all()])  # Changed teacher_job_role to teacher_job_type
-
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ['user', 'question', 'created_at', 'status']
+    list_display = ['id','user','get_issue_type','created_at', 'status']
+
+    def get_issue_type(self, obj):
+        return ", ".join([str(issue_type) for issue_type in obj.issue_type.all()])
+
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
