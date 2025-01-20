@@ -1176,30 +1176,37 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Authentication credentials were not provided."}, status=401)
 
         preferred_subjects = Subject.objects.filter(preference__user=user).distinct()
+        preferred_class_categories = ClassCategory.objects.filter(preference__user=user).distinct()
+
         response_data = {}
+        for class_category in preferred_class_categories:
+            response_data[class_category.name] = {}
+            for subject in preferred_subjects:
+                level1_count = TeacherExamResult.objects.filter(
+                    user=user,
+                    exam__subject=subject,
+                    exam__class_category=class_category,
+                    exam__level_id=1
+                ).count()
 
+                level2_count = TeacherExamResult.objects.filter(
+                    user=user,
+                    exam__subject=subject,
+                    exam__class_category=class_category,
+                    exam__level_id=2
+
+                ).count()
+
+                response_data[class_category.name][subject.subject_name] = {
+                    "level1": level1_count,
+                    "level2": level2_count
+                }
+        for class_category in preferred_class_categories:
+            if class_category.name not in response_data:
+                response_data[class_category.name] = {}
         for subject in preferred_subjects:
-            level1_count = TeacherExamResult.objects.filter(
-                user=user,
-                exam__subject=subject,
-                exam__level_id=1
-            ).count()
-
-            level2_count = TeacherExamResult.objects.filter(
-                user=user,
-                exam__subject=subject,
-                exam__level_id=2
-
-            ).count()
-
-            response_data[subject.subject_name] = {
-                "level1": level1_count,
-                "level2": level2_count
-            }
-
-        for subject in preferred_subjects:
-            if subject.subject_name not in response_data:
-                response_data[subject.subject_name] = {
+            if subject.subject_name not in response_data[class_category.name]:
+                response_data[class_category.name][subject.subject_name] = {
                     "level1": 0,
                     "level2": 0
                 }
