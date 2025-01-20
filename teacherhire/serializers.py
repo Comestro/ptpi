@@ -185,6 +185,16 @@ class ClassCategorySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A classcategory with this name already exists.")
         return value
 
+class RegionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Region
+        fields = ['id', 'issue_type']
+
+    def validate_issue_type(self, value):
+        if Region.objects.filter(issue_type=value).exists():
+            raise serializers.ValidationError("A Region with this issue_type already exists.")
+        return value
+
 class LevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Level
@@ -596,7 +606,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Report
-        fields = ['id', 'user', 'question','issue_type' ,'status', 'created_at']
+        fields = ['id', 'user', 'question','status', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
 
 class PasskeySerializer(serializers.ModelSerializer):

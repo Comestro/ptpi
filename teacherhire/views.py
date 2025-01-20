@@ -599,6 +599,25 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+class RegionViewSet(viewsets.ModelViewSet):    
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication] 
+    queryset= Region.objects.all()
+    serializer_class = RegionSerializer
+
+    def create(self, request):
+        return create_object(RegionSerializer, request.data, Region)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = get_count(Region)
+        return Response({"Count": count})
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Region deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class TeacherQualificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

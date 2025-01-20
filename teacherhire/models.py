@@ -93,6 +93,12 @@ class ClassCategory(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Region(models.Model):
+    issue_type = models.CharField(max_length=100,unique=True, null=True, blank=True)
+
+    def __str__(self):
+        return self.issue_type
 
 class EducationalQualification(models.Model):
     name = models.CharField(max_length=255, unique=True, null=True, blank=True)
@@ -358,17 +364,7 @@ class Report(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-    issue_type = models.CharField(
-        max_length=20,
-        choices=[
-            ('question wrong', 'Question Wrong'),
-            ('answer wrong', 'Answer Wrong'),
-            ('spelling mistake', 'Spelling Mistake')
-        ],
-        blank=True,
-        null=True
-    )
-    
+
     def __str__(self):
         return f"Report by {self.user.username if self.user else 'Anonymous'} on {self.question.id}"
 

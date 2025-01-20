@@ -26,6 +26,10 @@ class SubjectAdmin(admin.ModelAdmin):
 class RoleAdmin(admin.ModelAdmin):
     list_display = ['jobrole_name']
 
+@admin.register(Region)
+class RegionAdmin(admin.ModelAdmin):
+    list_display = ['issue_type']
+
 @admin.register(ClassCategory)
 class classCategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
@@ -82,7 +86,7 @@ class PreferenceAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ['user', 'question', 'issue_type', 'created_at', 'status']
+    list_display = ['user', 'question', 'created_at', 'status']
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
