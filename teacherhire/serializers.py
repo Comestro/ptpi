@@ -614,20 +614,12 @@ class InterviewSerializer(serializers.ModelSerializer):
         return representation
     
 
-# class TeacherSerializer(serializers.ModelSerializer):
-#     preference = serializers.StringRelatedField()
-#     skill = serializers.StringRelatedField() 
-#     educationalQualification = serializers.StringRelatedField()
-#     address = serializers.StringRelatedField()
+class TeacherSerializer(serializers.ModelSerializer):
+    teacherskill = TeacherSkillSerializer(many=True, required=False)
+    teachersaddress = TeachersAddressSerializer(many=True,required=False)
+    teacherexperiences = TeacherExperiencesSerializer(many=True,required=False)
+    teacherqualifications = TeacherQualificationSerializer(many=True,required=False)
 
-#     class Meta:
-#         model = Teacher
-#         fields = ['id', 'preference', 'skill', 'educationalQualification', 'address']
-#     def to_representation(self, instance):
-#         representation = super().to_representation(instance)
-#         representation['preference'] = PreferenceSerializer(instance.preference).data
-#         representation['skill'] = SkillSerializer(instance.skill).data
-#         representation['educationalQualification'] = EducationalQualificationSerializer(instance.educationalQualification).data  # Corrected field name
-#         representation['address'] = TeachersAddressSerializer(instance.address).data
-
-#         return representation
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'Fname', 'Lname', 'email', 'teacherskill', 'teachersaddress', 'teacherexperiences','teacherqualifications']

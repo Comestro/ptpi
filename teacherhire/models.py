@@ -55,7 +55,7 @@ class TeachersAddress(models.Model):
         ('permanent', 'Permanent'),
     ]
 
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='addresses')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='teachersaddress')
     address_type = models.CharField(max_length=10, choices=ADDRESS_TYPE_CHOICES, null=True, blank=True)
     state = models.CharField(max_length=100, default='Bihar', null=True, blank=True)
     division = models.CharField(max_length=100, null=True, blank=True)
@@ -102,7 +102,7 @@ class EducationalQualification(models.Model):
         return self.name
 
 class TeacherQualification(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True,related_name='teacherqualifications')
     qualification = models.ForeignKey(EducationalQualification, on_delete=models.CASCADE, null=True, blank=True)
     institution = models.CharField(max_length=225, null=True, blank=True)
     year_of_passing = models.PositiveIntegerField(null=True, blank=True)
@@ -130,7 +130,7 @@ class Role(models.Model):
         return self.jobrole_name
 
 class TeacherExperiences(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='teacherexperiences')
     institution = models.CharField(max_length=255, null=True, blank=True)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, blank=True, default=1)
     start_date = models.DateField(null=True, blank=True)
@@ -156,11 +156,12 @@ class Level(models.Model):
         return self.name
 
 class TeacherSkill(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, related_name='teacherskill', on_delete=models.CASCADE)
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)  
 
     def __str__(self):
-        return self.user.username
+        return f"{self.user.Fname} {self.user.Lname} - {self.skill.name}"
+
     
 class TeacherJobType(models.Model):
     teacher_job_name = models.CharField(max_length=255, null=True, blank=True)

@@ -506,115 +506,79 @@ class SubjectViewSet(viewsets.ModelViewSet):
 class SelfViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    serializer_class = PreferenceSerializer
+    serializer_class = TeacherSerializer
 
     def get_queryset(self):
         user = self.request.user
-        return Preference.objects.filter(user=user)
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-    
-
+        queryset =  CustomUser.objects.filter(id=user.id,is_teacher=True)    
+        return queryset
 class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    serializer_class = PreferenceSerializer
+    serializer_class = TeacherSerializer
 
     def get_queryset(self):
-        return Preference.objects.all()
+        queryset = CustomUser.objects.filter(is_teacher=True)
 
-    @action(detail=False, methods=['get'])
-    def teachers(self, request):
-        teachers = self.get_queryset()
-        filters = Q()
+        # Filtering based on skill
+        teacher_skill = self.request.query_params.get('skill', None)
+        if teacher_skill:
+            queryset = queryset.filter(teacherskill__skill__name__icontains=teacher_skill)
 
-        # Skill filter
-        teacher_skill_name = request.query_params.get('skill', None)
-        if teacher_skill_name:
-            skill_filter = Skill.objects.filter(name__icontains=teacher_skill_name)
-            filters &= Q(user__in=TeacherSkill.objects.filter(skill__in=skill_filter).values('user'))
+        qualification_filter = self.request.query_params.get('qualification', None)
+        if qualification_filter:
+            queryset = queryset.filter(teacherqualifications__qualification__name__icontains=qualification_filter)
 
-        # Qualification filter
-        teacher_qualification_name = request.query_params.get('qualification', None)
-        if teacher_qualification_name:
-            qualification_filter = EducationalQualification.objects.filter(name__icontains=teacher_qualification_name)
-            filters &= Q(user__in=TeacherQualification.objects.filter(qualification__in=qualification_filter).values('user'))
+        # Filtering based on experience
+        teacher_experience = self.request.query_params.get('experience', None)
+        experience_filter = self.get_experience_filter(teacher_experience)
+        if experience_filter:
+            queryset = queryset.filter(experience_filter)
 
-        # Experience filter
-        teacher_experience = request.query_params.get('experience', None)
-        if teacher_experience:
-            experience_filter = self.get_experience_filter(teacher_experience)
-            if experience_filter:
-                filters &= experience_filter
+        # Filtering based on address fields
+        state_filter = self.request.query_params.get('state', None)
+        division_filter = self.request.query_params.get('division', None)
+        district_filter = self.request.query_params.get('district', None)
+        pincode_filter = self.request.query_params.get('pincode', None)
+        block_filter = self.request.query_params.get('block', None)
+        village_filter = self.request.query_params.get('village', None)
 
-        # Address filter
-        teacher_address = request.query_params.get('address', None)
-        if teacher_address:
-            teacher_filter = TeachersAddress.objects.filter()
-            filters &= Q(user__in=teacher_filter.values('user'))
+        if state_filter:
+            queryset = queryset.filter(teachersaddress__state__icontains=state_filter)
+        if district_filter:
+            queryset = queryset.filter(teachersaddress__district__icontains=district_filter)
+        if division_filter:
+            queryset = queryset.filter(teachersaddress__division__icontains=division_filter)
+        if pincode_filter:
+            queryset = queryset.filter(teachersaddress__pincode__icontains=pincode_filter)
+        if block_filter:
+            queryset = queryset.filter(teachersaddress__block__icontains=block_filter)
+        if village_filter:
+            queryset = queryset.filter(teachersaddress__village__icontains=village_filter)
 
-        # Other filters (job role, class category, subject, job type, etc.)
-        job_role_ids = request.query_params.getlist('job_role', [])
-        if job_role_ids:
-            filters &= Q(job_role__jobrole_name__in=job_role_ids)
+        # Removing duplicates
+        queryset = queryset.distinct()
+        if not queryset.exists():
+            return Response({"error": "No teachers found."}, status=status.HTTP_404_NOT_FOUND)
+        return queryset
 
-        class_category = request.query_params.getlist('class_category', [])
-        if class_category:
-            filters &= Q(job_role__name__in=class_category)
+    def get_experience_filter(self, experience_str):    
+        if experience_str:
+            match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
+            if match:
+                years = int(match.group(1))
+                
+                start_date_threshold = date.today().replace(year=date.today().year - years)
+                end_date_threshold = start_date_threshold.replace(year=start_date_threshold.year + 1)
+                
+                experience_filter = Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
+                    teacherexperiences__start_date__lt=end_date_threshold)
+                
+                return experience_filter
 
-        subject_ids = request.query_params.getlist('subject', [])
-        if subject_ids:
-            filters &= Q(prefered_subject__subject_name__in=subject_ids)
-
-        job_type_ids = request.query_params.getlist('job_type', [])
-        if job_type_ids:
-            filters &= Q(job_type__teacher_job_name__in=job_type_ids)
-
-        # Location filters (state, division, district, block, village, pincode)
-        location_filters = Q()
-        state = request.query_params.get('state', None)
-        division = request.query_params.get('division', None)
-        district = request.query_params.get('district', None)
-        block = request.query_params.get('block', None)
-        village = request.query_params.get('village', None)
-        pincode = request.query_params.get('pincode', None)
-
-        if state:
-            location_filters &= Q(user__in=TeachersAddress.objects.filter(state__icontains=state).values('user'))
-        if division:
-            location_filters &= Q(user__in=TeachersAddress.objects.filter(division__icontains=division).values('user'))
-        if district:
-            location_filters &= Q(user__in=TeachersAddress.objects.filter(district__icontains=district).values('user'))
-        if block:
-            location_filters &= Q(user__in=TeachersAddress.objects.filter(block__icontains=block).values('user'))
-        if village:
-            location_filters &= Q(user__in=TeachersAddress.objects.filter(village__icontains=village).values('user'))
-        if pincode:
-            location_filters &= Q(user__in=TeachersAddress.objects.filter(pincode__icontains=pincode).values('user'))
-
-        if location_filters:
-            filters &= location_filters
-
-        teachers = teachers.filter(filters)     
-        if not teachers.exists():
-            return Response({"detail": "Teacher not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Serialize and return the response
-        serializer = PreferenceSerializer(teachers, many=True)
-        return Response(serializer.data)
-
-    def get_experience_filter(self, experience_str):        
-        match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
-        if match:
-            years = int(match.group(1))            
-            threshold_date = date.today().replace(year=date.today().year - years)            
-            start_date_lower_bound = threshold_date
-            start_date_upper_bound = threshold_date.replace(year=threshold_date.year + 1)
-            return Q(user__in=TeacherExperiences.objects.filter(start_date__gte=start_date_lower_bound, start_date__lt=start_date_upper_bound).values('user'))
-        
         return None
+
+
 
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
