@@ -8,6 +8,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
+from datetime import date
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -529,6 +530,14 @@ class BasicProfileSerializer(serializers.ModelSerializer):
             if not cleaned_value.startswith(('6', '7', '8', '9')):
                 raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
             return cleaned_value
+        return value
+    
+    def validate_date_of_birth(self, value):
+        if value > date.today():
+            raise serializers.ValidationError("Date of birth cannot be in the future.")
+        age = (date.today() - value).days // 365  
+        if age < 18:
+            raise serializers.ValidationError("You must be at least 18 years old.")
         return value
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
