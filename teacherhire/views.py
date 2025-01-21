@@ -4189,7 +4189,369 @@ def insert_data(request):
         "options": ["30 वर्ग सेंटीमीटर", "36 वर्ग सेंटीमीटर", "42 वर्ग सेंटीमीटर", "48 वर्ग सेंटीमीटर"],
         "correct_option": 2,
         "solution": "वर्ग का क्षेत्रफल भुजा × भुजा होता है, तो 6 × 6 = 36 वर्ग सेंटीमीटर।"
+    },
+     {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the dimensional formula of force?",
+        "options": ["MLT^-2", "ML^-1T^-2", "ML^2T^-2", "MLT^-1"],
+        "solution": "The dimensional formula of force is MLT^-2.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "English",
+        "text": "Which physical quantity is measured in Hertz?",
+        "options": ["Frequency", "Force", "Energy", "Power"],
+        "solution": "Frequency is measured in Hertz.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the value of acceleration due to gravity on Earth?",
+        "options": ["9.8 m/s^2", "10.8 m/s^2", "8.8 m/s^2", "7.8 m/s^2"],
+        "solution": "The acceleration due to gravity on Earth is 9.8 m/s^2.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "English",
+        "text": "Which of the following is a scalar quantity?",
+        "options": ["Speed", "Velocity", "Force", "Momentum"],
+        "solution": "Speed is a scalar quantity.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the SI unit of work?",
+        "options": ["Joule", "Newton", "Watt", "Pascal"],
+        "solution": "The SI unit of work is Joule.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "बल का विमीय सूत्र क्या है?",
+        "options": ["MLT^-2", "ML^-1T^-2", "ML^2T^-2", "MLT^-1"],
+        "solution": "बल का विमीय सूत्र MLT^-2 है।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "कौन सा भौतिक मात्रा हर्ट्ज़ में मापा जाता है?",
+        "options": ["आवृत्ति", "बल", "ऊर्जा", "शक्ति"],
+        "solution": "आवृत्ति हर्ट्ज़ में मापा जाता है।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "पृथ्वी पर गुरुत्वाकर्षण के कारण त्वरण का मान क्या है?",
+        "options": ["9.8 मी/से^2", "10.8 मी/से^2", "8.8 मी/से^2", "7.8 मी/से^2"],
+        "solution": "पृथ्वी पर गुरुत्वाकर्षण के कारण त्वरण का मान 9.8 मी/से^2 है।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "निम्नलिखित में से कौन एक अदिश मात्रा है?",
+        "options": ["गति", "वेग", "बल", "संचलन"],
+        "solution": "गति एक अदिश मात्रा है।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[25],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "कार्य की एसआई इकाई क्या है?",
+        "options": ["जूल", "न्यूटन", "वाट", "पास्कल"],
+        "solution": "कार्य की एसआई इकाई जूल है।",
+        "correct_option": 1
+    },
+     {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the derivative of \(x^2\)?",
+        "options": ["1", "2x", "x", "2"],
+        "solution": "The derivative of \(x^2\) is 2x.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "English",
+        "text": "If the matrix A is of order 2x2, how many elements does it have?",
+        "options": ["2", "4", "6", "8"],
+        "solution": "A matrix of order 2x2 has 4 elements.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the integral of \(1/x\)?",
+        "options": ["ln(x)", "x", "x^2/2", "1/(2x)"],
+        "solution": "The integral of \(1/x\) is ln(x).",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the sum of the angles in a triangle?",
+        "options": ["90 degrees", "180 degrees", "270 degrees", "360 degrees"],
+        "solution": "The sum of the angles in a triangle is 180 degrees.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "English",
+        "text": "Solve for x: \(2x + 3 = 7\)",
+        "options": ["1", "2", "3", "4"],
+        "solution": "The solution for \(2x + 3 = 7\) is x = 2.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "क्या है \(x^2\) का अवकलन?",
+        "options": ["1", "2x", "x", "2"],
+        "solution": "\(x^2\) का अवकलन 2x है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "यदि मैट्रिक्स A का क्रम 2x2 है, तो इसमें कितने तत्व होते हैं?",
+        "options": ["2", "4", "6", "8"],
+        "solution": "क्रम 2x2 का एक मैट्रिक्स में 4 तत्व होते हैं।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "\(1/x\) का समाकलन क्या है?",
+        "options": ["ln(x)", "x", "x^2/2", "1/(2x)"],
+        "solution": "\(1/x\) का समाकलन ln(x) है।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "त्रिभुज में कोणों का योग कितना होता है?",
+        "options": ["90 डिग्री", "180 डिग्री", "270 डिग्री", "360 डिग्री"],
+        "solution": "त्रिभुज में कोणों का योग 180 डिग्री होता है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[26],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "x के लिए हल करें: \(2x + 3 = 7\)",
+        "options": ["1", "2", "3", "4"],
+        "solution": "\(2x + 3 = 7\) के लिए हल x = 2 है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[27],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the derivative of \(e^x\)?",
+        "options": ["1", "e^x", "x", "e"],
+        "solution": "The derivative of \(e^x\) is \(e^x\).",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[27],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "समीकरण \(2x - 5 = 9\) का हल क्या है?",
+        "options": ["2", "4", "7", "5"],
+        "solution": "समीकरण \(2x - 5 = 9\) का हल \(x = 7\) है।",
+        "correct_option": 3
+    },
+     {
+        "exam": exams[27],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "यदि A = {1, 2, 3}, तो A का पावर सेट क्या है?",
+        "options": ["{{1}, {2}, {3}}", "{{}, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}", "{{1}, {2}, {3}, {1,2,3}}", "{{1,2}, {2,3}, {1,3}}"],
+        "solution": "A का पावर सेट {{}, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}} है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[27],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the solution to the equation \(2x - 5 = 9\)?",
+        "options": ["2", "4", "7", "5"],
+        "solution": "The solution to the equation \(2x - 5 = 9\) is \(x = 7\).",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[27],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the value of \(log(1)\)?",
+        "options": ["0", "1", "10", "Infinity"],
+        "solution": "The value of \(log(1)\) is 0.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[28],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "\(e^x\) का अवकलन क्या है?",
+        "options": ["1", "e^x", "x", "e"],
+        "solution": "\(e^x\) का अवकलन \(e^x\) है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[28],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "\(sin(90^\circ)\) का मान क्या है?",
+        "options": ["0", "1", "-1", "0.5"],
+        "solution": "\(sin(90^\circ)\) का मान 1 है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[28],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the value of \(sin(90^\circ)\)?",
+        "options": ["0", "1", "-1", "0.5"],
+        "solution": "The value of \(sin(90^\circ)\) is 1.",
+        "correct_option": 2
+    },
+    
+    {
+        "exam": exams[28],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "\(log(1)\) का मान क्या है?",
+        "options": ["0", "1", "10", "अनंत"],
+        "solution": "\(log(1)\) का मान 0 है।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[28],
+        "time": 1.5,
+        "language": "English",
+        "text": "If A = {1, 2, 3}, what is the power set of A?",
+        "options": ["{{1}, {2}, {3}}", "{{}, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}", "{{1}, {2}, {3}, {1,2,3}}", "{{1,2}, {2,3}, {1,3}}"],
+        "solution": "The power set of A is {{}, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the unit of length?",
+        "options": ["Meter", "Kilogram", "Newton", "Second"],
+        "solution": "The unit of length is Meter.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the state of water at 0°C?",
+        "options": ["Solid", "Liquid", "Gas", "Plasma"],
+        "solution": "Water is in solid state at 0°C (Ice).",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "English",
+        "text": "Which of the following is not a natural source of light?",
+        "options": ["Sun", "Moon", "Star", "Lamp"],
+        "solution": "Lamp is not a natural source of light.",
+        "correct_option": 4
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the force that opposes motion between two surfaces?",
+        "options": ["Magnetism", "Gravity", "Friction", "Electricity"],
+        "solution": "The force that opposes motion between two surfaces is Friction.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "English",
+        "text": "What do you call the process of water changing from liquid to gas?",
+        "options": ["Freezing", "Evaporation", "Condensation", "Melting"],
+        "solution": "The process of water changing from liquid to gas is Evaporation.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "लंबाई की इकाई क्या है?",
+        "options": ["मीटर", "किलोग्राम", "न्यूटन", "सेकंड"],
+        "solution": "लंबाई की इकाई मीटर है।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "0°C पर पानी की अवस्था क्या होती है?",
+        "options": ["ठोस", "तरल", "गैस", "प्लाज्मा"],
+        "solution": "0°C पर पानी ठोस अवस्था में होता है (बर्फ)।",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "निम्नलिखित में से कौन सा प्राकृतिक प्रकाश का स्रोत नहीं है?",
+        "options": ["सूरज", "चाँद", "तारा", "दीपक"],
+        "solution": "दीपक प्राकृतिक प्रकाश का स्रोत नहीं है।",
+        "correct_option": 4
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "दो सतहों के बीच गति का विरोध करने वाली शक्ति क्या है?",
+        "options": ["चुम्बकत्व", "गुरुत्वाकर्षण", "घर्षण", "विद्युत"],
+        "solution": "दो सतहों के बीच गति का विरोध करने वाली शक्ति घर्षण है।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[29],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "पानी का तरल से गैस में बदलने की प्रक्रिया को क्या कहते हैं?",
+        "options": ["जमना", "वाष्पीकरण", "संघनन", "पिघलना"],
+        "solution": "पानी का तरल से गैस में बदलने की प्रक्रिया वाष्पीकरण कहलाती है।",
+        "correct_option": 2
     }
+    
 
         ]
 
