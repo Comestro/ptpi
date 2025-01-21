@@ -961,7 +961,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         try:
             return Preference.objects.get(user=self.request.user)
         except Preference.DoesNotExist:
-            raise NotFound({"detail": "Preference not found."})
+            raise NotFound({"detail": "Preference not found."}, status=status.HTTP_204_NO_CONTENT)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -3550,6 +3550,647 @@ def insert_data(request):
         "solution": "पौधे भोजन बनाने के लिए सूर्य के प्रकाश से ऊर्जा का उपयोग करते हैं।",
         "correct_option": 2
     },
+    {
+        "exam": exams[11],
+        "language": "English",
+        "text": "What is the force that pulls objects towards the Earth?",
+        "options": ["Magnetism", "Friction", "Gravity", "Electricity"],
+        "correct_option": 3,
+        "solution": "Gravity is the force that pulls objects towards the Earth."
+    },
+    {
+        "exam": exams[11],
+        "language": "English",
+        "text": "Which of the following is the source of light during the day?",
+        "options": ["Moon", "Stars", "Sun", "Streetlight"],
+        "correct_option": 3,
+        "solution": "The Sun is the source of light during the day."
+    },
+    {
+        "exam": exams[11],
+        "language": "English",
+        "text": "What is the state of water when it freezes?",
+        "options": ["Liquid", "Gas", "Solid", "Plasma"],
+        "correct_option": 3,
+        "solution": "Water turns into a solid state when it freezes."
+    },
+    {
+        "exam": exams[11],
+        "language": "English",
+        "text": "What tool do we use to measure the weight of an object?",
+        "options": ["Thermometer", "Barometer", "Spring scale", "Compass"],
+        "correct_option": 3,
+        "solution": "A spring scale is used to measure the weight of an object."
+    },
+    {
+        "exam": exams[11],
+        "language": "English",
+        "text": "What happens when you heat a solid?",
+        "options": ["It becomes liquid", "It becomes gas", "It stays the same", "It becomes smaller"],
+        "correct_option": 1,
+        "solution": "When you heat a solid, it can melt and turn into a liquid."
+    },
+    {
+        "exam": exams[11],
+        "language": "Hindi",
+        "text": "वह कौन सा बल है जो वस्तुओं को पृथ्वी की ओर खींचता है?",
+        "options": ["चुंबकत्व", "घर्षण", "गुरुत्वाकर्षण", "विद्युत ऊर्जा"],
+        "correct_option": 3,
+        "solution": "गुरुत्वाकर्षण वह बल है जो वस्तुओं को पृथ्वी की ओर खींचता है।"
+    },
+    {
+        "exam": exams[11],
+        "language": "Hindi",
+        "text": "दिन के समय प्रकाश का स्रोत क्या है?",
+        "options": ["चाँद", "तारे", "सूरज", "सड़क की बत्तियाँ"],
+        "correct_option": 3,
+        "solution": "सूरज दिन के समय प्रकाश का मुख्य स्रोत है।"
+    },
+    {
+        "exam": exams[11],
+        "language": "Hindi",
+        "text": "जब पानी जमता है, तो उसकी अवस्था क्या होती है?",
+        "options": ["तरल", "गैस", "ठोस", "प्लाज्मा"],
+        "correct_option": 3,
+        "solution": "जब पानी जमता है, तो वह ठोस अवस्था में बदल जाता है।"
+    },
+    {
+        "exam": exams[11],
+        "language": "Hindi",
+        "text": "हम किसी वस्तु का वजन मापने के लिए कौन सा यंत्र उपयोग करते हैं?",
+        "options": ["थर्मामीटर", "वायुदाबमापी", "स्प्रिंग स्केल", "कंपास"],
+        "correct_option": 3,
+        "solution": "वजन मापने के लिए हम स्प्रिंग स्केल का उपयोग करते हैं।"
+    },
+    {
+        "exam": exams[11],
+        "language": "Hindi",
+        "text": "जब आप किसी ठोस को गरम करते हैं, तो क्या होता है?",
+        "options": ["यह तरल बन जाता है", "यह गैस बन जाता है", "यह वैसा का वैसा रहता है", "यह छोटा हो जाता है"],
+        "correct_option": 1,
+        "solution": "जब आप किसी ठोस को गरम करते हैं, तो वह पिघलकर तरल में बदल सकता है।"
+    },
+    {
+        "exam": exams[18],
+        "language": "English",
+        "text": "What is the sum of 56 and 78?",
+        "options": ["134", "136", "148", "138"],
+        "correct_option": 1,
+        "solution": "The sum of 56 and 78 is 134."
+    },
+    {
+        "exam": exams[18],
+        "language": "English",
+        "text": "What is the product of 12 and 9?",
+        "options": ["108", "96", "72", "110"],
+        "correct_option": 1,
+        "solution": "The product of 12 and 9 is 108."
+    },
+    {
+        "exam": exams[18],
+        "language": "English",
+        "text": "What is 36 divided by 4?",
+        "options": ["9", "8", "7", "10"],
+        "correct_option": 1,
+        "solution": "36 divided by 4 equals 9."
+    },
+    {
+        "exam": exams[18],
+        "language": "English",
+        "text": "What is the square of 7?",
+        "options": ["49", "56", "72", "64"],
+        "correct_option": 1,
+        "solution": "The square of 7 is 49."
+    },
+    {
+        "exam": exams[18],
+        "language": "English",
+        "text": "What is the perimeter of a rectangle with length 8 cm and width 5 cm?",
+        "options": ["26 cm", "32 cm", "16 cm", "18 cm"],
+        "correct_option": 1,
+        "solution": "The perimeter of the rectangle is 26 cm (2 × (8 + 5))."
+    },
+    {
+        "exam": exams[18],
+        "language": "Hindi",
+        "text": "56 और 78 का योगफल क्या है?",
+        "options": ["134", "136", "148", "138"],
+        "correct_option": 1,
+        "solution": "56 और 78 का योगफल 134 है।"
+    },
+    {
+        "exam": exams[18],
+        "language": "Hindi",
+        "text": "12 और 9 का गुणनफल क्या है?",
+        "options": ["108", "96", "72", "110"],
+        "correct_option": 1,
+        "solution": "12 और 9 का गुणनफल 108 है।"
+    },
+    {
+        "exam": exams[18],
+        "language": "Hindi",
+        "text": "36 को 4 से भाग देने पर क्या प्राप्त होता है?",
+        "options": ["9", "8", "7", "10"],
+        "correct_option": 1,
+        "solution": "36 को 4 से भाग देने पर 9 प्राप्त होता है।"
+    },
+    {
+        "exam": exams[18],
+        "language": "Hindi",
+        "text": "7 का वर्गफल क्या है?",
+        "options": ["49", "56", "72", "64"],
+        "correct_option": 1,
+        "solution": "7 का वर्गफल 49 है।"
+    },
+    {
+        "exam": exams[18],
+        "language": "Hindi",
+        "text": "8 सेंटीमीटर लंबाई और 5 सेंटीमीटर चौड़ाई वाले आयत का परिमाप क्या होगा?",
+        "options": ["26 सेंटीमीटर", "32 सेंटीमीटर", "16 सेंटीमीटर", "18 सेंटीमीटर"],
+        "correct_option": 1,
+        "solution": "आयत का परिमाप 26 सेंटीमीटर होगा (2 × (8 + 5))."
+    },
+    {
+        "exam": exams[19],
+        "language": "English",
+        "text": "What is the sum of 45 and 63?",
+        "options": ["108", "110", "112", "114"],
+        "correct_option": 1,
+        "solution": "The sum of 45 and 63 is 108."
+    },
+    {
+        "exam": exams[19],
+        "language": "English",
+        "text": "What is the difference between 95 and 47?",
+        "options": ["48", "50", "52", "58"],
+        "correct_option": 1,
+        "solution": "The difference between 95 and 47 is 48."
+    },
+    {
+        "exam": exams[19],
+        "language": "English",
+        "text": "What is 15 multiplied by 6?",
+        "options": ["90", "96", "84", "72"],
+        "correct_option": 1,
+        "solution": "15 multiplied by 6 is 90."
+    },
+    {
+        "exam": exams[19],
+        "language": "English",
+        "text": "What is the area of a rectangle with length 10 cm and width 5 cm?",
+        "options": ["50 cm²", "55 cm²", "60 cm²", "45 cm²"],
+        "correct_option": 1,
+        "solution": "The area of the rectangle is 50 cm² (length × width)."
+    },
+    {
+        "exam": exams[19],
+        "language": "English",
+        "text": "What is the square root of 49?",
+        "options": ["7", "6", "8", "9"],
+        "correct_option": 1,
+        "solution": "The square root of 49 is 7."
+    },
+     {
+        "exam": exams[19],
+        "language": "Hindi",
+        "text": "45 और 63 का योगफल क्या है?",
+        "options": ["108", "110", "112", "114"],
+        "correct_option": 1,
+        "solution": "45 और 63 का योगफल 108 है।"
+    },
+    {
+        "exam": exams[19],
+        "language": "Hindi",
+        "text": "95 और 47 के बीच का अंतर क्या है?",
+        "options": ["48", "50", "52", "58"],
+        "correct_option": 1,
+        "solution": "95 और 47 के बीच का अंतर 48 है।"
+    },
+    {
+        "exam": exams[19],
+        "language": "Hindi",
+        "text": "15 को 6 से गुणा करने पर क्या मिलता है?",
+        "options": ["90", "96", "84", "72"],
+        "correct_option": 1,
+        "solution": "15 को 6 से गुणा करने पर 90 मिलता है।"
+    },
+    {
+        "exam": exams[19],
+        "language": "Hindi",
+        "text": "10 सेंटीमीटर लंबाई और 5 सेंटीमीटर चौड़ाई वाले आयत का क्षेत्रफल क्या है?",
+        "options": ["50 सेमी²", "55 सेमी²", "60 सेमी²", "45 सेमी²"],
+        "correct_option": 1,
+        "solution": "आयत का क्षेत्रफल 50 सेमी² है (लंबाई × चौड़ाई)।"
+    },
+    {
+        "exam": exams[19],
+        "language": "Hindi",
+        "text": "49 का वर्गमूल क्या है?",
+        "options": ["7", "6", "8", "9"],
+        "correct_option": 1,
+        "solution": "49 का वर्गमूल 7 है।"
+    },
+     {
+        "exam": exams[20],
+        "language": "English",
+        "text": "What is the sum of 125 and 75?",
+        "options": ["200", "210", "190", "180"],
+        "correct_option": 1,
+        "solution": "The sum of 125 and 75 is 200."
+    },
+    {
+        "exam": exams[20],
+        "language": "English",
+        "text": "What is the product of 12 and 8?",
+        "options": ["96", "98", "100", "104"],
+        "correct_option": 1,
+        "solution": "The product of 12 and 8 is 96."
+    },
+    {
+        "exam": exams[20],
+        "language": "English",
+        "text": "What is the perimeter of a square with side length 6 cm?",
+        "options": ["24 cm", "18 cm", "20 cm", "22 cm"],
+        "correct_option": 1,
+        "solution": "The perimeter of the square is 24 cm (4 × side length)."
+    },
+    {
+        "exam": exams[20],
+        "language": "English",
+        "text": "What is 72 divided by 9?",
+        "options": ["8", "7", "9", "6"],
+        "correct_option": 1,
+        "solution": "72 divided by 9 equals 8."
+    },
+    {
+        "exam": exams[20],
+        "language": "English",
+        "text": "What is the value of 15 raised to the power of 2?",
+        "options": ["225", "250", "200", "300"],
+        "correct_option": 1,
+        "solution": "15 raised to the power of 2 equals 225."
+    },
+    {
+        "exam": exams[20],
+        "language": "Hindi",
+        "text": "125 और 75 का योगफल क्या है?",
+        "options": ["200", "210", "190", "180"],
+        "correct_option": 1,
+        "solution": "125 और 75 का योगफल 200 है।"
+    },
+    {
+        "exam": exams[20],
+        "language": "Hindi",
+        "text": "12 और 8 का गुणनफल क्या है?",
+        "options": ["96", "98", "100", "104"],
+        "correct_option": 1,
+        "solution": "12 और 8 का गुणनफल 96 है।"
+    },
+    {
+        "exam": exams[20],
+        "language": "Hindi",
+        "text": "6 सेंटीमीटर लंबाई वाले वर्ग का परिमाप क्या है?",
+        "options": ["24 सेमी", "18 सेमी", "20 सेमी", "22 सेमी"],
+        "correct_option": 1,
+        "solution": "वर्ग का परिमाप 24 सेमी है (4 × लंबाई)।"
+    },
+    {
+        "exam": exams[20],
+        "language": "Hindi",
+        "text": "72 को 9 से भाग करने पर क्या मिलता है?",
+        "options": ["8", "7", "9", "6"],
+        "correct_option": 1,
+        "solution": "72 को 9 से भाग करने पर 8 मिलता है।"
+    },
+    {
+        "exam": exams[20],
+        "language": "Hindi",
+        "text": "15 का वर्गमूल क्या है?",
+        "options": ["225", "250", "200", "300"],
+        "correct_option": 1,
+        "solution": "15 का वर्गमूल 225 है।"
+    },
+    {
+        "exam": [21],
+        "language": "English",
+        "text": "What is the square root of 81?",
+        "options": ["8", "9", "7", "6"],
+        "correct_option": 2,
+        "solution": "The square root of 81 is 9."
+    },
+    {
+        "exam": [21],
+        "language": "English",
+        "text": "What is the result of 15 × 4?",
+        "options": ["60", "55", "65", "70"],
+        "correct_option": 1,
+        "solution": "15 multiplied by 4 is 60."
+    },
+    {
+        "exam": [21],
+        "language": "English",
+        "text": "If a rectangle has a length of 8 cm and a width of 5 cm, what is its area?",
+        "options": ["40 cm²", "50 cm²", "60 cm²", "45 cm²"],
+        "correct_option": 1,
+        "solution": "The area of the rectangle is 40 cm² (length × width)."
+    },
+    {
+        "exam": [21],
+        "language": "English",
+        "text": "What is the sum of 56 and 44?",
+        "options": ["90", "100", "110", "120"],
+        "correct_option": 2,
+        "solution": "The sum of 56 and 44 is 100."
+    },
+    {
+        "exam": [21],
+        "language": "English",
+        "text": "What is the value of 100 ÷ 5?",
+        "options": ["25", "20", "30", "15"],
+        "correct_option": 1,
+        "solution": "100 divided by 5 is 20."
+    },
+    {
+        "exam": [21],
+        "language": "Hindi",
+        "text": "81 का वर्गमूल क्या है?",
+        "options": ["8", "9", "7", "6"],
+        "correct_option": 2,
+        "solution": "81 का वर्गमूल 9 है।"
+    },
+    {
+        "exam": [21],
+        "language": "Hindi",
+        "text": "15 × 4 का परिणाम क्या है?",
+        "options": ["60", "55", "65", "70"],
+        "correct_option": 1,
+        "solution": "15 गुणा 4 का परिणाम 60 है।"
+    },
+    {
+        "exam": [21],
+        "language": "Hindi",
+        "text": "यदि आयत की लंबाई 8 सेंटीमीटर और चौड़ाई 5 सेंटीमीटर है, तो उसका क्षेत्रफल क्या होगा?",
+        "options": ["40 वर्ग सेंटीमीटर", "50 वर्ग सेंटीमीटर", "60 वर्ग सेंटीमीटर", "45 वर्ग सेंटीमीटर"],
+        "correct_option": 1,
+        "solution": "आयत का क्षेत्रफल 40 वर्ग सेंटीमीटर है (लंबाई × चौड़ाई)।"
+    },
+    {
+        "exam": [21],
+        "language": "Hindi",
+        "text": "56 और 44 का योगफल क्या है?",
+        "options": ["90", "100", "110", "120"],
+        "correct_option": 2,
+        "solution": "56 और 44 का योगफल 100 है।"
+    },
+    {
+        "exam": [21],
+        "language": "Hindi",
+        "text": "100 ÷ 5 का मान क्या है?",
+        "options": ["25", "20", "30", "15"],
+        "correct_option": 1,
+        "solution": "100 को 5 से विभाजित करने पर 20 मिलता है।"
+    },
+    {
+        "exam": [22],
+        "language": "English",
+        "text": "What is 18 ÷ 3?",
+        "options": ["5", "6", "7", "8"],
+        "correct_option": 2,
+        "solution": "18 divided by 3 is 6."
+    },
+    {
+        "exam": [22],
+        "language": "English",
+        "text": "What is the perimeter of a square with each side measuring 4 cm?",
+        "options": ["12 cm", "14 cm", "16 cm", "20 cm"],
+        "correct_option": 3,
+        "solution": "The perimeter of a square is 4 times the length of one side. 4 × 4 = 16 cm."
+    },
+    {
+        "exam": [22],
+        "language": "English",
+        "text": "What is 25 × 3?",
+        "options": ["70", "75", "80", "85"],
+        "correct_option": 2,
+        "solution": "25 multiplied by 3 is 75."
+    },
+    {
+        "exam": [22],
+        "language": "English",
+        "text": "What is the area of a rectangle with a length of 6 cm and width of 3 cm?",
+        "options": ["15 cm²", "18 cm²", "20 cm²", "24 cm²"],
+        "correct_option": 2,
+        "solution": "The area of the rectangle is 18 cm² (length × width)."
+    },
+    {
+        "exam": [22],
+        "language": "English",
+        "text": "What is the sum of 45 and 35?",
+        "options": ["70", "75", "80", "85"],
+        "correct_option": 1,
+        "solution": "The sum of 45 and 35 is 80."
+    },
+    {
+        "exam": [22],
+        "language": "Hindi",
+        "text": "18 ÷ 3 क्या है?",
+        "options": ["5", "6", "7", "8"],
+        "correct_option": 2,
+        "solution": "18 को 3 से विभाजित करने पर 6 मिलता है।"
+    },
+    {
+        "exam": [22],
+        "language": "Hindi",
+        "text": "एक वर्ग का परिधि क्या है जिसका प्रत्येक किनारा 4 सेंटीमीटर है?",
+        "options": ["12 सेंटीमीटर", "14 सेंटीमीटर", "16 सेंटीमीटर", "20 सेंटीमीटर"],
+        "correct_option": 3,
+        "solution": "वर्ग का परिधि 4 गुना एक किनारे की लंबाई होती है। 4 × 4 = 16 सेंटीमीटर।"
+    },
+    {
+        "exam": [22],
+        "language": "Hindi",
+        "text": "25 × 3 क्या है?",
+        "options": ["70", "75", "80", "85"],
+        "correct_option": 2,
+        "solution": "25 को 3 से गुणा करने पर 75 मिलता है।"
+    },
+    {
+        "exam": [22],
+        "language": "Hindi",
+        "text": "एक आयत का क्षेत्रफल क्या होगा जिसकी लंबाई 6 सेंटीमीटर और चौड़ाई 3 सेंटीमीटर है?",
+        "options": ["15 वर्ग सेंटीमीटर", "18 वर्ग सेंटीमीटर", "20 वर्ग सेंटीमीटर", "24 वर्ग सेंटीमीटर"],
+        "correct_option": 2,
+        "solution": "आयत का क्षेत्रफल 18 वर्ग सेंटीमीटर होगा (लंबाई × चौड़ाई)।"
+    },
+    {
+        "exam": [22],
+        "language": "Hindi",
+        "text": "45 और 35 का योगफल क्या है?",
+        "options": ["70", "75", "80", "85"],
+        "correct_option": 1,
+        "solution": "45 और 35 का योगफल 80 है।"
+    },
+     {
+        "exam": [23],
+        "language": "English",
+        "text": "What is the square root of 64?",
+        "options": ["6", "7", "8", "9"],
+        "correct_option": 3,
+        "solution": "The square root of 64 is 8."
+    },
+    {
+        "exam": [23],
+        "language": "English",
+        "text": "What is 9 × 7?",
+        "options": ["56", "63", "72", "81"],
+        "correct_option": 2,
+        "solution": "9 multiplied by 7 is 63."
+    },
+    {
+        "exam": [23],
+        "language": "English",
+        "text": "What is the area of a triangle with base 10 cm and height 6 cm?",
+        "options": ["30 cm²", "40 cm²", "50 cm²", "60 cm²"],
+        "correct_option": 1,
+        "solution": "The area of the triangle is 30 cm² (base × height ÷ 2)."
+    },
+    {
+        "exam": [23],
+        "language": "English",
+        "text": "What is the sum of 150 and 275?",
+        "options": ["425", "450", "475", "500"],
+        "correct_option": 1,
+        "solution": "The sum of 150 and 275 is 425."
+    },
+    {
+        "exam": [23],
+        "language": "English",
+        "text": "What is 12 ÷ 4?",
+        "options": ["2", "3", "4", "5"],
+        "correct_option": 2,
+        "solution": "12 divided by 4 is 3."
+    },
+    {
+        "exam": [23],
+        "language": "Hindi",
+        "text": "64 का वर्गमूल क्या है?",
+        "options": ["6", "7", "8", "9"],
+        "correct_option": 3,
+        "solution": "64 का वर्गमूल 8 है।"
+    },
+    {
+        "exam": [23],
+        "language": "Hindi",
+        "text": "9 × 7 क्या है?",
+        "options": ["56", "63", "72", "81"],
+        "correct_option": 2,
+        "solution": "9 को 7 से गुणा करने पर 63 मिलता है।"
+    },
+    {
+        "exam": [23],
+        "language": "Hindi",
+        "text": "एक त्रिकोण का क्षेत्रफल क्या होगा जिसकी आधार 10 सेंटीमीटर और ऊंचाई 6 सेंटीमीटर है?",
+        "options": ["30 वर्ग सेंटीमीटर", "40 वर्ग सेंटीमीटर", "50 वर्ग सेंटीमीटर", "60 वर्ग सेंटीमीटर"],
+        "correct_option": 1,
+        "solution": "त्रिकोण का क्षेत्रफल 30 वर्ग सेंटीमीटर होगा (आधार × ऊंचाई ÷ 2)।"
+    },
+    {
+        "exam": [23],
+        "language": "Hindi",
+        "text": "150 और 275 का योगफल क्या है?",
+        "options": ["425", "450", "475", "500"],
+        "correct_option": 1,
+        "solution": "150 और 275 का योगफल 425 है।"
+    },
+    {
+        "exam": [23],
+        "language": "Hindi",
+        "text": "12 ÷ 4 क्या है?",
+        "options": ["2", "3", "4", "5"],
+        "correct_option": 2,
+        "solution": "12 को 4 से विभाजित करने पर 3 मिलता है।"
+    },
+     {
+        "exam": [24],
+        "language": "English",
+        "text": "What is 15 × 8?",
+        "options": ["120", "130", "140", "150"],
+        "correct_option": 1,
+        "solution": "15 multiplied by 8 is 120."
+    },
+    {
+        "exam": [24],
+        "language": "English",
+        "text": "What is the perimeter of a rectangle with length 12 cm and width 8 cm?",
+        "options": ["40 cm", "50 cm", "60 cm", "70 cm"],
+        "correct_option": 1,
+        "solution": "The perimeter of a rectangle is 2 × (length + width), so 2 × (12 + 8) = 40 cm."
+    },
+    {
+        "exam": [24],
+        "language": "English",
+        "text": "What is 45 ÷ 9?",
+        "options": ["3", "4", "5", "6"],
+        "correct_option": 1,
+        "solution": "45 divided by 9 is 5."
+    },
+    {
+        "exam": [24],
+        "language": "English",
+        "text": "What is the product of 12 and 7?",
+        "options": ["72", "75", "78", "84"],
+        "correct_option": 4,
+        "solution": "The product of 12 and 7 is 84."
+    },
+    {
+        "exam": [24],
+        "language": "English",
+        "text": "What is the area of a square with side length 6 cm?",
+        "options": ["30 cm²", "36 cm²", "42 cm²", "48 cm²"],
+        "correct_option": 2,
+        "solution": "The area of a square is side × side, so 6 × 6 = 36 cm²."
+    },
+    {
+        "exam": [24],
+        "language": "Hindi",
+        "text": "15 × 8 क्या है?",
+        "options": ["120", "130", "140", "150"],
+        "correct_option": 1,
+        "solution": "15 को 8 से गुणा करने पर 120 मिलता है।"
+    },
+    {
+        "exam": [24],
+        "language": "Hindi",
+        "text": "एक आयत का परिधि क्या होगा, जिसकी लंबाई 12 सेंटीमीटर और चौड़ाई 8 सेंटीमीटर है?",
+        "options": ["40 सेंटीमीटर", "50 सेंटीमीटर", "60 सेंटीमीटर", "70 सेंटीमीटर"],
+        "correct_option": 1,
+        "solution": "आयत का परिधि 2 × (लंबाई + चौड़ाई) होता है, तो 2 × (12 + 8) = 40 सेंटीमीटर।"
+    },
+    {
+        "exam": [24],
+        "language": "Hindi",
+        "text": "45 ÷ 9 क्या है?",
+        "options": ["3", "4", "5", "6"],
+        "correct_option": 3,
+        "solution": "45 को 9 से विभाजित करने पर 5 मिलता है।"
+    },
+    {
+        "exam": [24],
+        "language": "Hindi",
+        "text": "12 और 7 का गुणनफल क्या है?",
+        "options": ["72", "75", "78", "84"],
+        "correct_option": 4,
+        "solution": "12 और 7 का गुणनफल 84 है।"
+    },
+    {
+        "exam": [24],
+        "language": "Hindi",
+        "text": "एक वर्ग का क्षेत्रफल क्या होगा, जिसका एक भुजा 6 सेंटीमीटर है?",
+        "options": ["30 वर्ग सेंटीमीटर", "36 वर्ग सेंटीमीटर", "42 वर्ग सेंटीमीटर", "48 वर्ग सेंटीमीटर"],
+        "correct_option": 2,
+        "solution": "वर्ग का क्षेत्रफल भुजा × भुजा होता है, तो 6 × 6 = 36 वर्ग सेंटीमीटर।"
+    }
+
         ]
 
         question_added_count = 0
