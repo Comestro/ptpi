@@ -2022,7 +2022,575 @@ def insert_data(request):
     if exams.exists():
         questions_data = [
     {
-        "exam": [0],
+                "exam": exams[0],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the capital of India?",
+                "options": ["New Delhi", "Mumbaiinsert_", "Kolkata", "Chennai"],
+                "solution": "New Delhi is the capital of India.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[2],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the full form of DBMS?",
+                "options": ["Database Management System", "Data Management System", "Database Maintenance System",
+                            "Data Backup Management System"],
+                "solution": "DBMS stands for Database Management System.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[3],
+                "time": 2.5,
+                "language": "English",
+                "text": "Which of the following is a type of database model?",
+                "options": ["Hierarchical Model", "Relational Model", "Object-Oriented Model", "All of the above"],
+                "solution": "The correct answer is 'All of the above'. Each of these is a type of database model.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[4],
+                "language": "English",
+                "time": 1.5,
+                "text": "Which SQL command is used to retrieve data from a database?",
+                "options": ["SELECT", "INSERT", "UPDATE", "DELETE"],
+                "solution": "The correct SQL command to retrieve data from a database is 'SELECT'.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[5],
+                "language": "English",
+                "time": 1.5,
+                "text": "What is normalization in DBMS?",
+                "options": ["The process of organizing data to reduce redundancy",
+                            "The process of copying data for backup", "The process of making data available online",
+                            "The process of encrypting data"],
+                "solution": "Normalization is the process of organizing data in a database to reduce redundancy and improve data integrity.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[6],
+                "time": 1.5,
+                "language": "English",
+                "text": "Which of the following is a type of join in SQL?",
+                "options": ["INNER JOIN", "OUTER JOIN", "CROSS JOIN", "All of the above"],
+                "solution": "The correct answer is 'All of the above'. INNER JOIN, OUTER JOIN, and CROSS JOIN are all types of SQL joins.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[7],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "भारत की राजधानी क्या है?",
+                "options": ["नई दिल्ली", "मुंबई", "कोलकाता", "चेन्नई"],
+                "solution": "नई दिल्ली भारत की राजधानी है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[8],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is 5 + 5?",
+                "options": ["8", "9", "10", "11"],
+                "solution": "The correct answer is 10.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[9],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the boiling point of water?",
+                "options": ["90°C", "100°C", "110°C", "120°C"],
+                "solution": "The correct answer is 100°C.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[9],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "भारत का सबसे बड़ा राज्य कौन सा है?",
+                "options": ["राजस्थान", "उत्तर प्रदेश", "मध्य प्रदेश", "महाराष्ट्र"],
+                "solution": "भारत का सबसे बड़ा राज्य राजस्थान है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[10],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "भारत का पहला प्रधानमंत्री कौन थे?",
+                "options": ["लाल बहादुर शास्त्री", "पंडित नेहरू", "इंदिरा गांधी", "राजीव गांधी"],
+                "solution": "भारत के पहले प्रधानमंत्री पंडित नेहरू थे।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[11],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "एक ट्रेन 60 किमी/घंटे की गति से 2 घंटे में कितनी दूरी तय करेगी?",
+                "options": ["60 किमी", "120 किमी", "180 किमी", "240 किमी"],
+                "solution": "ट्रेन 120 किमी की दूरी तय करेगी।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[5],
+                "time": 1.5,
+                "language": "English",
+                "text": "If a train travels at 60 km/hr for 2 hours, what distance does it cover?",
+                "options": ["60 km", "120 km", "180 km", "240 km"],
+                "solution": "The train covers 120 km.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[0],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "5 का घनफल क्या है?",
+                "options": ["25", "125", "15", "225"],
+                "solution": "5 का घनफल 125 है।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[1],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the cube of 5?",
+                "options": ["25", "125", "15", "225"],
+                "solution": "The cube of 5 is 125.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[2],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "100 और 250 का औसत क्या है?",
+                "options": ["175", "150", "200", "225"],
+                "solution": "100 और 250 का औसत 175 है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[3],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the average of 100 and 250?",
+                "options": ["175", "150", "200", "225"],
+                "solution": "The average of 100 and 250 is 175.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[4],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "प्रकाश की गति क्या है?",
+                "options": ["3 × 10^6 मीटर/सेकेंड", "3 × 10^8 मीटर/सेकेंड", "3 × 10^9 मीटर/सेकेंड",
+                            "3 × 10^7 मीटर/सेकेंड"],
+                "solution": "प्रकाश की गति 3 × 10^8 मीटर/सेकेंड है।",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[5],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the speed of light?",
+                "options": ["3 × 10^6 m/s", "3 × 10^8 m/s", "3 × 10^9 m/s", "3 × 10^7 m/s"],
+                "solution": "The speed of light is 3 × 10^8 m/s.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[6],
+                "time": 1.5,
+                "language": "Hindi",
+                "text": "न्यूटन के गति का दूसरा नियम क्या है?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "न्यूटन के गति का दूसरा नियम F = ma है।",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[7],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is Newton's second law of motion?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "Newton's second law of motion is F = ma.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[8],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is Newton's second law of motion?",
+                "options": ["F = ma", "F = mv", "F = m/v", "F = ma^2"],
+                "solution": "Newton's second law of motion is F = ma.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[9],
+                "time": 1.5,
+                "language": "English",
+                "text": "Which of the following is the largest planet in our solar system?",
+                "options": ["Earth", "Mars", "Jupiter", "Saturn"],
+                "solution": "Jupiter is the largest planet in our solar system.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[10],
+                "time": 1.5,
+                "language": "English",
+                "text": "Who is the author of the play 'Romeo and Juliet'?",
+                "options": ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"],
+                "solution": "The author of 'Romeo and Juliet' is William Shakespeare.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[1],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the chemical symbol for water?",
+                "options": ["H2O", "HO2", "O2H", "H2"],
+                "solution": "The chemical symbol for water is H2O.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[2],
+                "time": 1.5,
+                "language": "English",
+                "text": "Who proposed the theory of relativity?",
+                "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
+                "solution": "The theory of relativity was proposed by Albert Einstein.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[3],
+                "time": 1.5,
+                "language": "English",
+                "text": "What is the powerhouse of the cell?",
+                "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
+                "solution": "The mitochondria are known as the powerhouse of the cell.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[4],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the capital of France?",
+                "options": ["Berlin", "Madrid", "Paris", "Rome"],
+                "solution": "The capital of France is Paris.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[5],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the square root of 64?",
+                "options": ["6", "7", "8", "9"],
+                "solution": "The square root of 64 is 8.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[6],
+                "time": 2.5,
+                "language": "English",
+                "text": "Who wrote 'Romeo and Juliet'?",
+                "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                "solution": "'Romeo and Juliet'",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[1],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the chemical symbol for water?",
+                "options": ["H2O", "HO2", "O2H", "H2"],
+                "solution": "The chemical symbol for water is H2O.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[2],
+                "time": 2.5,
+                "language": "English",
+                "text": "Who proposed the theory of relativity?",
+                "options": ["Isaac Newton", "Albert Einstein", "Galileo Galilei", "Marie Curie"],
+                "solution": "The theory of relativity was proposed by Albert Einstein.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[3],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the powerhouse of the cell?",
+                "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
+                "solution": "The mitochondria are known as the powerhouse of the cell.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[4],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the capital of France?",
+                "options": ["Berlin", "Madrid", "Paris", "Rome"],
+                "solution": "The capital of France is Paris.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[5],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the square root of 64?",
+                "options": ["6", "7", "8", "9"],
+                "solution": "The square root of 64 is 8.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[6],
+                "time": 2.5,
+                "language": "English",
+                "text": "Who wrote 'Romeo and Juliet'?",
+                "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                "solution": "'Romeo and Juliet' was written by William Shakespeare.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[7],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the boiling point of water at sea level?",
+                "options": ["90°C", "100°C", "110°C", "120°C"],
+                "solution": "The boiling point of water at sea level is 100°C.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[8],
+                "time": 2.5,
+                "language": "English",
+                "text": "Which planet is known as the Red Planet?",
+                "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+                "solution": "Mars is known as the Red Planet.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[9],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the largest organ in the human body?",
+                "options": ["Liver", "Heart", "Skin", "Lungs"],
+                "solution": "The skin is the largest organ in the human body.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[10],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the value of π (pi) up to two decimal places?",
+                "options": ["3.12", "3.13", "3.14", "3.15"],
+                "solution": "The value of π (pi) up to two decimal places is 3.14.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[0],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the value of π (pi) up to two decimal places?",
+                "options": ["3.12", "3.14", "3.16", "3.18"],
+                "solution": "The value of π up to two decimal places is 3.14.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[1],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the square root of 144?",
+                "options": ["10", "11", "12", "13"],
+                "solution": "The square root of 144 is 12.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[2],
+                "time": 2.5,
+                "language": "English",
+                "text": "Solve: 5 + 3 × 2.",
+                "options": ["11", "16", "21", "13"],
+                "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[3],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is 15% of 200?",
+                "options": ["25", "30", "35", "40"],
+                "solution": "15% of 200 is 30.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[4],
+                "time": 2.5,
+                "language": "English",
+                "text": "If x + 5 = 12, what is the value of x?",
+                "options": ["5", "6", "7", "8"],
+                "solution": "Subtracting 5 from both sides gives x = 7.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[5],
+                "time": 2.5,
+                "language": "English",
+                "text": "Solve: 9 × (3 + 2).",
+                "options": ["36", "40", "45", "50"],
+                "solution": "Using BODMAS, 9 × (3 + 2) = 45.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[6],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the perimeter of a rectangle with length 10 and width 5?",
+                "options": ["20", "25", "30", "35"],
+                "solution": "The perimeter of a rectangle is 2 × (length + width). So, 2 × (10 + 5) = 30.",
+                "correct_option": 3
+            },
+            {
+                "exam": exams[7],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the value of 2³?",
+                "options": ["6", "8", "9", "12"],
+                "solution": "2³ means 2 × 2 × 2 = 8.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[8],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the area of a triangle with base 8 and height 5?",
+                "options": ["20", "25", "30", "35"],
+                "solution": "The area of a triangle is ½ × base × height. So, ½ × 8 × 5 = 20.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[9],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the value of 100 ÷ 4?",
+                "options": ["20", "25", "30", "40"],
+                "solution": "100 ÷ 4 = 25.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[12],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the unit of force?",
+                "options": ["Newton", "Pascal", "Joule", "Watt"],
+                "solution": "The SI unit of force is the Newton (N), named after Isaac Newton.",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[12],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the acceleration due to gravity on Earth?",
+                "options": ["9.8 m/s²", "8.9 m/s²", "10.2 m/s²", "7.6 m/s²"],
+                "solution": "The acceleration due to gravity on Earth is approximately 9.8 m/s².",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[13],
+                "time": 2.5,
+                "language": "English",
+                "text": "Which law explains why a rocket moves upward when gases are expelled downward?",
+                "options": [
+                    "Newton's First Law",
+                    "Newton's Second Law",
+                    "Newton's Third Law",
+                    "Law of Gravitation"
+                ],
+                "solution": "Newton's Third Law states that for every action, there is an equal and opposite reaction.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[13],
+                "time": 2.5,
+                "language": "English",
+                "text": "Which of the following is a scalar quantity?",
+                "options": ["Velocity", "Force", "Speed", "Momentum"],
+                "solution": "Speed is a scalar quantity because it has only magnitude, not direction.",
+                "correct_option": 2
+            },
+            {
+                "exam": exams[14],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the formula for kinetic energy?",
+                "options": [
+                    "KE = mv",
+                    "KE = 1/2 mv²",
+                    "KE = 2mv",
+                    "KE = m²v"
+                ],
+                "solution": "The formula for kinetic energy is KE = 1/2 mv².",
+                "correct_option": 1
+            },
+            {
+                "exam": exams[14],
+                "time": 2.5,
+                "language": "English",
+                "text": "What is the speed of light in a vacuum?",
+                "options": [
+                    "3 × 10⁸ m/s",
+                    "2 × 10⁸ m/s",
+                    "1.5 × 10⁸ m/s",
+                    "4 × 10⁸ m/s"
+                ],
+                "solution": "The speed of light in a vacuum is approximately 3 × 10⁸ meters per second.",
+                "correct_option": 1
+            },
+            {
+        "exam": exams[15],
+        "time": 2.5,
+        "language": "English",
+        "text": "Solve: 5 + 3 × 2.",
+        "options": ["11", "16", "21", "13"],
+        "solution": "According to the order of operations (BODMAS), 5 + 3 × 2 = 11.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[15],
+        "time": 2.5,
+        "language": "English",
+        "text": "What is the square root of 81?",
+        "options": ["7", "8", "9", "10"],
+        "solution": "The square root of 81 is 9.",
+        "correct_option": 3
+    },
+    { 
+        "exam": exams[16],
+        "time": 1.5,
+        "language": "English",
+        "text": "Find the value of 12 ÷ 4 × 3.",
+        "options": ["9", "3", "12", "15"],
+        "solution": "Using BODMAS, 12 ÷ 4 × 3 = 3 × 3 = 9.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[16],
+        "time": 1.5,
+        "language": "English",
+        "text": "Solve: 7 × (8 - 3).",
+        "options": ["35", "56", "40", "21"],
+        "solution": "First solve inside the brackets: 8 - 3 = 5. Then multiply: 7 × 5 = 35.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[17],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is 50% of 200?",
+        "options": ["50", "100", "150", "200"],
+        "solution": "50% of 200 is 100.",
+        "correct_option": 1
+    },
+    {
+        "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What is 2 + 3?",
@@ -2031,7 +2599,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What comes after 7?",
@@ -2040,7 +2608,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 - 4?",
@@ -2049,7 +2617,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a triangle have?",
@@ -2058,7 +2626,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What is the smallest two-digit number?",
@@ -2067,7 +2635,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "2 + 3 कितना है?",
@@ -2076,7 +2644,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "7 के बाद कौन सा नंबर आता है?",
@@ -2085,7 +2653,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 - 4 कितना है?",
@@ -2094,7 +2662,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "त्रिभुज के कितने भुजाएँ होती हैं?",
@@ -2103,7 +2671,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [0],
+        "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "सबसे छोटा दो-अंकीय नंबर कौन सा है?",
@@ -2112,7 +2680,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "What is 2 + 2?",
@@ -2121,7 +2689,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "What is the next number after 5?",
@@ -2130,7 +2698,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a triangle have?",
@@ -2139,7 +2707,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 minus 4?",
@@ -2148,7 +2716,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "How many hours are there in a day?",
@@ -2157,7 +2725,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "2 + 2 कितना होता है?",
@@ -2166,7 +2734,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "5 के बाद कौन सा संख्या आती है?",
@@ -2175,7 +2743,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "त्रिभुज में कितने भुजाएं होती हैं?",
@@ -2184,7 +2752,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 में से 4 घटाएं तो कितना होगा?",
@@ -2193,7 +2761,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [1],
+        "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "एक दिन में कितने घंटे होते हैं?",
@@ -2202,7 +2770,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is 5 + 3?",
@@ -2211,7 +2779,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a square have?",
@@ -2220,7 +2788,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 divided by 2?",
@@ -2229,7 +2797,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is 2 times 4?",
@@ -2238,7 +2806,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is the smallest two-digit number?",
@@ -2247,7 +2815,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "5 और 3 का योगफल क्या है?",
@@ -2256,7 +2824,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "एक वर्ग में कितने भुजाएँ होती हैं?",
@@ -2265,7 +2833,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 को 2 से विभाजित करें।",
@@ -2274,7 +2842,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "2 और 4 का गुणा क्या है?",
@@ -2283,7 +2851,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [2],
+        "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "सबसे छोटा दो अंकों का अंक कौन सा है?",
@@ -2292,7 +2860,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "What is the force that pulls objects towards the Earth?",
@@ -2301,7 +2869,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "वह कौन सी ताकत है जो वस्तुओं को पृथ्वी की ओर खींचती है?",
@@ -2310,7 +2878,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is a source of light?",
@@ -2319,7 +2887,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन सा प्रकाश का स्रोत है?",
@@ -2328,7 +2896,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "What is the change in position of an object called?",
@@ -2337,7 +2905,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "वस्तु की स्थिति में परिवर्तन को क्या कहा जाता है?",
@@ -2346,7 +2914,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "What do we use to measure temperature?",
@@ -2355,7 +2923,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "हम तापमान मापने के लिए किसका उपयोग करते हैं?",
@@ -2364,7 +2932,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is a form of energy?",
@@ -2373,7 +2941,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [3],
+        "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन सा ऊर्जा का रूप है?",
@@ -2382,7 +2950,7 @@ def insert_data(request):
         "correct_option": 2
     },
      {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the unit of force?",
@@ -2391,7 +2959,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "बल की इकाई क्या है?",
@@ -2400,7 +2968,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the boiling point of water?",
@@ -2409,7 +2977,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "पानी का उबालने का बिंदु क्या है?",
@@ -2418,7 +2986,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the force that attracts objects towards the Earth?",
@@ -2427,7 +2995,7 @@ def insert_data(request):
     "correct_option": 1
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "वह बल जो वस्तुओं को पृथ्वी की ओर आकर्षित करता है, क्या कहलाता है?",
@@ -2436,7 +3004,7 @@ def insert_data(request):
     "correct_option": 1
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the shape of the Earth?",
@@ -2445,7 +3013,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "पृथ्वी का आकार क्या है?",
@@ -2454,7 +3022,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the source of light in the daytime?",
@@ -2463,7 +3031,7 @@ def insert_data(request):
     "correct_option": 3
   },
   {
-    "exam": [4],
+    "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "दिन के समय प्रकाश का स्रोत क्या है?",
@@ -2472,7 +3040,7 @@ def insert_data(request):
     "correct_option": 3
   },
   {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "What is the main source of light on Earth?",
@@ -2481,7 +3049,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "What is water in its solid form?",
@@ -2490,7 +3058,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is a gas?",
@@ -2499,7 +3067,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "What is the force that slows down a moving object?",
@@ -2508,7 +3076,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "Which of these is an example of an insulator?",
@@ -2517,7 +3085,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "पृथ्वी पर मुख्य प्रकाश स्रोत क्या है?",
@@ -2526,7 +3094,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "पानी अपनी ठोस अवस्था में क्या होता है?",
@@ -2535,7 +3103,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन गैस है?",
@@ -2544,7 +3112,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "वह कौन सा बल है जो चलती हुई वस्तु को धीमा कर देता है?",
@@ -2553,7 +3121,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [5],
+        "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "इनमें से कौन सा उदाहरण इंसुलेटर का है?",
@@ -2562,7 +3130,7 @@ def insert_data(request):
         "correct_option": 1
     },
      {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is 5 + 3?",
@@ -2571,7 +3139,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 - 4?",
@@ -2580,7 +3148,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is the shape of a ball?",
@@ -2589,7 +3157,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a triangle have?",
@@ -2598,7 +3166,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is 7 × 2?",
@@ -2607,7 +3175,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "5 + 3 क्या है?",
@@ -2616,7 +3184,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 - 4 क्या है?",
@@ -2625,7 +3193,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "गेंद का आकार क्या है?",
@@ -2634,7 +3202,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "त्रिभुज के कितने भुजाएँ होती हैं?",
@@ -2643,7 +3211,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": [6],
+        "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "7 × 2 क्या है?",
@@ -2652,395 +3220,336 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "English",
         "text": "What is 15 - 7?",
         "options": ["6", "7", "8", "9"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "15 - 7 = 8."
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "English",
         "text": "What is the smallest 2-digit number?",
         "options": ["9", "10", "11", "12"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "The smallest two-digit number is 10."
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "English",
         "text": "How many sides does a pentagon have?",
         "options": ["3", "4", "5", "6"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "A pentagon has 5 sides."
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "English",
         "text": "What is 25 ÷ 5?",
         "options": ["4", "5", "6", "7"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "25 ÷ 5 = 5."
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "English",
         "text": "What comes after 499?",
         "options": ["498", "500", "501", "502"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "The number after 499 is 500."
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "Hindi",
         "text": "15 - 7 क्या है?",
         "options": ["6", "7", "8", "9"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "15 - 7 = 8।"
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "Hindi",
         "text": "सबसे छोटी दो-अंकीय संख्या क्या है?",
         "options": ["9", "10", "11", "12"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "सबसे छोटी दो-अंकीय संख्या 10 है।"
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "Hindi",
         "text": "पंचभुज में कितने भुजाएँ होती हैं?",
         "options": ["3", "4", "5", "6"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "पंचभुज में 5 भुजाएँ होती हैं।"
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "Hindi",
         "text": "25 ÷ 5 कितना है?",
         "options": ["4", "5", "6", "7"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "25 ÷ 5 = 5।"
     },
     {
-        "exam": [7],
+        "exam": exams[7],
         "language": "Hindi",
         "text": "499 के बाद कौन सी संख्या आती है?",
         "options": ["498", "500", "501", "502"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "499 के बाद 500 आती है।"
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "English",
         "text": "What is 12 + 8?",
         "options": ["18", "19", "20", "21"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "12 + 8 = 20."
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "English",
         "text": "How many hours are there in 2 days?",
         "options": ["24", "36", "48", "60"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "2 days × 24 hours/day = 48 hours."
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "English",
         "text": "Which shape has 4 equal sides?",
         "options": ["Triangle", "Square", "Rectangle", "Circle"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "A square has 4 equal sides."
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "English",
         "text": "What is 5 × 6?",
         "options": ["25", "30", "35", "40"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "5 × 6 = 30."
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "English",
         "text": "What is 100 minus 45?",
         "options": ["55", "50", "60", "45"],
-        "correct_option": 1
+        "correct_option": 1,
+        "solution": "100 - 45 = 55."
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "Hindi",
         "text": "12 + 8 क्या है?",
         "options": ["18", "19", "20", "21"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "12 + 8 = 20।"
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "Hindi",
         "text": "2 दिनों में कितने घंटे होते हैं?",
         "options": ["24", "36", "48", "60"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "2 दिनों में 48 घंटे होते हैं।"
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "Hindi",
         "text": "कौन सा आकार चार बराबर भुजाएँ रखता है?",
         "options": ["त्रिभुज", "वर्ग", "आयत", "वृत्त"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "वर्ग चार बराबर भुजाएँ रखता है।"
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "Hindi",
         "text": "5 × 6 कितना है?",
         "options": ["25", "30", "35", "40"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "5 × 6 = 30।"
     },
     {
-        "exam": [8],
+        "exam": exams[8],
         "language": "Hindi",
         "text": "100 में से 45 घटाने पर क्या प्राप्त होगा?",
         "options": ["55", "50", "60", "45"],
-        "correct_option": 1
+        "correct_option": 1,
+        "solution": "100 - 45 = 55।"
     },
-     {
-        "exam": [9],
+    {
+        "exam": exams[9],
         "language": "English",
         "text": "What is the source of energy for the sun?",
         "options": ["Nuclear fusion", "Electric energy", "Chemical reaction", "Magnetic field"],
-        "correct_option": 1
+        "correct_option": 1,
+        "solution": "The sun's energy comes from nuclear fusion, where hydrogen atoms combine to form helium, releasing a vast amount of energy."
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "English",
         "text": "What force pulls objects towards the Earth?",
         "options": ["Friction", "Magnetism", "Gravity", "Air resistance"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "Gravity is the force that pulls objects towards the Earth's center due to its mass."
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "English",
         "text": "Which is the lightest planet in the solar system?",
         "options": ["Earth", "Mars", "Jupiter", "Mercury"],
-        "correct_option": 4
+        "correct_option": 4,
+        "solution": "Mercury is the lightest planet in the solar system due to its small size and low mass."
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "English",
         "text": "What do we use to see very small objects?",
         "options": ["Telescope", "Binoculars", "Microscope", "Magnifying glass"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "A microscope is used to observe very small objects by magnifying them to make them visible."
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "English",
         "text": "What is formed when light passes through a prism?",
         "options": ["Shadow", "Spectrum", "Reflection", "Absorption"],
-        "correct_option": 2
+        "correct_option": 2,
+        "solution": "When light passes through a prism, it splits into its constituent colors, forming a spectrum."
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "Hindi",
         "text": "सूरज का ऊर्जा स्रोत क्या है?",
         "options": ["नाभिकीय संलयन", "विद्युत ऊर्जा", "रासायनिक प्रतिक्रिया", "चुंबकीय क्षेत्र"],
-        "correct_option": 1
+        "correct_option": 1,
+        "solution": "सूरज की ऊर्जा का स्रोत नाभिकीय संलयन है, जिसमें हाइड्रोजन परमाणु मिलकर हीलियम बनाते हैं और ऊर्जा उत्पन्न करते हैं।"
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "Hindi",
         "text": "पृथ्वी की ओर वस्तुओं को खींचने वाला बल कौन सा है?",
         "options": ["घर्षण", "चुंबकत्व", "गुरुत्वाकर्षण", "वायुरोध"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "गुरुत्वाकर्षण बल पृथ्वी की ओर वस्तुओं को खींचता है क्योंकि यह पृथ्वी के द्रव्यमान के कारण उत्पन्न होता है।"
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "Hindi",
         "text": "सौरमंडल में सबसे हल्का ग्रह कौन सा है?",
         "options": ["पृथ्वी", "मंगल", "बृहस्पति", "बुध"],
-        "correct_option": 4
+        "correct_option": 4,
+        "solution": "बुध सौरमंडल का सबसे हल्का ग्रह है क्योंकि इसका आकार और द्रव्यमान बहुत छोटा है।"
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "Hindi",
         "text": "बहुत छोटे वस्तुओं को देखने के लिए हम क्या उपयोग करते हैं?",
         "options": ["दूरबीन", "दूरदर्शी", "सूक्ष्मदर्शी", "आवर्धक काँच"],
-        "correct_option": 3
+        "correct_option": 3,
+        "solution": "बहुत छोटे वस्तुओं को देखने के लिए सूक्ष्मदर्शी का उपयोग किया जाता है, जो वस्तुओं को बड़ा दिखाने में मदद करता है।"
     },
     {
-        "exam": [9],
+        "exam": exams[9],
         "language": "Hindi",
         "text": "प्रिज्म से प्रकाश गुजरने पर क्या बनता है?",
         "options": ["छाया", "वर्णक्रम", "परावर्तन", "अवशोषण"],
+        "correct_option": 2,
+        "solution": "प्रिज्म से प्रकाश गुजरने पर यह विभाजित होकर विभिन्न रंगों का वर्णक्रम बनाता है।"
+    },
+
+    {
+        "exam": exams[10],
+        "time": 1.5,
+        "language": "English",
+        "text": "What happens when you place an object in water, and it floats?",
+        "options": ["The object is heavy", "The object is light", "The water is hot", "The water is cold"],
+        "solution": "The object is light, which is why it floats.",
         "correct_option": 2
     },
     {
-        "exam": [7],
+        "exam": exams[10],
         "time": 1.5,
         "language": "English",
-        "text": "What is 12 + 8?",
-        "options": ["18", "19", "20", "21"],
-        "solution": "12 + 8 equals 20.",
+        "text": "What is the natural satellite of Earth?",
+        "options": ["Mars", "Sun", "Moon", "Venus"],
+        "solution": "The Moon is the natural satellite of Earth.",
         "correct_option": 3
     },
     {
-        "exam": [7],
+        "exam": exams[10],
         "time": 1.5,
         "language": "English",
-        "text": "What is half of 16?",
-        "options": ["6", "7", "8", "9"],
-        "solution": "Half of 16 is 8.",
-        "correct_option": 3
-    },
-    {
-        "exam": [7],
-        "time": 1.5,
-        "language": "English",
-        "text": "How many sides does a square have?",
-        "options": ["2", "3", "4", "5"],
-        "solution": "A square has 4 sides.",
-        "correct_option": 3
-    },
-    {
-        "exam": [7],
-        "time": 1.5,
-        "language": "English",
-        "text": "What is 6 × 3?",
-        "options": ["18", "16", "14", "12"],
-        "solution": "6 × 3 equals 18.",
+        "text": "Which force slows down a moving ball on the ground?",
+        "options": ["Friction", "Gravity", "Electricity", "Magnetism"],
+        "solution": "Friction slows down a moving ball on the ground.",
         "correct_option": 1
     },
     {
-        "exam": [7],
+        "exam": exams[10],
         "time": 1.5,
         "language": "English",
-        "text": "What is 25 - 7?",
-        "options": ["17", "18", "19", "20"],
-        "solution": "25 - 7 equals 18.",
+        "text": "Which of these can change the shape of an object?",
+        "options": ["Push", "Pull", "Both", "None"],
+        "solution": "Both pushing and pulling can change the shape of an object.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[10],
+        "time": 1.5,
+        "language": "English",
+        "text": "What do plants use from sunlight to make food?",
+        "options": ["Heat", "Energy", "Water", "Air"],
+        "solution": "Plants use energy from sunlight to make food.",
         "correct_option": 2
     },
     {
-        "exam": [7],
+        "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
-        "text": "12 + 8 क्या है?",
-        "options": ["18", "19", "20", "21"],
-        "solution": "12 + 8 का उत्तर 20 है।",
+        "text": "जब आप किसी वस्तु को पानी में रखते हैं और वह तैरती है, तो क्या होता है?",
+        "options": ["वस्तु भारी होती है", "वस्तु हल्की होती है", "पानी गर्म होता है", "पानी ठंडा होता है"],
+        "solution": "वस्तु हल्की होती है, इसलिए वह तैरती है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[10],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "पृथ्वी का प्राकृतिक उपग्रह क्या है?",
+        "options": ["मंगल", "सूर्य", "चंद्रमा", "शुक्र"],
+        "solution": "चंद्रमा पृथ्वी का प्राकृतिक उपग्रह है।",
         "correct_option": 3
     },
     {
-        "exam": [7],
+        "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
-        "text": "16 का आधा क्या है?",
-        "options": ["6", "7", "8", "9"],
-        "solution": "16 का आधा 8 होता है।",
-        "correct_option": 3
-    },
-    {
-        "exam": [7],
-        "time": 1.5,
-        "language": "Hindi",
-        "text": "वर्ग के कितने भुजाएँ होती हैं?",
-        "options": ["2", "3", "4", "5"],
-        "solution": "वर्ग की 4 भुजाएँ होती हैं।",
-        "correct_option": 3
-    },
-    {
-        "exam": [7],
-        "time": 1.5,
-        "language": "Hindi",
-        "text": "6 × 3 क्या है?",
-        "options": ["18", "16", "14", "12"],
-        "solution": "6 × 3 का उत्तर 18 है।",
+        "text": "कौन सा बल जमीन पर चल रही गेंद को धीमा कर देता है?",
+        "options": ["घर्षण", "गुरुत्वाकर्षण", "बिजली", "चुंबकत्व"],
+        "solution": "घर्षण जमीन पर चल रही गेंद को धीमा कर देता है।",
         "correct_option": 1
     },
     {
-        "exam": [7],
+        "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
-        "text": "25 - 7 क्या है?",
-        "options": ["17", "18", "19", "20"],
-        "solution": "25 - 7 का उत्तर 18 है।",
-        "correct_option": 2
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "English",
-        "text": "What is 15 + 10?",
-        "options": ["20", "25", "30", "35"],
-        "solution": "15 + 10 equals 25.",
-        "correct_option": 2
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "English",
-        "text": "How many corners does a rectangle have?",
-        "options": ["2", "3", "4", "5"],
-        "solution": "A rectangle has 4 corners.",
+        "text": "इनमें से कौन सी चीज किसी वस्तु का आकार बदल सकती है?",
+        "options": ["धक्का", "खींचना", "दोनों", "कोई नहीं"],
+        "solution": "धक्का और खींचना दोनों वस्तु का आकार बदल सकते हैं।",
         "correct_option": 3
     },
     {
-        "exam": [8],
+        "exam": exams[10],
         "time": 1.5,
-        "language": "English",
-        "text": "What is 9 × 2?",
-        "options": ["18", "16", "14", "12"],
-        "solution": "9 × 2 equals 18.",
-        "correct_option": 1
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "English",
-        "text": "What is 30 - 12?",
-        "options": ["16", "17", "18", "19"],
-        "solution": "30 - 12 equals 18.",
-        "correct_option": 3
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "English",
-        "text": "What is double of 7?",
-        "options": ["12", "14", "16", "18"],
-        "solution": "Double of 7 is 14.",
+        "language": "Hindi",
+        "text": "पौधे भोजन बनाने के लिए सूर्य के प्रकाश से क्या उपयोग करते हैं?",
+        "options": ["गर्मी", "ऊर्जा", "पानी", "हवा"],
+        "solution": "पौधे भोजन बनाने के लिए सूर्य के प्रकाश से ऊर्जा का उपयोग करते हैं।",
         "correct_option": 2
     },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "Hindi",
-        "text": "15 + 10 क्या है?",
-        "options": ["20", "25", "30", "35"],
-        "solution": "15 + 10 का उत्तर 25 है।",
-        "correct_option": 2
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "Hindi",
-        "text": "आयत के कितने कोने होते हैं?",
-        "options": ["2", "3", "4", "5"],
-        "solution": "आयत के 4 कोने होते हैं।",
-        "correct_option": 3
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "Hindi",
-        "text": "9 × 2 क्या है?",
-        "options": ["18", "16", "14", "12"],
-        "solution": "9 × 2 का उत्तर 18 है।",
-        "correct_option": 1
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "Hindi",
-        "text": "30 - 12 क्या है?",
-        "options": ["16", "17", "18", "19"],
-        "solution": "30 - 12 का उत्तर 18 है।",
-        "correct_option": 3
-    },
-    {
-        "exam": [8],
-        "time": 1.5,
-        "language": "Hindi",
-        "text": "7 का डबल क्या है?",
-        "options": ["12", "14", "16", "18"],
-        "solution": "7 का डबल 14 है।",
-        "correct_option": 2
-    }
         ]
 
         question_added_count = 0
@@ -3060,8 +3569,6 @@ def insert_data(request):
                     correct_option=question["correct_option"]
                 )
                 question_added_count += 1
-            else:
-                print(f"Question already exists: {question['text']}")
 
         response_data["questions"] = {
             "message": f'{question_added_count} questions added successfully.',
