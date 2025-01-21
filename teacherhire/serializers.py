@@ -515,7 +515,7 @@ class BasicProfileSerializer(serializers.ModelSerializer):
     religion = models.CharField(max_length=15, blank=True, null=True)
     class Meta:
         model = BasicProfile
-        fields = '__all__'
+        fields = ['id', 'user', 'bio', 'phone_number', 'religion','profile_picture','date_of_birth','marital_status','gender','language']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -639,10 +639,11 @@ class InterviewSerializer(serializers.ModelSerializer):
 
 class TeacherSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
+    profiles = BasicProfileSerializer(required=False)
     teachersaddress = TeachersAddressSerializer(many=True,required=False)
     teacherexperiences = TeacherExperiencesSerializer(many=True,required=False)
     teacherqualifications = TeacherQualificationSerializer(many=True,required=False)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'teacherskill', 'teachersaddress', 'teacherexperiences','teacherqualifications']
+        fields = ['id', 'Fname', 'Lname','profiles', 'email', 'teacherskill', 'teachersaddress', 'teacherexperiences','teacherqualifications']
