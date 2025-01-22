@@ -271,7 +271,7 @@ class ExamCenter(models.Model):
     status = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.user.username
+        return self.center_name
 
 class Exam(models.Model):
     name = models.CharField(max_length=255)
@@ -281,7 +281,6 @@ class Exam(models.Model):
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     total_marks = models.PositiveIntegerField()
     duration = models.PositiveIntegerField(help_text="Duration in minutes")
-    center_id = models.ForeignKey(ExamCenter, on_delete=models.CASCADE, null=True, blank=True)
     type = models.CharField(
         max_length=20,
         choices=[
@@ -396,6 +395,7 @@ class Report(models.Model):
 class Passkey(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE,null=True, related_name='passkeys')
+    center = models.ForeignKey(ExamCenter, on_delete=models.CASCADE,null=True, related_name='passkeys')
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
     status = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
