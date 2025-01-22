@@ -102,7 +102,7 @@ class TeacherJobTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Exam)
 class ExamAdmin(admin.ModelAdmin):
-    list_display = ['subject', 'level', 'class_category', 'duration', 'name', 'description', 'total_marks','type', 'created_at', 'updated_at']
+    list_display = ['subject', 'level', 'class_category', 'duration', 'name', 'description', 'total_marks','type', 'created_at', 'center_id','updated_at']
 
 @admin.register(Passkey)
 class PasskeyAdmin(admin.ModelAdmin):
@@ -113,4 +113,4 @@ class InterviewAdmin(admin.ModelAdmin):
     list_display = ['user', 'time','link','grade','status','created_at']
 @admin.register(ExamCenter)
 class ExamCenter(admin.ModelAdmin):
-    list_display = ['user', 'center_name', 'pincode', 'state', 'city', 'status']
+    list_display = ['user', 'center_name', 'pincode', 'state', 'city', 'status','area']
