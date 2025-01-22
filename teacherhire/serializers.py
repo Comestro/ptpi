@@ -652,3 +652,9 @@ class ExamCenterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamCenter
         fields = "__all__"
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        return representation
+
