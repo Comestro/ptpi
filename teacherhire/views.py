@@ -563,7 +563,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
         
     def get_experience_filter(self, experience_str):    
         if experience_str:
-            match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
+            match = re.match(r'(d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
             if match:
                 years = int(match.group(1))
                 
@@ -4284,9 +4284,9 @@ def insert_data(request):
         "exam": exams[26],
         "time": 1.5,
         "language": "English",
-        "text": "What is the derivative of \(x^2\)?",
+        "text": "What is the derivative of (x^2)?",
         "options": ["1", "2x", "x", "2"],
-        "solution": "The derivative of \(x^2\) is 2x.",
+        "solution": "The derivative of (x^2) is 2x.",
         "correct_option": 2
     },
     {
@@ -4302,9 +4302,9 @@ def insert_data(request):
         "exam": exams[26],
         "time": 1.5,
         "language": "English",
-        "text": "What is the integral of \(1/x\)?",
+        "text": "What is the integral of (1/x)?",
         "options": ["ln(x)", "x", "x^2/2", "1/(2x)"],
-        "solution": "The integral of \(1/x\) is ln(x).",
+        "solution": "The integral of (1/x) is ln(x).",
         "correct_option": 1
     },
     {
@@ -4320,18 +4320,18 @@ def insert_data(request):
         "exam": exams[26],
         "time": 1.5,
         "language": "English",
-        "text": "Solve for x: \(2x + 3 = 7\)",
+        "text": "Solve for x: (2x + 3 = 7)",
         "options": ["1", "2", "3", "4"],
-        "solution": "The solution for \(2x + 3 = 7\) is x = 2.",
+        "solution": "The solution for (2x + 3 = 7) is x = 2.",
         "correct_option": 2
     },
     {
         "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
-        "text": "क्या है \(x^2\) का अवकलन?",
+        "text": "क्या है (x^2) का अवकलन?",
         "options": ["1", "2x", "x", "2"],
-        "solution": "\(x^2\) का अवकलन 2x है।",
+        "solution": "(x^2) का अवकलन 2x है।",
         "correct_option": 2
     },
     {
@@ -4347,9 +4347,9 @@ def insert_data(request):
         "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
-        "text": "\(1/x\) का समाकलन क्या है?",
+        "text": "(1/x) का समाकलन क्या है?",
         "options": ["ln(x)", "x", "x^2/2", "1/(2x)"],
-        "solution": "\(1/x\) का समाकलन ln(x) है।",
+        "solution": "(1/x) का समाकलन ln(x) है।",
         "correct_option": 1
     },
     {
@@ -4365,27 +4365,27 @@ def insert_data(request):
         "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
-        "text": "x के लिए हल करें: \(2x + 3 = 7\)",
+        "text": "x के लिए हल करें: (2x + 3 = 7)",
         "options": ["1", "2", "3", "4"],
-        "solution": "\(2x + 3 = 7\) के लिए हल x = 2 है।",
+        "solution": "(2x + 3 = 7) के लिए हल x = 2 है।",
         "correct_option": 2
     },
     {
         "exam": exams[27],
         "time": 1.5,
         "language": "English",
-        "text": "What is the derivative of \(e^x\)?",
+        "text": "What is the derivative of (e^x)?",
         "options": ["1", "e^x", "x", "e"],
-        "solution": "The derivative of \(e^x\) is \(e^x\).",
+        "solution": "The derivative of (e^x) is (e^x).",
         "correct_option": 2
     },
     {
         "exam": exams[27],
         "time": 1.5,
         "language": "Hindi",
-        "text": "समीकरण \(2x - 5 = 9\) का हल क्या है?",
+        "text": "समीकरण (2x - 5 = 9) का हल क्या है?",
         "options": ["2", "4", "7", "5"],
-        "solution": "समीकरण \(2x - 5 = 9\) का हल \(x = 7\) है।",
+        "solution": "समीकरण (2x - 5 = 9) का हल (x = 7) है।",
         "correct_option": 3
     },
      {
@@ -4401,45 +4401,45 @@ def insert_data(request):
         "exam": exams[27],
         "time": 1.5,
         "language": "English",
-        "text": "What is the solution to the equation \(2x - 5 = 9\)?",
+        "text": "What is the solution to the equation (2x - 5 = 9)?",
         "options": ["2", "4", "7", "5"],
-        "solution": "The solution to the equation \(2x - 5 = 9\) is \(x = 7\).",
+        "solution": "The solution to the equation (2x - 5 = 9) is (x = 7).",
         "correct_option": 3
     },
     {
         "exam": exams[27],
         "time": 1.5,
         "language": "English",
-        "text": "What is the value of \(log(1)\)?",
+        "text": "What is the value of (log(1))?",
         "options": ["0", "1", "10", "Infinity"],
-        "solution": "The value of \(log(1)\) is 0.",
+        "solution": "The value of (log(1)) is 0.",
         "correct_option": 1
     },
     {
         "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
-        "text": "\(e^x\) का अवकलन क्या है?",
+        "text": "(e^x) का अवकलन क्या है?",
         "options": ["1", "e^x", "x", "e"],
-        "solution": "\(e^x\) का अवकलन \(e^x\) है।",
+        "solution": "(e^x) का अवकलन (e^x) है।",
         "correct_option": 2
     },
     {
         "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
-        "text": "\(sin(90^\circ)\) का मान क्या है?",
+        "text": "(sin(90^circ)) का मान क्या है?",
         "options": ["0", "1", "-1", "0.5"],
-        "solution": "\(sin(90^\circ)\) का मान 1 है।",
+        "solution": "(sin(90^circ)) का मान 1 है।",
         "correct_option": 2
     },
     {
         "exam": exams[28],
         "time": 1.5,
         "language": "English",
-        "text": "What is the value of \(sin(90^\circ)\)?",
+        "text": "What is the value of (sin(90^circ))?",
         "options": ["0", "1", "-1", "0.5"],
-        "solution": "The value of \(sin(90^\circ)\) is 1.",
+        "solution": "The value of (sin(90^circ)) is 1.",
         "correct_option": 2
     },
     
@@ -4447,9 +4447,9 @@ def insert_data(request):
         "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
-        "text": "\(log(1)\) का मान क्या है?",
+        "text": "(log(1)) का मान क्या है?",
         "options": ["0", "1", "10", "अनंत"],
-        "solution": "\(log(1)\) का मान 0 है।",
+        "solution": "(log(1)) का मान 0 है।",
         "correct_option": 1
     },
     {
@@ -4643,7 +4643,13 @@ class GeneratePasskeyView(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')
         exam_id = request.data.get('exam_id')
- 
+        center_id = request.data.get('center_id')
+
+        try:
+            center = ExamCenter.objects.get(id=center_id)
+        except ExamCenter.DoesNotExist:
+            return Response({"error": "Please choose a exam center first."}, status=status.HTTP_400_BAD_REQUEST)
+            
         try:
             user = CustomUser.objects.get(id=user_id)
         except CustomUser.DoesNotExist:
@@ -4684,6 +4690,7 @@ class GeneratePasskeyView(APIView):
             user=user,
             exam=exam,
             code=str(passkey),
+            center=center,
             status=False,
         )
         return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
