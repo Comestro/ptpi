@@ -131,7 +131,7 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), required=False, allow_null=True)
     start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
-    achievements = serializers.CharField(required=False, allow_null=True)
+    achievements = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = TeacherExperiences
