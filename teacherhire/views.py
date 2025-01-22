@@ -4816,7 +4816,11 @@ class ExameCenterViewSets(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
-
+    
+    action(detail=False, methods=['get'])
+    def teachers(self, request):
+        status = request.query_params.get('status')
+        
 
 
     

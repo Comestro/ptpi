@@ -261,6 +261,18 @@ class TeacherClassCategory(models.Model):
   def __str__(self):
         return self.user.username	
 
+class ExamCenter(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    center_name = models.CharField(max_length=200, null=True, blank=True)
+    pincode = models.CharField(max_length=6, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    area = models.TextField(null=True, blank=True)
+    status = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.user.username
+
 class Exam(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -269,6 +281,7 @@ class Exam(models.Model):
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     total_marks = models.PositiveIntegerField()
     duration = models.PositiveIntegerField(help_text="Duration in minutes")
+    center_id = models.ForeignKey(ExamCenter, on_delete=models.CASCADE, null=True, blank=True)
     type = models.CharField(
         max_length=20,
         choices=[
@@ -402,13 +415,3 @@ class Interview(models.Model):
     def __str__(self):
         return self.user.username
     
-class ExamCenter(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    center_name = models.CharField(max_length=200, null=True, blank=True)
-    pincode = models.CharField(max_length=6, null=True, blank=True)
-    state = models.CharField(max_length=100, null=True, blank=True)
-    city = models.CharField(max_length=100, null=True, blank=True)
-    status = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.user.username
