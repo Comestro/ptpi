@@ -3871,7 +3871,7 @@ def insert_data(request):
         "solution": "15 का वर्गमूल 225 है।"
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "English",
         "text": "What is the square root of 81?",
         "options": ["8", "9", "7", "6"],
@@ -3879,7 +3879,7 @@ def insert_data(request):
         "solution": "The square root of 81 is 9."
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "English",
         "text": "What is the result of 15 × 4?",
         "options": ["60", "55", "65", "70"],
@@ -3887,7 +3887,7 @@ def insert_data(request):
         "solution": "15 multiplied by 4 is 60."
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "English",
         "text": "If a rectangle has a length of 8 cm and a width of 5 cm, what is its area?",
         "options": ["40 cm²", "50 cm²", "60 cm²", "45 cm²"],
@@ -3895,7 +3895,7 @@ def insert_data(request):
         "solution": "The area of the rectangle is 40 cm² (length × width)."
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "English",
         "text": "What is the sum of 56 and 44?",
         "options": ["90", "100", "110", "120"],
@@ -3903,7 +3903,7 @@ def insert_data(request):
         "solution": "The sum of 56 and 44 is 100."
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "English",
         "text": "What is the value of 100 ÷ 5?",
         "options": ["25", "20", "30", "15"],
@@ -3911,7 +3911,7 @@ def insert_data(request):
         "solution": "100 divided by 5 is 20."
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "Hindi",
         "text": "81 का वर्गमूल क्या है?",
         "options": ["8", "9", "7", "6"],
@@ -3919,7 +3919,7 @@ def insert_data(request):
         "solution": "81 का वर्गमूल 9 है।"
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "Hindi",
         "text": "15 × 4 का परिणाम क्या है?",
         "options": ["60", "55", "65", "70"],
@@ -3927,7 +3927,7 @@ def insert_data(request):
         "solution": "15 गुणा 4 का परिणाम 60 है।"
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "Hindi",
         "text": "यदि आयत की लंबाई 8 सेंटीमीटर और चौड़ाई 5 सेंटीमीटर है, तो उसका क्षेत्रफल क्या होगा?",
         "options": ["40 वर्ग सेंटीमीटर", "50 वर्ग सेंटीमीटर", "60 वर्ग सेंटीमीटर", "45 वर्ग सेंटीमीटर"],
@@ -3935,7 +3935,7 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 40 वर्ग सेंटीमीटर है (लंबाई × चौड़ाई)।"
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "Hindi",
         "text": "56 और 44 का योगफल क्या है?",
         "options": ["90", "100", "110", "120"],
@@ -3943,7 +3943,7 @@ def insert_data(request):
         "solution": "56 और 44 का योगफल 100 है।"
     },
     {
-        "exam": [21],
+        "exam": exams[21],
         "language": "Hindi",
         "text": "100 ÷ 5 का मान क्या है?",
         "options": ["25", "20", "30", "15"],
@@ -3951,7 +3951,7 @@ def insert_data(request):
         "solution": "100 को 5 से विभाजित करने पर 20 मिलता है।"
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "English",
         "text": "What is 18 ÷ 3?",
         "options": ["5", "6", "7", "8"],
@@ -3959,7 +3959,7 @@ def insert_data(request):
         "solution": "18 divided by 3 is 6."
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "English",
         "text": "What is the perimeter of a square with each side measuring 4 cm?",
         "options": ["12 cm", "14 cm", "16 cm", "20 cm"],
@@ -3967,7 +3967,7 @@ def insert_data(request):
         "solution": "The perimeter of a square is 4 times the length of one side. 4 × 4 = 16 cm."
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "English",
         "text": "What is 25 × 3?",
         "options": ["70", "75", "80", "85"],
@@ -3975,7 +3975,7 @@ def insert_data(request):
         "solution": "25 multiplied by 3 is 75."
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "English",
         "text": "What is the area of a rectangle with a length of 6 cm and width of 3 cm?",
         "options": ["15 cm²", "18 cm²", "20 cm²", "24 cm²"],
@@ -3983,7 +3983,7 @@ def insert_data(request):
         "solution": "The area of the rectangle is 18 cm² (length × width)."
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "English",
         "text": "What is the sum of 45 and 35?",
         "options": ["70", "75", "80", "85"],
@@ -3991,7 +3991,7 @@ def insert_data(request):
         "solution": "The sum of 45 and 35 is 80."
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "Hindi",
         "text": "18 ÷ 3 क्या है?",
         "options": ["5", "6", "7", "8"],
@@ -3999,7 +3999,7 @@ def insert_data(request):
         "solution": "18 को 3 से विभाजित करने पर 6 मिलता है।"
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "Hindi",
         "text": "एक वर्ग का परिधि क्या है जिसका प्रत्येक किनारा 4 सेंटीमीटर है?",
         "options": ["12 सेंटीमीटर", "14 सेंटीमीटर", "16 सेंटीमीटर", "20 सेंटीमीटर"],
@@ -4007,7 +4007,7 @@ def insert_data(request):
         "solution": "वर्ग का परिधि 4 गुना एक किनारे की लंबाई होती है। 4 × 4 = 16 सेंटीमीटर।"
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "Hindi",
         "text": "25 × 3 क्या है?",
         "options": ["70", "75", "80", "85"],
@@ -4015,7 +4015,7 @@ def insert_data(request):
         "solution": "25 को 3 से गुणा करने पर 75 मिलता है।"
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "Hindi",
         "text": "एक आयत का क्षेत्रफल क्या होगा जिसकी लंबाई 6 सेंटीमीटर और चौड़ाई 3 सेंटीमीटर है?",
         "options": ["15 वर्ग सेंटीमीटर", "18 वर्ग सेंटीमीटर", "20 वर्ग सेंटीमीटर", "24 वर्ग सेंटीमीटर"],
@@ -4023,7 +4023,7 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 18 वर्ग सेंटीमीटर होगा (लंबाई × चौड़ाई)।"
     },
     {
-        "exam": [22],
+        "exam": exams[22],
         "language": "Hindi",
         "text": "45 और 35 का योगफल क्या है?",
         "options": ["70", "75", "80", "85"],
@@ -4031,7 +4031,7 @@ def insert_data(request):
         "solution": "45 और 35 का योगफल 80 है।"
     },
      {
-        "exam": [23],
+        "exam": exams[23],
         "language": "English",
         "text": "What is the square root of 64?",
         "options": ["6", "7", "8", "9"],
@@ -4039,7 +4039,7 @@ def insert_data(request):
         "solution": "The square root of 64 is 8."
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "English",
         "text": "What is 9 × 7?",
         "options": ["56", "63", "72", "81"],
@@ -4047,7 +4047,7 @@ def insert_data(request):
         "solution": "9 multiplied by 7 is 63."
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "English",
         "text": "What is the area of a triangle with base 10 cm and height 6 cm?",
         "options": ["30 cm²", "40 cm²", "50 cm²", "60 cm²"],
@@ -4055,7 +4055,7 @@ def insert_data(request):
         "solution": "The area of the triangle is 30 cm² (base × height ÷ 2)."
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "English",
         "text": "What is the sum of 150 and 275?",
         "options": ["425", "450", "475", "500"],
@@ -4063,7 +4063,7 @@ def insert_data(request):
         "solution": "The sum of 150 and 275 is 425."
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "English",
         "text": "What is 12 ÷ 4?",
         "options": ["2", "3", "4", "5"],
@@ -4071,7 +4071,7 @@ def insert_data(request):
         "solution": "12 divided by 4 is 3."
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "Hindi",
         "text": "64 का वर्गमूल क्या है?",
         "options": ["6", "7", "8", "9"],
@@ -4079,7 +4079,7 @@ def insert_data(request):
         "solution": "64 का वर्गमूल 8 है।"
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "Hindi",
         "text": "9 × 7 क्या है?",
         "options": ["56", "63", "72", "81"],
@@ -4087,7 +4087,7 @@ def insert_data(request):
         "solution": "9 को 7 से गुणा करने पर 63 मिलता है।"
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "Hindi",
         "text": "एक त्रिकोण का क्षेत्रफल क्या होगा जिसकी आधार 10 सेंटीमीटर और ऊंचाई 6 सेंटीमीटर है?",
         "options": ["30 वर्ग सेंटीमीटर", "40 वर्ग सेंटीमीटर", "50 वर्ग सेंटीमीटर", "60 वर्ग सेंटीमीटर"],
@@ -4095,7 +4095,7 @@ def insert_data(request):
         "solution": "त्रिकोण का क्षेत्रफल 30 वर्ग सेंटीमीटर होगा (आधार × ऊंचाई ÷ 2)।"
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "Hindi",
         "text": "150 और 275 का योगफल क्या है?",
         "options": ["425", "450", "475", "500"],
@@ -4103,7 +4103,7 @@ def insert_data(request):
         "solution": "150 और 275 का योगफल 425 है।"
     },
     {
-        "exam": [23],
+        "exam": exams[23],
         "language": "Hindi",
         "text": "12 ÷ 4 क्या है?",
         "options": ["2", "3", "4", "5"],
@@ -4111,7 +4111,7 @@ def insert_data(request):
         "solution": "12 को 4 से विभाजित करने पर 3 मिलता है।"
     },
      {
-        "exam": [24],
+        "exam": exams[24],
         "language": "English",
         "text": "What is 15 × 8?",
         "options": ["120", "130", "140", "150"],
@@ -4119,7 +4119,7 @@ def insert_data(request):
         "solution": "15 multiplied by 8 is 120."
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "English",
         "text": "What is the perimeter of a rectangle with length 12 cm and width 8 cm?",
         "options": ["40 cm", "50 cm", "60 cm", "70 cm"],
@@ -4127,7 +4127,7 @@ def insert_data(request):
         "solution": "The perimeter of a rectangle is 2 × (length + width), so 2 × (12 + 8) = 40 cm."
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "English",
         "text": "What is 45 ÷ 9?",
         "options": ["3", "4", "5", "6"],
@@ -4135,7 +4135,7 @@ def insert_data(request):
         "solution": "45 divided by 9 is 5."
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "English",
         "text": "What is the product of 12 and 7?",
         "options": ["72", "75", "78", "84"],
@@ -4143,7 +4143,7 @@ def insert_data(request):
         "solution": "The product of 12 and 7 is 84."
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "English",
         "text": "What is the area of a square with side length 6 cm?",
         "options": ["30 cm²", "36 cm²", "42 cm²", "48 cm²"],
@@ -4151,7 +4151,7 @@ def insert_data(request):
         "solution": "The area of a square is side × side, so 6 × 6 = 36 cm²."
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "Hindi",
         "text": "15 × 8 क्या है?",
         "options": ["120", "130", "140", "150"],
@@ -4159,7 +4159,7 @@ def insert_data(request):
         "solution": "15 को 8 से गुणा करने पर 120 मिलता है।"
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "Hindi",
         "text": "एक आयत का परिधि क्या होगा, जिसकी लंबाई 12 सेंटीमीटर और चौड़ाई 8 सेंटीमीटर है?",
         "options": ["40 सेंटीमीटर", "50 सेंटीमीटर", "60 सेंटीमीटर", "70 सेंटीमीटर"],
@@ -4167,7 +4167,7 @@ def insert_data(request):
         "solution": "आयत का परिधि 2 × (लंबाई + चौड़ाई) होता है, तो 2 × (12 + 8) = 40 सेंटीमीटर।"
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "Hindi",
         "text": "45 ÷ 9 क्या है?",
         "options": ["3", "4", "5", "6"],
@@ -4175,7 +4175,7 @@ def insert_data(request):
         "solution": "45 को 9 से विभाजित करने पर 5 मिलता है।"
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "Hindi",
         "text": "12 और 7 का गुणनफल क्या है?",
         "options": ["72", "75", "78", "84"],
@@ -4183,7 +4183,7 @@ def insert_data(request):
         "solution": "12 और 7 का गुणनफल 84 है।"
     },
     {
-        "exam": [24],
+        "exam": exams[24],
         "language": "Hindi",
         "text": "एक वर्ग का क्षेत्रफल क्या होगा, जिसका एक भुजा 6 सेंटीमीटर है?",
         "options": ["30 वर्ग सेंटीमीटर", "36 वर्ग सेंटीमीटर", "42 वर्ग सेंटीमीटर", "48 वर्ग सेंटीमीटर"],
@@ -4810,6 +4810,12 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         print("Validation errors:", serializer.errors) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ExameCenterViewSets(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = ExamCenter.objects.all()
+    serializer_class = ExamCenterSerializer
 
 
 
