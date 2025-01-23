@@ -4818,14 +4818,17 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
         print("Validation errors:", serializer.errors) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
 class ExamCenterViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
     
-    @action(detail=False, methods=["post"], url_path="create-center")
-    def create_center(self, request):
+    # Override the default create method for ExamCenter creation
+    def create(self, request, *args, **kwargs):
+        # Handle user creation first
         user_serializer = CenterUserSerializer(data=request.data.get("user"))
         if not user_serializer.is_valid():
             return Response({
@@ -4833,10 +4836,12 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
                 "message": "User creation failed"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Save the user
         user_serializer.save()
         user_email = user_serializer.data["email"]
         user = CustomUser.objects.get(email=user_email)
 
+        # Handle ExamCenter creation
         exam_center_data = request.data.get("exam_center")
         if not exam_center_data:
             return Response({
@@ -4844,6 +4849,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
                 "message": "Please include exam center details"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Assign the user to the exam center data
         exam_center_data["user"] = user.id
         exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
 
@@ -4853,6 +4859,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
                 "message": "Exam center creation failed"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Save the exam center
         exam_center_serializer.save()
 
         return Response({
