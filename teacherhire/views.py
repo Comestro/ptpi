@@ -26,7 +26,10 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from fuzzywuzzy import process, fuzz
 from django.db.models import Q
+import re
+from datetime import date
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
@@ -512,6 +515,8 @@ class SelfViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset =  CustomUser.objects.filter(id=user.id,is_teacher=True)    
         return queryset
+
+
 class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -520,65 +525,60 @@ class TeacherViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = CustomUser.objects.filter(is_teacher=True)
 
-        # Filtering based on skill
-        teacher_skill = self.request.query_params.get('skill', None)
-        if teacher_skill:
-            queryset = queryset.filter(teacherskill__skill__name__icontains=teacher_skill)
+        filters = {
+            'skill': self.request.query_params.get('skill', None),
+            'qualification': self.request.query_params.get('qualification', None),
+            'state': self.request.query_params.get('state', None),
+            'district': self.request.query_params.get('district', None),
+            'division': self.request.query_params.get('division', None),
+            'pincode': self.request.query_params.get('pincode', None),
+            'block': self.request.query_params.get('block', None),
+            'village': self.request.query_params.get('village', None),
+            'experience': self.request.query_params.get('experience', None)
+        }
 
-        qualification_filter = self.request.query_params.get('qualification', None)
-        if qualification_filter:
-            queryset = queryset.filter(teacherqualifications__qualification__name__icontains=qualification_filter)
+        if filters['skill']:
+            queryset = self.fuzzy_filter(queryset, 'teacherskills__skill__name', filters['skill'])
+        if filters['qualification']:
+            queryset = self.fuzzy_filter(queryset, 'teacherqualification__qualification__name', filters['qualification'])
 
-        # Filtering based on experience
-        teacher_experience = self.request.query_params.get('experience', None)
-        experience_filter = self.get_experience_filter(teacher_experience)
+        experience_filter = self.get_experience_filter(filters['experience'])
         if experience_filter:
             queryset = queryset.filter(experience_filter)
 
-        # Filtering based on address fields
-        state_filter = self.request.query_params.get('state', None)
-        division_filter = self.request.query_params.get('division', None)
-        district_filter = self.request.query_params.get('district', None)
-        pincode_filter = self.request.query_params.get('pincode', None)
-        block_filter = self.request.query_params.get('block', None)
-        village_filter = self.request.query_params.get('village', None)
+        for field in ['state', 'district', 'division', 'block', 'village']:
+            if filters[field]:
+                queryset = self.fuzzy_filter(queryset, f'teachersaddress__{field}', filters[field])
 
-        if state_filter:
-            queryset = queryset.filter(teachersaddress__state__icontains=state_filter)
-        if district_filter:
-            queryset = queryset.filter(teachersaddress__district__icontains=district_filter)
-        if division_filter:
-            queryset = queryset.filter(teachersaddress__division__icontains=division_filter)
-        if pincode_filter:
-            queryset = queryset.filter(teachersaddress__pincode__icontains=pincode_filter)
-        if block_filter:
-            queryset = queryset.filter(teachersaddress__block__icontains=block_filter)
-        if village_filter:
-            queryset = queryset.filter(teachersaddress__village__icontains=village_filter)
+        if filters['pincode']:
+            queryset = queryset.filter(teachersaddress__pincode__icontains=filters['pincode'])
 
-        # Removing duplicates
         queryset = queryset.distinct()
-        
+
         return queryset
+
+    def fuzzy_filter(self, queryset, field_name, filter_value, threshold=80):
+   
+        filter_value = filter_value.strip().lower()
+        all_values = queryset.values_list(field_name, flat=True).distinct()
+        best_match = process.extractOne(filter_value, all_values, scorer=fuzz.ratio)
+
+        if best_match and best_match[1] >= threshold:
+            return queryset.filter(**{f"{field_name}__iexact": best_match[0]})
+        else:
+            raise NotFound(detail=f"No records found for '{filter_value}'. Please check your spelling.")
         
-    def get_experience_filter(self, experience_str):    
+    def get_experience_filter(self, experience_str):
+   
         if experience_str:
-            match = re.match(r'(d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
+            match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
             if match:
                 years = int(match.group(1))
-                
                 start_date_threshold = date.today().replace(year=date.today().year - years)
                 end_date_threshold = start_date_threshold.replace(year=start_date_threshold.year + 1)
-                
-                experience_filter = Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
+                return Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
                     teacherexperiences__start_date__lt=end_date_threshold)
-                
-                return experience_filter
-
         return None
-
-
-
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
