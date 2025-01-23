@@ -4879,6 +4879,12 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
     
+class SelfExamCenterViewSets(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = ExamCenter.objects.all()
+    serializer_class = ExamCenterSerializer
+    
         
     
 

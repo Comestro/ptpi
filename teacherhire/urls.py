@@ -46,6 +46,7 @@ router.register(r'self/question', SelfQuestionViewSet, basename='teacher-questio
 router.register(r'self/exam', SelfExamViewSet, basename='self-exam')
 router.register(r'self/report', SelfReportViewSet, basename='self-report')
 router.register(r'self/interview', SelfInterviewViewSet, basename='self-interview')
+router.register(r'self/examcenter', SelfExamCenterViewSets, basename='self-examcenter')
 
 
 urlpatterns = [
