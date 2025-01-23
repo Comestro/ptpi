@@ -4818,12 +4818,49 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
         print("Validation errors:", serializer.errors) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ExameCenterViewSets(viewsets.ModelViewSet):
+class ExamCenterViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
     
+    @action(detail=False, methods=["post"], url_path="create-center")
+    def create_center(self, request):
+        user_serializer = CenterUserSerializer(data=request.data.get("user"))
+        if not user_serializer.is_valid():
+            return Response({
+                "error": user_serializer.errors,
+                "message": "User creation failed"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user_serializer.save()
+        user_email = user_serializer.data["email"]
+        user = CustomUser.objects.get(email=user_email)
+
+        exam_center_data = request.data.get("exam_center")
+        if not exam_center_data:
+            return Response({
+                "error": "Exam center data not provided",
+                "message": "Please include exam center details"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        exam_center_data["user"] = user.id
+        exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
+
+        if not exam_center_serializer.is_valid():
+            return Response({
+                "error": exam_center_serializer.errors,
+                "message": "Exam center creation failed"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        exam_center_serializer.save()
+
+        return Response({
+            "user": user_serializer.data,
+            "exam_center": exam_center_serializer.data,
+            "message": "User and Exam Center created successfully"
+        }, status=status.HTTP_201_CREATED)
+
     def put(self, request, *args, **kwargs):
         examcenter_id = request.data.get('id', None)
         if examcenter_id:
@@ -4839,10 +4876,3 @@ class ExameCenterViewSets(viewsets.ModelViewSet):
         else:
             return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-    
-
-
-    
- 
