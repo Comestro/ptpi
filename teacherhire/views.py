@@ -4693,7 +4693,11 @@ class GeneratePasskeyView(APIView):
             center=center,
             status=False,
         )
-        return Response({"message": "Passkey generated successfully."}, status=status.HTTP_200_OK)
+        center_serializer = ExamCenterSerializer(center)
+
+        return Response({"message": "Passkey generated successfully.",
+            "center":center_serializer.data},
+         status=status.HTTP_200_OK)
  
 class ApprovePasscodeView(APIView):
     #permission_classes = [IsAdminPermission]  # Only accessible by admin users
