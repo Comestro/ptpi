@@ -4875,4 +4875,10 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
                 return create_object(ExamSerializer, request.data, Exam)
         else:
             return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+        
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+        
+    
 
