@@ -60,6 +60,41 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
             raise ValidationError({'error': str(e)})
         return user
     
+class CenterUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+    Fname = serializers.CharField(required=True)
+    Lname = serializers.CharField(required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
+    
+    def create(self, validated_data):
+        email = validated_data['email']
+        base_username = email.split('@')[0]
+        username = base_username
+        Fname = validated_data['Fname']
+        Lname = validated_data['Lname']
+        is_centeruser = True
+        is_verified = True
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError({'email': 'Email is already in use.'})
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}{random.randint(1000, 9999)}"
+        try:
+            user = CustomUser.objects.create_user(
+                username=username,
+                email=email,
+                password=validated_data['password'],
+                Fname=Fname,
+                Lname=Lname,
+                is_centeruser=is_centeruser,
+                is_verified=is_verified 
+            )
+        except Exception as e:
+            raise ValidationError({'error': str(e)})
+        return user
+    
 class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, min_length=8)
 
@@ -653,8 +688,8 @@ class ExamCenterSerializer(serializers.ModelSerializer):
         model = ExamCenter
         fields = "__all__"
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
-        return representation
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     representation['user'] = UserSerializer(instance.user).data
+    #     return representation
 
