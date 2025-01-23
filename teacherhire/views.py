@@ -1898,6 +1898,17 @@ def insert_data(request):
             "field": "name",
             "data": ["matric", "Intermediate", "Under Graduate", "Post Graduate"]
         },
+        "exam_centers": {
+            "model": ExamCenter,
+            "field": "center_name",
+            "data": [
+                {"center_name": "Alpha Exam Center", "pincode": "111111", "state": "State A", "city": "City A", "area": "Area A"},
+                {"center_name": "Beta Exam Center", "pincode": "222222", "state": "State B", "city": "City B", "area": "Area B"},
+                {"center_name": "Gamma Exam Center", "pincode": "333333", "state": "State C", "city": "City C", "area": "Area C"},
+                {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
+                {"center_name": "Epsilon Exam Center", "pincode": "555555", "state": "State E", "city": "City E", "area": "Area E"},
+            ]
+        },
         "Exams": {
             "model": Exam,
             "field": "name",
@@ -1968,28 +1979,36 @@ def insert_data(request):
 
     response_data = {}
 
-    # Insert class categories, levels, etc.
     for key, config in data_to_insert.items():
         model = config["model"]
         field = config["field"]
         entries = config["data"]
-
         added_count = 0
+
         for entry in entries:
-            if isinstance(entry, dict):
+            if key == "exam_centers":  # Handle ExamCenter data
+                if not model.objects.filter(center_name=entry["center_name"]).exists():
+                    model.objects.create(
+                        center_name=entry["center_name"],
+                        pincode=entry["pincode"],
+                        state=entry["state"],
+                        city=entry["city"],
+                        area=entry["area"]
+                    )
+                    added_count += 1
+            elif key == "Exams":  # Handle Exam data
                 name = entry.get("name")
                 total_marks = entry.get("total_marks")
                 duration = entry.get("duration")
                 type = entry.get("type")
-
-
                 class_category_name = entry.get("class_category")
                 level_name = entry.get("level")
                 subject_name = entry.get("subject")
 
-                class_category, created = ClassCategory.objects.get_or_create(name=class_category_name)
-                level, created = Level.objects.get_or_create(name=level_name)
-                subject, created = Subject.objects.get_or_create(subject_name=subject_name)
+                # Fetch related objects
+                class_category, _ = ClassCategory.objects.get_or_create(name=class_category_name)
+                level, _ = Level.objects.get_or_create(name=level_name)
+                subject, _ = Subject.objects.get_or_create(subject_name=subject_name)
 
                 if not model.objects.filter(
                         name=name,
@@ -2008,7 +2027,7 @@ def insert_data(request):
                         type=type
                     )
                     added_count += 1
-            else:
+            else:  # Handle other data
                 if not model.objects.filter(**{field: entry}).exists():
                     model.objects.create(**{field: entry})
                     added_count += 1
