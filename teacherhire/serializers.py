@@ -118,6 +118,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         username = base_username
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
+        is_teacher = True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
         while CustomUser.objects.filter(username=username).exists():
@@ -128,7 +129,8 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
                 email=email,
                 password=validated_data['password'],
                 Fname=Fname,
-                Lname=Lname
+                Lname=Lname,
+                is_teacher=is_teacher
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
