@@ -4681,35 +4681,24 @@ class GeneratePasskeyView(APIView):
  
         try:
             exam = Exam.objects.get(id=exam_id)
+            if exam.level.id != 2 and exam.type != 'offline':
+                return Response({"error": "The provided exam is not valid exam"}, status=status.HTTP_400_BAD_REQUEST)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
  
-        # Check if the user has qualified in any attempt
-        results = TeacherExamResult.objects.filter(user=user, exam=exam)
-        if not results.exists():
-            return Response({"error": "No exam results found for this user."}, status=status.HTTP_400_BAD_REQUEST)
- 
-        # Check qualification status across all attempts
-        qualified = results.filter(isqualified=True).exists()
-        if not qualified:
-            return Response({"error": "User did not score the required 60% or above in any attempt."},
-                status=status.HTTP_400_BAD_REQUEST)
- 
-        # Check if user qualifies at level 2 and if the qualification type is 'online'
-        level_2_results = results.filter(isqualified=True, exam__level_id=2)
-        qualified_level_2_offline = level_2_results.filter(exam__type="online").exists()
-        if not qualified_level_2_offline:
-            return Response({"error": "User did not qualify at level 2 online."}, status=status.HTTP_400_BAD_REQUEST)
- 
-        # Check if a passkey already exists
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
                 status=status.HTTP_400_BAD_REQUEST)
- 
-        # Generate a new passkey
+
+        level_1_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=1, exam__type="online", isqualified=True).exists()
+        level_2_online_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=2, exam__type="online", isqualified=True).exists()
+
+        if not (level_1_qualified and level_2_online_qualified):
+            return Response({"error": "User must qualify both Level 1 and Level 2 online exams to access Level 2 offline exams."}, status=status.HTTP_400_BAD_REQUEST)
+        
         passkey = random.randint(1000, 9999)
- 
+
         passkey_obj = Passkey.objects.create(
             user=user,
             exam=exam,
@@ -4718,11 +4707,10 @@ class GeneratePasskeyView(APIView):
             status=False,
         )
         center_serializer = ExamCenterSerializer(center)
-
         return Response({"message": "Passkey generated successfully.",
-            "center":center_serializer.data},
-         status=status.HTTP_200_OK)
-    
+            "center":center_serializer.data,
+            },
+        status=status.HTTP_200_OK)    
  
 class ApprovePasscodeView(APIView):
     #permission_classes = [IsAdminPermission]  # Only accessible by admin users
