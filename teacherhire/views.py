@@ -4749,25 +4749,11 @@ class VerifyPasscodeView(APIView):
         passkey_obj.status = False
         passkey_obj.save()
         exam = passkey_obj.exam
-        exam_details = {
-            "id": exam.id,
-            "name": exam.name,
-            "level_id": exam.level_id,
-            "type": exam.type,
-        }
-        questions = exam.questions.all()
-        questions_list = [
-            {
-                "id": question.id,
-                "question_text": question.text,
-            }
-            for question in questions
-        ]
+        exam_serializer = ExamSerializer(exam)
         return Response(
             {
                 "message": "Passcode verified successfully.",
-                "exam_details": exam_details,
-                "questions": questions_list,
+                "offline exam" : exam_serializer.data
             },
             status=status.HTTP_200_OK,
         )
