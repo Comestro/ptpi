@@ -1801,6 +1801,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__class_category_id=class_category_id,exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2).exists()
 
+        exist_passcode_request = Passkey.objects.filter(user=user,status=False)
+        
         # Handle level filter
         if level_id:
             if level_id == '1':
@@ -1813,6 +1815,9 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                     if type == 'offline' and not qualified_level_2:
                         return Response({"message": "You must qualify Level 2 online exam before taking the offline exam."},
                                         status=status.HTTP_404_NOT_FOUND)
+                     
+                    if type == "offline" and exist_passcode_request.exists():
+                        return Response({"message": "You already request for offline exam. you can only request for passcode one time."}, status=status.HTTP_409_CONFLICT)
 
                     exams = exams.filter(type=type)
                 if qualified_level_1:
@@ -4717,6 +4722,7 @@ class GeneratePasskeyView(APIView):
         return Response({"message": "Passkey generated successfully.",
             "center":center_serializer.data},
          status=status.HTTP_200_OK)
+    
  
 class ApprovePasscodeView(APIView):
     #permission_classes = [IsAdminPermission]  # Only accessible by admin users
@@ -4742,28 +4748,41 @@ class VerifyPasscodeView(APIView):
         user_id = request.data.get('user_id')
         exam_id = request.data.get('exam_id')
         entered_passcode = request.data.get('passcode')
- 
         if not user_id or not exam_id or not entered_passcode:
-            return Response({"error": "Missing required fields: user_id, exam_id, or passcode."},
-            status=status.HTTP_400_BAD_REQUEST)
- 
+            return Response(
+                {"error": "Missing required fields: user_id, exam_id, or passcode."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
-            # Fetch the passkey objectIsAdminUser
             passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode)
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
- 
-        # Check if the passkey is approved by the admin
-        if not passkey_obj.status:
-            return Response({"error": "Passcode is not approved by the admin ."},
-            status=status.HTTP_400_BAD_REQUEST)
- 
-        # Mark the passkey as used after successful validation
+
         passkey_obj.status = False
         passkey_obj.save()
- 
-        return Response({"message": "Passcode verified successfully."}, status=status.HTTP_200_OK)
-    
+        exam = passkey_obj.exam
+        exam_details = {
+            "id": exam.id,
+            "name": exam.name,
+            "level_id": exam.level_id,
+            "type": exam.type,
+        }
+        questions = exam.questions.all()
+        questions_list = [
+            {
+                "id": question.id,
+                "question_text": question.text,
+            }
+            for question in questions
+        ]
+        return Response(
+            {
+                "message": "Passcode verified successfully.",
+                "exam_details": exam_details,
+                "questions": questions_list,
+            },
+            status=status.HTTP_200_OK,
+        )
 class InterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
