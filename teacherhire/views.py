@@ -517,17 +517,31 @@ class SelfViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class TeacherViewSet(viewsets.ModelViewSet):
+from rest_framework.exceptions import NotFound
+from fuzzywuzzy import process, fuzz
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
+from .models import CustomUser
+from .serializers import TeacherSerializer
+from django.db.models import Q
+from datetime import date
+import re
+
+class TeacherViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
 
     def get_queryset(self):
         queryset = CustomUser.objects.filter(is_teacher=True)
-
-        filters = {
-            'skill': self.request.query_params.get('skill', None),
-            'qualification': self.request.query_params.get('qualification', None),
+        teacher_skill = self.request.query_params.get('skill', None)
+        if teacher_skill:
+            queryset = queryset.filter(teacherskill__skill__name__icontains=teacher_skill)      
+        qualification_filter = self.request.query_params.get('qualification', None)
+        if qualification_filter:
+            queryset = queryset.filter(teacherqualifications__qualification__name__icontains=qualification_filter)
+        
+        filters = {            
             'state': self.request.query_params.get('state', None),
             'district': self.request.query_params.get('district', None),
             'division': self.request.query_params.get('division', None),
@@ -537,17 +551,13 @@ class TeacherViewSet(viewsets.ModelViewSet):
             'experience': self.request.query_params.get('experience', None)
         }
 
-        if filters['skill']:
-            queryset = self.fuzzy_filter(queryset, 'teacherskills__skill__name', filters['skill'])
-        if filters['qualification']:
-            queryset = self.fuzzy_filter(queryset, 'teacherqualification__qualification__name', filters['qualification'])
-
+        
         experience_filter = self.get_experience_filter(filters['experience'])
         if experience_filter:
             queryset = queryset.filter(experience_filter)
 
         for field in ['state', 'district', 'division', 'block', 'village']:
-            if filters[field]:
+            if filters.get(field):
                 queryset = self.fuzzy_filter(queryset, f'teachersaddress__{field}', filters[field])
 
         if filters['pincode']:
@@ -558,27 +568,28 @@ class TeacherViewSet(viewsets.ModelViewSet):
         return queryset
 
     def fuzzy_filter(self, queryset, field_name, filter_value, threshold=80):
-   
-        filter_value = filter_value.strip().lower()
+        if not filter_value:
+            return queryset 
+        filter_value = filter_value.strip().lower() if filter_value else '' 
         all_values = queryset.values_list(field_name, flat=True).distinct()
         best_match = process.extractOne(filter_value, all_values, scorer=fuzz.ratio)
-
         if best_match and best_match[1] >= threshold:
             return queryset.filter(**{f"{field_name}__iexact": best_match[0]})
         else:
             raise NotFound(detail=f"No records found for '{filter_value}'. Please check your spelling.")
-        
+
     def get_experience_filter(self, experience_str):
-   
         if experience_str:
             match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
             if match:
                 years = int(match.group(1))
                 start_date_threshold = date.today().replace(year=date.today().year - years)
                 end_date_threshold = start_date_threshold.replace(year=start_date_threshold.year + 1)
+
                 return Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
                     teacherexperiences__start_date__lt=end_date_threshold)
         return None
+
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
     permission_classes = [IsAuthenticated]
