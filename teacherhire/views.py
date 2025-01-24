@@ -516,17 +516,6 @@ class SelfViewSet(viewsets.ModelViewSet):
         queryset =  CustomUser.objects.filter(id=user.id,is_teacher=True)    
         return queryset
 
-
-from rest_framework.exceptions import NotFound
-from fuzzywuzzy import process, fuzz
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
-from .models import CustomUser
-from .serializers import TeacherSerializer
-from django.db.models import Q
-from datetime import date
-import re
-
 class TeacherViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
