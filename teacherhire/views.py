@@ -4915,6 +4915,14 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
     
-        
+    @action(detail=False, methods=['get'])
+    def teachers(self, request):
+        status = request.query_params.get('status', None)
+        filter_condition = Q(status=status.lower() in ['true', '1', 'yes'])
+
+        teachers = Passkey.objects.filter(filter_condition)
+
+        serializer = PasskeySerializer(teachers, many=True)
+        return Response(serializer.data)
     
 
