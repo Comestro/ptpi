@@ -516,7 +516,7 @@ class SelfViewSet(viewsets.ModelViewSet):
         queryset =  CustomUser.objects.filter(id=user.id,is_teacher=True)    
         return queryset
 
-class TeacherViewSet(ModelViewSet):
+class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
