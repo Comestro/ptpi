@@ -4681,7 +4681,7 @@ class GeneratePasskeyView(APIView):
  
         try:
             exam = Exam.objects.get(id=exam_id)
-            if exam.level.id != 2 and exam.type != 'offline':
+            if exam.level.id == 1 or exam.level.id == 2 and exam.type == 'online':
                 return Response({"error": "The provided exam is not valid exam"}, status=status.HTTP_400_BAD_REQUEST)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
@@ -4741,12 +4741,15 @@ class VerifyPasscodeView(APIView):
                 {"error": "Missing required fields: user_id, exam_id, or passcode."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        passkey_status = Passkey.objects.filter(user=user_id,exam=exam_id,code=entered_passcode, status=False)
+        if passkey_status.exists():
+            return Response({"error":"Passcode verification is allowed only if the passcode is approved by the exam center."})
         try:
             passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode)
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
-        passkey_obj.status = False
+        # passkey_obj.status = False
         passkey_obj.save()
         exam = passkey_obj.exam
         exam_serializer = ExamSerializer(exam)
