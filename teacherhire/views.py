@@ -1809,7 +1809,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__class_category_id=class_category_id,exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2).exists()
 
-        exist_passcode_request = Passkey.objects.filter(user=user,status=False)
+        # exist_passcode_request = Passkey.objects.filter(user=user,status=False)
         
         # Handle level filter
         if level_id:
@@ -1824,8 +1824,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                         return Response({"message": "You must qualify Level 2 online exam before taking the offline exam."},
                                         status=status.HTTP_404_NOT_FOUND)
                      
-                    if type == "offline" and exist_passcode_request.exists():
-                        return Response({"message": "You already request for offline exam. you can only request for passcode one time."}, status=status.HTTP_409_CONFLICT)
+                    # if type == "offline" and exist_passcode_request.exists():
+                    #     return Response({"message": "You already request for offline exam. you can only request for passcode one time."}, status=status.HTTP_409_CONFLICT)
 
                     exams = exams.filter(type=type)
                 if qualified_level_1:
