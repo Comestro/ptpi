@@ -17,36 +17,29 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
 from django.db.models import F
-from django.utils.crypto import get_random_string
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
 from django.utils.html import format_html
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from fuzzywuzzy import process, fuzz
 from django.db.models import Q
 import re
 from datetime import date
-
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
-
 class AdminView(APIView):
     permission_classes = [IsAdminPermission]
 
     def get(self, request):
         return Response({"message": "You are an admin!"}, status=status.HTTP_200_OK)
 
-
 def check_for_duplicate(model_class, **kwargs):
     return model_class.objects.filter(**kwargs).exists()
-
 
 def create_object(serializer_class, request_data, model_class):
     serializer = serializer_class(data=request_data)
@@ -54,8 +47,6 @@ def create_object(serializer_class, request_data, model_class):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 # for authenticated teacher
 def create_auth_data(serializer_class, request_data, model_class, user, *args, **kwargs):
     if not user or not user.is_authenticated:
@@ -117,7 +108,6 @@ class ChangePasswordView(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
             user = request.user
-
             # Set the new password
             user.set_password(serializer.validated_data['new_password'])
             user.save()
@@ -127,14 +117,12 @@ class ChangePasswordView(APIView):
 class TeacherRegisterUser(APIView):
     def post(self, request):
         serializer = TeacherRegisterSerializer(data=request.data)
-
         if not serializer.is_valid():
             return Response({
                 'error': serializer.errors,
                 # Todo
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
-
         serializer.save()
         send_otp_via_email(serializer.data['email'])
         email = serializer.data['email']
