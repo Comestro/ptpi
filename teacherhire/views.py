@@ -4902,14 +4902,41 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
     
+    
     @action(detail=False, methods=['get'])
     def teachers(self, request):
+        # Extract query parameters
+        user_id = request.query_params.get('user_id', None)
         status = request.query_params.get('status', None)
-        filter_condition = Q(status=status.lower() in ['true', '1', 'yes'])
+        date = request.query_params.get('date', None)  
 
-        teachers = Passkey.objects.filter(filter_condition)
+        filters = Q()
+        if user_id:
+            filters &= Q(user_id=user_id) 
+        if status is not None:
+            try:
+                status_bool = status.lower() in ['true', '1', 'yes']
+                filters &= Q(status=status_bool)
+            except AttributeError:
+                return Response({"error": "Invalid status value"}, status=400)
+        if date:
+            try:
+                # Convert string date to a datetime object and filter
+                date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+                filters &= Q(created_at__date=date_obj)
+            except ValueError:
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
 
+        # Filter Passkey objects
+        teachers = Passkey.objects.filter(filters)
+
+        # Serialize and return the data
         serializer = PasskeySerializer(teachers, many=True)
         return Response(serializer.data)
+
+    
+    
+    
+    
     
 
