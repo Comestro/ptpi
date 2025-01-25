@@ -4925,26 +4925,29 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
     
-    
     @action(detail=False, methods=['get'])
     def teachers(self, request):
+        user = request.user
+        try:
+            exam_center = ExamCenter.objects.get(user=user)
+        except ExamCenter.DoesNotExist:
+            return Response({"error": "ExamCenter not found for the user."}, status=404)
+
         # Extract query parameters
         user_id = request.query_params.get('user_id', None)
         status = request.query_params.get('status', None)
-        date = request.query_params.get('date', None)  
+        date = request.query_params.get('date', None)
 
-        filters = Q()
+        # Build filters
+        filters = Q(center=exam_center)
         if user_id:
-            filters &= Q(user_id=user_id) 
+            filters &= Q(user_id=user_id)
         if status is not None:
-            try:
-                status_bool = status.lower() in ['true', '1', 'yes']
-                filters &= Q(status=status_bool)
-            except AttributeError:
-                return Response({"error": "Invalid status value"}, status=400)
+            status = status.lower()
+            if status in ['true', '1', 'yes']:
+                filters &= Q(status=True)
         if date:
             try:
-                # Convert string date to a datetime object and filter
                 date_obj = datetime.strptime(date, '%Y-%m-%d').date()
                 filters &= Q(created_at__date=date_obj)
             except ValueError:
@@ -4954,7 +4957,7 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
         teachers = Passkey.objects.filter(filters)
 
         # Serialize and return the data
-        serializer = PasskeySerializer(teachers, many=True)
+        serializer = PasskeySerializer(teachers, many=True) 
         return Response(serializer.data)
 
     
