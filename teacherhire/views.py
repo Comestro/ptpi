@@ -4720,7 +4720,6 @@ class ApprovePasscodeView(APIView):
         exam_id = request.data.get('exam_id')
  
         try:
-            # Fetch the passkey object
             passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id)
         except Passkey.DoesNotExist:
             return Response({"error": "Passkey not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -4749,14 +4748,18 @@ class VerifyPasscodeView(APIView):
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # passkey_obj.status = False
+        passkey_obj.status = False
         passkey_obj.save()
         exam = passkey_obj.exam
         exam_serializer = ExamSerializer(exam)
+
+        result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
+        if result:
+            passkey_obj.delete()
         return Response(
             {
                 "message": "Passcode verified successfully.",
-                "offline exam" : exam_serializer.data
+                "offline_exam" : exam_serializer.data
             },
             status=status.HTTP_200_OK,
         )
