@@ -4714,9 +4714,11 @@ class GeneratePasskeyView(APIView):
             center=center,
             status=False,
         )
+        exam_serializer = ExamSerializer(exam)
         center_serializer = ExamCenterSerializer(center)
         return Response({"message": "Passkey generated successfully.",
             "center":center_serializer.data,
+            "exam": exam_serializer.data
             },
         status=status.HTTP_200_OK)    
  
