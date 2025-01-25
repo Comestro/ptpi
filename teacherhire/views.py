@@ -17,36 +17,29 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import JsonResponse
 from django.db.models import F
-from django.utils.crypto import get_random_string
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
 from django.utils.html import format_html
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
-from django.shortcuts import get_object_or_404
 from fuzzywuzzy import process, fuzz
 from django.db.models import Q
 import re
 from datetime import date
-
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
-
 class AdminView(APIView):
     permission_classes = [IsAdminPermission]
 
     def get(self, request):
         return Response({"message": "You are an admin!"}, status=status.HTTP_200_OK)
 
-
 def check_for_duplicate(model_class, **kwargs):
     return model_class.objects.filter(**kwargs).exists()
-
 
 def create_object(serializer_class, request_data, model_class):
     serializer = serializer_class(data=request_data)
@@ -54,8 +47,6 @@ def create_object(serializer_class, request_data, model_class):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 # for authenticated teacher
 def create_auth_data(serializer_class, request_data, model_class, user, *args, **kwargs):
     if not user or not user.is_authenticated:
@@ -117,7 +108,6 @@ class ChangePasswordView(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
             user = request.user
-
             # Set the new password
             user.set_password(serializer.validated_data['new_password'])
             user.save()
@@ -127,14 +117,12 @@ class ChangePasswordView(APIView):
 class TeacherRegisterUser(APIView):
     def post(self, request):
         serializer = TeacherRegisterSerializer(data=request.data)
-
         if not serializer.is_valid():
             return Response({
                 'error': serializer.errors,
                 # Todo
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
-
         serializer.save()
         send_otp_via_email(serializer.data['email'])
         email = serializer.data['email']
@@ -4701,35 +4689,24 @@ class GeneratePasskeyView(APIView):
  
         try:
             exam = Exam.objects.get(id=exam_id)
+            if exam.level.id == 1 or exam.level.id == 2 and exam.type == 'online':
+                return Response({"error": "The provided exam is not valid exam"}, status=status.HTTP_400_BAD_REQUEST)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
  
-        # Check if the user has qualified in any attempt
-        results = TeacherExamResult.objects.filter(user=user, exam=exam)
-        if not results.exists():
-            return Response({"error": "No exam results found for this user."}, status=status.HTTP_400_BAD_REQUEST)
- 
-        # Check qualification status across all attempts
-        qualified = results.filter(isqualified=True).exists()
-        if not qualified:
-            return Response({"error": "User did not score the required 60% or above in any attempt."},
-                status=status.HTTP_400_BAD_REQUEST)
- 
-        # Check if user qualifies at level 2 and if the qualification type is 'online'
-        level_2_results = results.filter(isqualified=True, exam__level_id=2)
-        qualified_level_2_offline = level_2_results.filter(exam__type="online").exists()
-        if not qualified_level_2_offline:
-            return Response({"error": "User did not qualify at level 2 online."}, status=status.HTTP_400_BAD_REQUEST)
- 
-        # Check if a passkey already exists
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
                 status=status.HTTP_400_BAD_REQUEST)
- 
-        # Generate a new passkey
+
+        level_1_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=1, exam__type="online", isqualified=True).exists()
+        level_2_online_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=2, exam__type="online", isqualified=True).exists()
+
+        if not (level_1_qualified and level_2_online_qualified):
+            return Response({"error": "User must qualify both Level 1 and Level 2 online exams to access Level 2 offline exams."}, status=status.HTTP_400_BAD_REQUEST)
+        
         passkey = random.randint(1000, 9999)
- 
+
         passkey_obj = Passkey.objects.create(
             user=user,
             exam=exam,
@@ -4738,11 +4715,10 @@ class GeneratePasskeyView(APIView):
             status=False,
         )
         center_serializer = ExamCenterSerializer(center)
-
         return Response({"message": "Passkey generated successfully.",
-            "center":center_serializer.data},
-         status=status.HTTP_200_OK)
-    
+            "center":center_serializer.data,
+            },
+        status=status.HTTP_200_OK)    
  
 class ApprovePasscodeView(APIView):
     #permission_classes = [IsAdminPermission]  # Only accessible by admin users
@@ -4752,7 +4728,6 @@ class ApprovePasscodeView(APIView):
         exam_id = request.data.get('exam_id')
  
         try:
-            # Fetch the passkey object
             passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id)
         except Passkey.DoesNotExist:
             return Response({"error": "Passkey not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -4773,6 +4748,9 @@ class VerifyPasscodeView(APIView):
                 {"error": "Missing required fields: user_id, exam_id, or passcode."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        passkey_status = Passkey.objects.filter(user=user_id,exam=exam_id,code=entered_passcode, status=False)
+        if passkey_status.exists():
+            return Response({"error":"Passcode verification is allowed only if the passcode is approved by the exam center."})
         try:
             passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode)
         except Passkey.DoesNotExist:
@@ -4781,25 +4759,15 @@ class VerifyPasscodeView(APIView):
         passkey_obj.status = False
         passkey_obj.save()
         exam = passkey_obj.exam
-        exam_details = {
-            "id": exam.id,
-            "name": exam.name,
-            "level_id": exam.level_id,
-            "type": exam.type,
-        }
-        questions = exam.questions.all()
-        questions_list = [
-            {
-                "id": question.id,
-                "question_text": question.text,
-            }
-            for question in questions
-        ]
+        exam_serializer = ExamSerializer(exam)
+
+        result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
+        if result:
+            passkey_obj.delete()
         return Response(
             {
                 "message": "Passcode verified successfully.",
-                "exam_details": exam_details,
-                "questions": questions_list,
+                "offline_exam" : exam_serializer.data
             },
             status=status.HTTP_200_OK,
         )
@@ -4954,6 +4922,14 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
     
-        
+    @action(detail=False, methods=['get'])
+    def teachers(self, request):
+        status = request.query_params.get('status', None)
+        filter_condition = Q(status=status.lower() in ['true', '1', 'yes'])
+
+        teachers = Passkey.objects.filter(filter_condition)
+
+        serializer = PasskeySerializer(teachers, many=True)
+        return Response(serializer.data)
     
 

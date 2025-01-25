@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+import os
 
 
 class CustomUserManager(BaseUserManager):
@@ -248,12 +249,13 @@ class BasicProfile(models.Model):
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
    
-    # def save(self, *args, **kwargs):
-    #     if self.pk:
-    #         old_profile = BasicProfile.objects.get(pk=self.pk)
-    #         if old_profile.profile_picture != self.profile_picture:
-    #             old_profile.profile_picture.delete(save=False)
-    #         return super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = BasicProfile.objects.filter(pk=self.pk).first()
+            if old_instance and old_instance.profile_picture != self.profile_picture:
+                if old_instance.profile_picture and os.path.isfile(old_instance.profile_picture.path):
+                    os.remove(old_instance.profile_picture.path)
+        super().save(*args, **kwargs)
 
 class TeacherClassCategory(models.Model):	
   user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)	
