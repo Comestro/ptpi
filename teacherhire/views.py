@@ -522,14 +522,28 @@ class TeacherViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherSerializer
 
     def get_queryset(self):
+        return_all = self.request.query_params.get('all', None)
+        if return_all and return_all.lower() == 'true':
+            return CustomUser.objects.filter(is_teacher=True)
         queryset = CustomUser.objects.filter(is_teacher=True)
+
         teacher_skill = self.request.query_params.get('skill', None)
         if teacher_skill:
-            queryset = queryset.filter(teacherskill__skill__name__icontains=teacher_skill)      
+            teacherskills = [skill.strip().lower() for skill in teacher_skill.split(',')]
+            queries = [Q(teacherskill__skill__name__iexact=skill) for skill in teacherskills]
+            query = queries.pop()
+            for item in queries:
+                query |= item
+            queryset = queryset.filter(query)
+            
         qualification_filter = self.request.query_params.get('qualification', None)
         if qualification_filter:
-            queryset = queryset.filter(teacherqualifications__qualification__name__icontains=qualification_filter)
-        
+            qualification_filter = [qualification.strip().lower() for qualification in qualification_filter.split(',')]
+            query = queries.pop()
+            for item in queries:
+                query |= item
+            queryset = queryset.filter(query)
+
         filters = {            
             'state': self.request.query_params.get('state', None),
             'district': self.request.query_params.get('district', None),
@@ -540,32 +554,38 @@ class TeacherViewSet(viewsets.ModelViewSet):
             'experience': self.request.query_params.get('experience', None)
         }
 
-        
+        # Experience filter
         experience_filter = self.get_experience_filter(filters['experience'])
         if experience_filter:
             queryset = queryset.filter(experience_filter)
 
         for field in ['state', 'district', 'division', 'block', 'village']:
-            if filters.get(field):
-                queryset = self.fuzzy_filter(queryset, f'teachersaddress__{field}', filters[field])
+            queryset = self.filter_by_address_field(queryset, field, filters.get(field))
 
         if filters['pincode']:
-            queryset = queryset.filter(teachersaddress__pincode__icontains=filters['pincode'])
+            pincodes = filters['pincode'].split(',')
+            queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
 
         queryset = queryset.distinct()
 
         return queryset
 
-    def fuzzy_filter(self, queryset, field_name, filter_value, threshold=80):
-        if not filter_value:
-            return queryset 
-        filter_value = filter_value.strip().lower() if filter_value else '' 
-        all_values = queryset.values_list(field_name, flat=True).distinct()
-        best_match = process.extractOne(filter_value, all_values, scorer=fuzz.ratio)
-        if best_match and best_match[1] >= threshold:
-            return queryset.filter(**{f"{field_name}__iexact": best_match[0]})
-        else:
-            raise NotFound(detail=f"No records found for '{filter_value}'. Please check your spelling.")
+    def filter_by_address_field(self, queryset, field, filter_value):
+        if filter_value:
+            field_values = filter_value.split(',')
+            q_objects = Q()  
+            for value in field_values:
+                value = value.strip()
+                best_match = process.extractOne(value.lower(), queryset.values_list(f'teachersaddress__{field}', flat=True))
+                
+                if best_match and best_match[1] >= 70:
+                    q_objects |= Q(**{f'teachersaddress__{field}__iexact': best_match[0]})
+                else:
+                    q_objects |= Q(**{f'teachersaddress__{field}__icontains': value})
+
+            queryset = queryset.filter(q_objects)
+
+        return queryset
 
     def get_experience_filter(self, experience_str):
         if experience_str:
