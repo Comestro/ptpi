@@ -4693,7 +4693,7 @@ class GeneratePasskeyView(APIView):
                 return Response({"error": "The provided exam is not valid exam"}, status=status.HTTP_400_BAD_REQUEST)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
- 
+        
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
@@ -4760,10 +4760,11 @@ class VerifyPasscodeView(APIView):
         passkey_obj.save()
         exam = passkey_obj.exam
         exam_serializer = ExamSerializer(exam)
-
-        result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
-        if result:
+        if passkey_obj.status==False:
             passkey_obj.delete()
+        # result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
+        # if result:
+        #     passkey_obj.delete()
         return Response(
             {
                 "message": "Passcode verified successfully.",
