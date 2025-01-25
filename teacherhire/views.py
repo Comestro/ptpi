@@ -510,14 +510,28 @@ class TeacherViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherSerializer
 
     def get_queryset(self):
+        return_all = self.request.query_params.get('all', None)
+        if return_all and return_all.lower() == 'true':
+            return CustomUser.objects.filter(is_teacher=True)
         queryset = CustomUser.objects.filter(is_teacher=True)
+
         teacher_skill = self.request.query_params.get('skill', None)
         if teacher_skill:
-            queryset = queryset.filter(teacherskill__skill__name__icontains=teacher_skill)      
+            teacherskills = [skill.strip().lower() for skill in teacher_skill.split(',')]
+            queries = [Q(teacherskill__skill__name__iexact=skill) for skill in teacherskills]
+            query = queries.pop()
+            for item in queries:
+                query |= item
+            queryset = queryset.filter(query)
+            
         qualification_filter = self.request.query_params.get('qualification', None)
         if qualification_filter:
-            queryset = queryset.filter(teacherqualifications__qualification__name__icontains=qualification_filter)
-        
+            qualification_filter = [qualification.strip().lower() for qualification in qualification_filter.split(',')]
+            query = queries.pop()
+            for item in queries:
+                query |= item
+            queryset = queryset.filter(query)
+
         filters = {            
             'state': self.request.query_params.get('state', None),
             'district': self.request.query_params.get('district', None),
@@ -528,32 +542,38 @@ class TeacherViewSet(viewsets.ModelViewSet):
             'experience': self.request.query_params.get('experience', None)
         }
 
-        
+        # Experience filter
         experience_filter = self.get_experience_filter(filters['experience'])
         if experience_filter:
             queryset = queryset.filter(experience_filter)
 
         for field in ['state', 'district', 'division', 'block', 'village']:
-            if filters.get(field):
-                queryset = self.fuzzy_filter(queryset, f'teachersaddress__{field}', filters[field])
+            queryset = self.filter_by_address_field(queryset, field, filters.get(field))
 
         if filters['pincode']:
-            queryset = queryset.filter(teachersaddress__pincode__icontains=filters['pincode'])
+            pincodes = filters['pincode'].split(',')
+            queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
 
         queryset = queryset.distinct()
 
         return queryset
 
-    def fuzzy_filter(self, queryset, field_name, filter_value, threshold=80):
-        if not filter_value:
-            return queryset 
-        filter_value = filter_value.strip().lower() if filter_value else '' 
-        all_values = queryset.values_list(field_name, flat=True).distinct()
-        best_match = process.extractOne(filter_value, all_values, scorer=fuzz.ratio)
-        if best_match and best_match[1] >= threshold:
-            return queryset.filter(**{f"{field_name}__iexact": best_match[0]})
-        else:
-            raise NotFound(detail=f"No records found for '{filter_value}'. Please check your spelling.")
+    def filter_by_address_field(self, queryset, field, filter_value):
+        if filter_value:
+            field_values = filter_value.split(',')
+            q_objects = Q()  
+            for value in field_values:
+                value = value.strip()
+                best_match = process.extractOne(value.lower(), queryset.values_list(f'teachersaddress__{field}', flat=True))
+                
+                if best_match and best_match[1] >= 70:
+                    q_objects |= Q(**{f'teachersaddress__{field}__iexact': best_match[0]})
+                else:
+                    q_objects |= Q(**{f'teachersaddress__{field}__icontains': value})
+
+            queryset = queryset.filter(q_objects)
+
+        return queryset
 
     def get_experience_filter(self, experience_str):
         if experience_str:
@@ -1789,7 +1809,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__class_category_id=class_category_id,exam__level_id=1).exists()
         qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2).exists()
 
-        exist_passcode_request = Passkey.objects.filter(user=user,status=False)
+        # exist_passcode_request = Passkey.objects.filter(user=user,status=False)
         
         # Handle level filter
         if level_id:
@@ -1804,8 +1824,8 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                         return Response({"message": "You must qualify Level 2 online exam before taking the offline exam."},
                                         status=status.HTTP_404_NOT_FOUND)
                      
-                    if type == "offline" and exist_passcode_request.exists():
-                        return Response({"message": "You already request for offline exam. you can only request for passcode one time."}, status=status.HTTP_409_CONFLICT)
+                    # if type == "offline" and exist_passcode_request.exists():
+                    #     return Response({"message": "You already request for offline exam. you can only request for passcode one time."}, status=status.HTTP_409_CONFLICT)
 
                     exams = exams.filter(type=type)
                 if qualified_level_1:
@@ -4673,7 +4693,7 @@ class GeneratePasskeyView(APIView):
                 return Response({"error": "The provided exam is not valid exam"}, status=status.HTTP_400_BAD_REQUEST)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
- 
+        
         existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
@@ -4740,10 +4760,11 @@ class VerifyPasscodeView(APIView):
         passkey_obj.save()
         exam = passkey_obj.exam
         exam_serializer = ExamSerializer(exam)
-
-        result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
-        if result:
+        if passkey_obj.status==False:
             passkey_obj.delete()
+        # result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
+        # if result:
+        #     passkey_obj.delete()
         return Response(
             {
                 "message": "Passcode verified successfully.",

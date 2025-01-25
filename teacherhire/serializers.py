@@ -683,7 +683,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname','profiles', 'email', 'teacherskill', 'teachersaddress', 'teacherexperiences','teacherqualifications']
+        fields = ['id', 'Fname', 'Lname', 'email', 'profiles', 'teacherskill', 'teachersaddress', 'teacherexperiences','teacherqualifications']
     
 class ExamCenterSerializer(serializers.ModelSerializer):
     class Meta:
