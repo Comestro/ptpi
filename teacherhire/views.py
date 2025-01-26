@@ -4960,6 +4960,8 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
         serializer = PasskeySerializer(teachers, many=True) 
         return Response(serializer.data)
 
+    def get_queryset(self):
+        return ExamCenter.objects.filter(user=self.request.user)
     
     
     
