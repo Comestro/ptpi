@@ -690,17 +690,17 @@ class ExamCenterSerializer(serializers.ModelSerializer):
         model = ExamCenter
         fields = "__all__"
 
+
 class TeacherReportSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
-    teacherclasscategory = TeacherClassCategorySerializer(many=True, required=False)
-    teacherqualifications = TeacherQualificationSerializer(many=True,required=False)
-    teachersubject = TeacherSubjectSerializer(many=True, requried=False)
-    teacherexperiences = TeacherExperiencesSerializer(many=True,required=False)
+    teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
+    teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
     teacherexamresult = TeacherExamResultSerializer(many=True, required=False)
-    preference = PreferenceSerializer(many=True, requried=False)
+    preference = PreferenceSerializer(many=True, required=False)  
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email','teacherskill', 'teacherclasscategory', 'teacherqualifications' ,'teachersubject','teacherexperiences','teacherexamresult', 'preference']
+        fields = ['id', 'Fname', 'Lname', 'email', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
+
 
         
