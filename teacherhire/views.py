@@ -520,23 +520,21 @@ class TeacherViewSet(viewsets.ModelViewSet):
             queryset = CustomUser.objects.filter(is_teacher=True)
 
         queryset = queryset.prefetch_related('preferences')
+        
+        # Fuzzy matching for skills and qualifications
         teacher_skill = self.request.query_params.get('skill', None)
         if teacher_skill:
             teacherskills = [skill.strip().lower() for skill in teacher_skill.split(',')]
-            queries = [Q(teacherskill__skill__name__iexact=skill) for skill in teacherskills]
-            query = queries.pop()
-            for item in queries:
-                query |= item
-            queryset = queryset.filter(query)
+            queries = [self.fuzzy_filter(queryset, 'teacherskill__skill__name', skill) for skill in teacherskills]
+            queryset = queryset.filter(*queries)
 
         qualification_filter = self.request.query_params.get('qualification', None)
         if qualification_filter:
-            qualification_filter = [qualification.strip().lower() for qualification in qualification_filter.split(',')]
-            query = queries.pop()
-            for item in queries:
-                query |= item
-            queryset = queryset.filter(query)
+            qualifications = [qualification.strip().lower() for qualification in qualification_filter.split(',')]
+            queries = [self.fuzzy_filter(queryset, 'qualification__name', qualification) for qualification in qualifications]
+            queryset = queryset.filter(*queries)
 
+        # Other filters
         filters = {            
             'state': self.request.query_params.get('state', None),
             'district': self.request.query_params.get('district', None),
@@ -555,7 +553,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
         experience_filter = self.get_experience_filter(filters['experience'])
         if experience_filter:
             queryset = queryset.filter(experience_filter)       
-        
+
         for field in ['state', 'district', 'division', 'block', 'village']:
             queryset = self.filter_by_address_field(queryset, field, filters.get(field))
 
@@ -566,7 +564,6 @@ class TeacherViewSet(viewsets.ModelViewSet):
             for role in job_roles:
                 job_role_query |= Q(preferences__job_role__jobrole_name__iexact=role)
             queryset = queryset.filter(job_role_query)
-
         class_category_filter = filters['class_category']
         if class_category_filter:
             class_categories = [class_category.strip().lower() for class_category in class_category_filter.split(',')]
@@ -575,7 +572,6 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 class_category_query |= Q(preferences__class_category__name__iexact=class_category)
             queryset = queryset.filter(class_category_query)
         
-
         subject_filter = filters['subject']
         if subject_filter:
             prefere_subject = [subject.strip().lower() for subject in subject_filter.split(',')]
@@ -583,7 +579,6 @@ class TeacherViewSet(viewsets.ModelViewSet):
             for subject in prefere_subject:
                 subject_query |= Q(preferences__prefered_subject__subject_name__iexact=subject)
             queryset = queryset.filter(subject_query)
-
         teacher_job_type = filters['teacher_job_type']
         if teacher_job_type:
             teacher_job_types = [teacher_job_type.strip().lower() for teacher_job_type in teacher_job_type.split(',')]
@@ -592,13 +587,13 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 teacher_job_type_query |= Q(preferences__teacher_job_type__teacher_job_name__iexact=teacher_job_type)
             queryset = queryset.filter(teacher_job_type_query)
 
+
         if filters['pincode']:
             pincodes = filters['pincode'].split(',')
             queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
 
         queryset = queryset.distinct()
         return queryset
-
 
     def filter_by_address_field(self, queryset, field, filter_value):
         if filter_value:
@@ -617,6 +612,23 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def fuzzy_filter(self, queryset, field_name, filter_value, threshold=80):
+        """
+        Perform fuzzy matching using fuzzywuzzy on the field and filter value.
+        """
+        if not filter_value:
+            return queryset
+        filter_value = filter_value.strip().lower()
+        all_values = queryset.values_list(field_name, flat=True).distinct()
+        
+        best_match = process.extractOne(filter_value, all_values, scorer=fuzz.ratio)
+        
+        if best_match and best_match[1] >= threshold:
+            return queryset.filter(**{f"{field_name}__iexact": best_match[0]})
+        else:
+            # If no sufficiently close match is found, return an empty queryset or raise an exception.
+            raise NotFound(detail=f"No records found for '{filter_value}'. Please check your spelling.")
+        
     def get_experience_filter(self, experience_str):
         if experience_str:
             match = re.match(r'(\d+)\s*(year|yr|y|years?)', experience_str.strip().lower())
@@ -627,7 +639,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
                 return Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
                     teacherexperiences__start_date__lt=end_date_threshold)
-        return None
+        return None   
 
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
