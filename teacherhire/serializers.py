@@ -677,14 +677,46 @@ class InterviewSerializer(serializers.ModelSerializer):
 class TeacherSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
     profiles = BasicProfileSerializer(required=False)
-    teachersaddress = TeachersAddressSerializer(many=True,required=False)
-    teacherexperiences = TeacherExperiencesSerializer(many=True,required=False)
-    teacherqualifications = TeacherQualificationSerializer(many=True,required=False)
+    teachersaddress = TeachersAddressSerializer(many=True, required=False)
+    teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
+    teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
 
     class Meta:
-        model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'profiles', 'teacherskill', 'teachersaddress', 'teacherexperiences','teacherqualifications']
-    
+        model = CustomUser 
+        fields = [
+            'id', 'Fname', 'Lname', 'email', 'profiles', 
+            'teacherskill', 'teachersaddress', 
+            'teacherexperiences', 'teacherqualifications'
+        ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if 'teacherskill' in representation:
+            representation['teacherskill'] = [
+                {'skill': skill.get('skill')} for skill in representation['teacherskill']
+            ]
+        if 'teacherqualifications' in representation:
+            representation['teacherqualifications'] = [
+                {'qualification': qualification.get('qualification')} for qualification in representation['teacherqualifications']
+            ]
+        if 'teacherexperiences' in representation:
+            representation['teacherexperiences'] = [
+                {'start_date': experience.get('start_date'), 'end_date': experience.get('end_date'),'achievements': experience.get('achievements')}
+                for experience in representation['teacherexperiences']
+            ]
+        if 'profiles' in representation and representation['profiles'] is not None:
+            representation['profiles'] = {
+                'bio': representation['profiles'].get('bio', ''),
+                'phone_number': representation['profiles'].get('phone_number', None),
+                'religion': representation['profiles'].get('religion', None),
+                'profile_picture': representation['profiles'].get('profile_picture', None),
+                'date_of_birth': representation['profiles'].get('date_of_birth', None),
+                'marital_status': representation['profiles'].get('marital_status', None),
+                'gender': representation['profiles'].get('gender', None),
+                'language': representation['profiles'].get('language', None),
+            }           
+        return representation
+
 class ExamCenterSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamCenter
