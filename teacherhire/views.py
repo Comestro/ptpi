@@ -4966,8 +4966,6 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
     
 def insert_data_examcenter(request):
     data_to_insert = { 
-        
-    
     "exam_centers": {
             "model": ExamCenter,
             "field": "center_name",
@@ -4980,14 +4978,11 @@ def insert_data_examcenter(request):
             ]
         },
     }
-
     response_data = {}
-
     for key, config in data_to_insert.items():
         model = config["model"]
         entries = config["data"]
         added_count = 0
-
         for entry in entries:
             if key == "exam_centers":  # Handle ExamCenter data
                 user = CustomUser.objects.order_by('?').first()  # Random user
@@ -5008,12 +5003,10 @@ def insert_data_examcenter(request):
                     if not model.objects.filter(**{field: entry_value}).exists():
                         model.objects.create(**{field: entry_value})
                         added_count += 1
-
         response_data[key] = {
             "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
             "added_count": added_count
         }
-
     return JsonResponse(response_data) 
     
     
