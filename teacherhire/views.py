@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
+from teacherhire.pagination import TeacherPagination
 from teacherhire.serializers import *
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
@@ -509,13 +510,16 @@ class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
-
+    pagination_class = TeacherPagination
+    
     def get_queryset(self):
         return_all = self.request.query_params.get('all', None)
         if return_all and return_all.lower() == 'true':
-            return CustomUser.objects.filter(is_teacher=True)
-        queryset = CustomUser.objects.filter(is_teacher=True)
+            queryset = CustomUser.objects.filter(is_teacher=True)
+        else:
+            queryset = CustomUser.objects.filter(is_teacher=True)
 
+        queryset = queryset.prefetch_related('preferences')
         teacher_skill = self.request.query_params.get('skill', None)
         if teacher_skill:
             teacherskills = [skill.strip().lower() for skill in teacher_skill.split(',')]
@@ -524,7 +528,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
             for item in queries:
                 query |= item
             queryset = queryset.filter(query)
-            
+
         qualification_filter = self.request.query_params.get('qualification', None)
         if qualification_filter:
             qualification_filter = [qualification.strip().lower() for qualification in qualification_filter.split(',')]
@@ -540,24 +544,61 @@ class TeacherViewSet(viewsets.ModelViewSet):
             'pincode': self.request.query_params.get('pincode', None),
             'block': self.request.query_params.get('block', None),
             'village': self.request.query_params.get('village', None),
-            'experience': self.request.query_params.get('experience', None)
+            'experience': self.request.query_params.get('experience', None),
+            'class_category': self.request.query_params.get('class_category', None),
+            'subject': self.request.query_params.get('subject', None),
+            'job_role': self.request.query_params.get('job_role', None),
+            'teacher_job_type': self.request.query_params.get('teacher_job_type', None),
         }
 
         # Experience filter
         experience_filter = self.get_experience_filter(filters['experience'])
         if experience_filter:
-            queryset = queryset.filter(experience_filter)
-
+            queryset = queryset.filter(experience_filter)       
+        
         for field in ['state', 'district', 'division', 'block', 'village']:
             queryset = self.filter_by_address_field(queryset, field, filters.get(field))
+
+        job_role_filter = filters['job_role']
+        if job_role_filter:
+            job_roles = [role.strip().lower() for role in job_role_filter.split(',')]
+            job_role_query = Q()
+            for role in job_roles:
+                job_role_query |= Q(preferences__job_role__jobrole_name__iexact=role)
+            queryset = queryset.filter(job_role_query)
+
+        class_category_filter = filters['class_category']
+        if class_category_filter:
+            class_categories = [class_category.strip().lower() for class_category in class_category_filter.split(',')]
+            class_category_query = Q()
+            for class_category in class_categories:
+                class_category_query |= Q(preferences__class_category__name__iexact=class_category)
+            queryset = queryset.filter(class_category_query)
+        
+
+        subject_filter = filters['subject']
+        if subject_filter:
+            prefere_subject = [subject.strip().lower() for subject in subject_filter.split(',')]
+            subject_query = Q()
+            for subject in prefere_subject:
+                subject_query |= Q(preferences__prefered_subject__subject_name__iexact=subject)
+            queryset = queryset.filter(subject_query)
+
+        teacher_job_type = filters['teacher_job_type']
+        if teacher_job_type:
+            teacher_job_types = [teacher_job_type.strip().lower() for teacher_job_type in teacher_job_type.split(',')]
+            teacher_job_type_query = Q()
+            for teacher_job_type in teacher_job_types:
+                teacher_job_type_query |= Q(preferences__teacher_job_type__teacher_job_name__iexact=teacher_job_type)
+            queryset = queryset.filter(teacher_job_type_query)
 
         if filters['pincode']:
             pincodes = filters['pincode'].split(',')
             queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
 
         queryset = queryset.distinct()
-
         return queryset
+
 
     def filter_by_address_field(self, queryset, field, filter_value):
         if filter_value:

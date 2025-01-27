@@ -456,7 +456,6 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ['id','jobrole_name']
 
     def validate_jobrole_name(self, value):
-        # Validate if the name has at least 3 characters
         if len(value) < 3:
             raise serializers.ValidationError("Role name must be at least 3 characters.")
         
@@ -680,13 +679,14 @@ class TeacherSerializer(serializers.ModelSerializer):
     teachersaddress = TeachersAddressSerializer(many=True, required=False)
     teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
     teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
+    preferences = PreferenceSerializer(many=True, required=False)
 
     class Meta:
         model = CustomUser 
         fields = [
             'id', 'Fname', 'Lname', 'email', 'profiles', 
             'teacherskill', 'teachersaddress', 
-            'teacherexperiences', 'teacherqualifications'
+            'teacherexperiences', 'teacherqualifications', 'preferences'
         ]
 
     def to_representation(self, instance):
@@ -714,7 +714,16 @@ class TeacherSerializer(serializers.ModelSerializer):
                 'marital_status': representation['profiles'].get('marital_status', None),
                 'gender': representation['profiles'].get('gender', None),
                 'language': representation['profiles'].get('language', None),
-            }           
+            }
+        if 'preferences' in representation:
+            representation['preferences'] = [
+                {
+                    'job_role': preference.get('job_role'),
+                    'class_category': preference.get('class_category'),
+                    'prefered_subject': preference.get('prefered_subject'),
+                    'teacher_job_type': preference.get('teacher_job_type'),
+                } for preference in representation['preferences']
+            ]
         return representation
 
 class ExamCenterSerializer(serializers.ModelSerializer):
