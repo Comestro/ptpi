@@ -1911,17 +1911,7 @@ def insert_data(request):
             "field": "name",
             "data": ["matric", "Intermediate", "Under Graduate", "Post Graduate"]
         },
-        "exam_centers": {
-            "model": ExamCenter,
-            "field": "center_name",
-            "data": [
-                {"center_name": "Alpha Exam Center", "pincode": "111111", "state": "State A", "city": "City A", "area": "Area A"},
-                {"center_name": "Beta Exam Center", "pincode": "222222", "state": "State B", "city": "City B", "area": "Area B"},
-                {"center_name": "Gamma Exam Center", "pincode": "333333", "state": "State C", "city": "City C", "area": "Area C"},
-                {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
-                {"center_name": "Epsilon Exam Center", "pincode": "555555", "state": "State E", "city": "City E", "area": "Area E"},
-            ]
-        },
+      
         "Exams": {
             "model": Exam,
             "field": "name",
@@ -4883,7 +4873,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Assign the user to the exam center data
-        exam_center_data["user"] = user.id
+        exam_center_data["user"] = user
         exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
 
         if not exam_center_serializer.is_valid():
@@ -4962,8 +4952,61 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
 
     # def get_queryset(self):
     #     return ExamCenter.objects.filter(user=self.request.user)
+
+
+
+
+def insert_data_examcenter(request):
+    data_to_insert = { 
+        
     
-    
+    "exam_centers": {
+            "model": ExamCenter,
+            "field": "center_name",
+            "data": [
+                {"center_name": "Alpha Exam Center", "pincode": "111111", "state": "State A", "city": "City A", "area": "Area A"},
+                {"center_name": "Beta Exam Center", "pincode": "222222", "state": "State B", "city": "City B", "area": "Area B"},
+                {"center_name": "Gamma Exam Center", "pincode": "333333", "state": "State C", "city": "City C", "area": "Area C"},
+                {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
+                {"center_name": "Epsilon Exam Center", "pincode": "555555", "state": "State E", "city": "City E", "area": "Area E"},
+            ]
+        },
+    }
+
+    response_data = {}
+
+    for key, config in data_to_insert.items():
+        model = config["model"]
+        entries = config["data"]
+        added_count = 0
+
+        for entry in entries:
+            if key == "exam_centers":  # Handle ExamCenter data
+                user = CustomUser.objects.order_by('?').first()  # Random user
+                if not model.objects.filter(center_name=entry["center_name"]).exists():
+                    model.objects.create(
+                        user=user, 
+                        center_name=entry["center_name"],
+                        pincode=entry["pincode"],
+                        state=entry["state"],
+                        city=entry["city"],
+                        area=entry["area"]
+                    )
+                    added_count += 1
+            # Handle other models like Exams, Roles, Subjects, etc.
+            else:
+                field = config["field"]
+                for entry_value in entry:
+                    if not model.objects.filter(**{field: entry_value}).exists():
+                        model.objects.create(**{field: entry_value})
+                        added_count += 1
+
+        response_data[key] = {
+            "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
+            "added_count": added_count
+        }
+
+    return JsonResponse(response_data) 
     
     
     

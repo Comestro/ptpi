@@ -265,7 +265,7 @@ class TeacherClassCategory(models.Model):
         return self.user.username	
 
 class ExamCenter(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     center_name = models.CharField(max_length=200, null=True, blank=True)
     pincode = models.CharField(max_length=6, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
