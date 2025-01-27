@@ -696,6 +696,7 @@ class TeacherReportSerializer(serializers.ModelSerializer):
     teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
     teacherexamresult = TeacherExamResultSerializer(many=True, required=False)
     preference = PreferenceSerializer(many=True, required=False)  
+    rate = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser

@@ -27,6 +27,7 @@ from fuzzywuzzy import process, fuzz
 from django.db.models import Q
 import re
 from datetime import date
+from django.db.models import Count
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
@@ -1915,7 +1916,7 @@ def insert_data(request):
             "model": ExamCenter,
             "field": "center_name",
             "data": [
-                {"center_name": "Alpha Exam Center", "pincode": "111111", "state": "State A", "city": "City A", "area": "Area A"},
+                
                 {"center_name": "Beta Exam Center", "pincode": "222222", "state": "State B", "city": "City B", "area": "Area B"},
                 {"center_name": "Gamma Exam Center", "pincode": "333333", "state": "State C", "city": "City C", "area": "Area C"},
                 {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
@@ -4960,11 +4961,84 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
         serializer = PasskeySerializer(teachers, many=True) 
         return Response(serializer.data)
 
-    def get_queryset(self):
-        return ExamCenter.objects.filter(user=self.request.user)
+    def update(self, request, *args, **kwargs):
+        passkey_id = kwargs.get('pk')
+        if passkey_id:
+            try:
+                passkey_instance = Passkey.objects.get(id=passkey_id)
+                allowed_fields = {'status'}
+                updating_field = set(request.data.keys())
+                if not updating_field.issubset(allowed_fields):
+                    return Response({"error": "You can only update the 'status' field."}, status=status.HTTP_400_BAD_REQUEST)
+                serializer = PasskeySerializer(passkey_instance, data=request.data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Passkey.DoesNotExist:
+                return create_object(PasskeySerializer, request.data, Passkey)
+        else:
+            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+                
     
-    
-    
-    
+class TeacherReportViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = TeacherReportSerializer
+    queryset = CustomUser.objects.all()
+    def get(self, request):
+        user = self.request.user
+        try:
+            user_data = CustomUser.objects.get(id=user.id)
+
+            qualifications = user_data.teacherqualification.all()
+            experiences = user_data.teacherexperience.all()
+            skills = user_data.teacherskills.all()
+            exam_results = user_data.teacherexamresult.filter(is_qualified=True)
+            preferences = user_data.teacherpreference.all()
+
+            rate = 0
+
+            qualification_weight = 0.3
+            experience_weight = 0.4
+            result_weight = 0.2
+            preference_weight = 0.1
+
+            high_qualification = max(q.name for q in qualifications) if qualifications else 0
+            rate += high_qualification * qualification_weight
+
+            total_experience = sum(exp.end_date.year - exp.start_date.year for exp in experiences) if experiences else 0
+            rate += total_experience * experience_weight
+
+            qualified_results_count = exam_results.count()
+            rate += qualified_results_count * result_weight
+
+            # Rate based on preferences
+            preferred_categories = preferences.aggregate(total_categories=Count('classcategory'))
+            rate += preferred_categories['total_categories'] * preference_weight
+
+            # Normalize the rate (optional)
+            rate = min(rate, 100)  # Assuming the maximum rate is 100
+
+            # Prepare the response
+            report = {
+                "teacher_id": user.id,
+                "name": f"{user_data.Fname} {user_data.Lname}",
+                "email": user_data.email,
+                "rate": rate,
+                "details": {
+                    "qualifications": [q.name for q in qualifications],
+                    "experiences": [f"{exp.institution} ({exp.start_date} - {exp.end_date})" for exp in experiences],
+                    "qualified_exam_results": qualified_results_count,
+                    "preferences": [pref.classcategory.name for pref in preferences],
+                }
+            }
+
+            return Response(report)
+
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Teacher not found."}, status=404)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
     
 
