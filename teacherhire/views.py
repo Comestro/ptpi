@@ -4954,14 +4954,14 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
                 return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
 
         # Filter Passkey objects
-        teachers = Passkey.objects.filter(filters)
+        teachers = Passkey.objects.filter(filters).select_related('user')
 
         # Serialize and return the data
         serializer = PasskeySerializer(teachers, many=True) 
         return Response(serializer.data)
 
-    def get_queryset(self):
-        return ExamCenter.objects.filter(user=self.request.user)
+    # def get_queryset(self):
+    #     return ExamCenter.objects.filter(user=self.request.user)
     
     
     
