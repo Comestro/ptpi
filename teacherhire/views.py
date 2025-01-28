@@ -4884,7 +4884,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Assign the user to the exam center data
-        exam_center_data["user"] = user
+        exam_center_data["user"] = user.id
         exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
 
         if not exam_center_serializer.is_valid():
