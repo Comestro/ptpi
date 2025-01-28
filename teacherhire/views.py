@@ -4988,12 +4988,10 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
             exam_center = ExamCenter.objects.get(user=user)
         except ExamCenter.DoesNotExist:
             return Response({"error": "ExamCenter not found for the user."}, status=404)
-
         # Extract query parameters
         user_id = request.query_params.get('user_id', None)
         status = request.query_params.get('status', None)
         date = request.query_params.get('date', None)
-
         # Build filters
         filters = Q(center=exam_center)
         if user_id:
@@ -5008,11 +5006,9 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
                 filters &= Q(created_at__date=date_obj)
             except ValueError:
                 return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
-
         # Filter Passkey objects
         teachers = Passkey.objects.filter(filters).select_related('user')
 
-        # Serialize and return the data
         serializer = PasskeySerializer(teachers, many=True) 
         return Response(serializer.data)
 
@@ -5068,7 +5064,6 @@ def insert_data_examcenter(request):
                         area=entry["area"]
                     )
                     added_count += 1
-            # Handle other models like Exams, Roles, Subjects, etc.
             else:
                 field = config["field"]
                 for entry_value in entry:
