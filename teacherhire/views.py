@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
-from teacherhire.pagination import TeacherPagination
 from teacherhire.serializers import *
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
@@ -509,8 +508,7 @@ class SelfViewSet(viewsets.ModelViewSet):
 class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    serializer_class = TeacherSerializer
-    pagination_class = TeacherPagination
+    serializer_class = TeacherSerializer    
     
     def get_queryset(self):
         return_all = self.request.query_params.get('all', None)
