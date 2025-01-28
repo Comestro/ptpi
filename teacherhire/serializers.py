@@ -662,6 +662,12 @@ class PasskeySerializer(serializers.ModelSerializer):
     class Meta:
         model = Passkey
         fields = "__all__"
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = instance.user.email
+        representation['exam'] = instance.exam.name
+        return representation
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:                    
         model = Interview
