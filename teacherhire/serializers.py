@@ -662,6 +662,12 @@ class PasskeySerializer(serializers.ModelSerializer):
     class Meta:
         model = Passkey
         fields = "__all__"
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = instance.user.email
+        representation['exam'] = instance.exam.name
+        return representation
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:                    
         model = Interview
@@ -742,10 +748,10 @@ class TeacherReportSerializer(serializers.ModelSerializer):
     teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
     teacherexamresult = TeacherExamResultSerializer(many=True, required=False)
     preference = PreferenceSerializer(many=True, required=False)  
-    rate = serializers.SerializerMethodField()
+    rate = serializers.CharField(max_length=10, required=False)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
+        fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
 
     
