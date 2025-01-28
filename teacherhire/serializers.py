@@ -488,7 +488,6 @@ class PreferenceSerializer(serializers.ModelSerializer):
         representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data if instance.class_category else None
         representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject.all(), many=True).data
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
-                
         return representation
 
 class TeacherSubjectSerializer(serializers.ModelSerializer):
@@ -582,7 +581,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter',
             'is_teacher', 'groups', 'user_permissions']
         read_only_fields = ['email', 'username'] 
-
 class TeacherJobTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherJobType
@@ -608,11 +606,9 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
                 'to_email':user.email
             }
             Util.send_email(data)
-            
             return attrs
         else:
             raise ValidationError('Not a valid Email. Please provide a valid Email.')
-
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)
@@ -638,7 +634,6 @@ class ResetPasswordSerializer(serializers.Serializer):
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
             raise ValidationError('Token is not valid or Expired')
-        
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
@@ -677,8 +672,6 @@ class InterviewSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         return representation
-    
-
 class TeacherSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
     profiles = BasicProfileSerializer(required=False)
