@@ -519,32 +519,35 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
         queryset = queryset.prefetch_related('preferences')
         
-        # Fuzzy matching for skills and qualifications
-        teacher_skill = self.request.query_params.get('skill', None)
-        if teacher_skill:
-            teacherskills = [skill.strip().lower() for skill in teacher_skill.split(',')]
-            queries = [self.fuzzy_filter(queryset, 'teacherskill__skill__name', skill) for skill in teacherskills]
-            queryset = queryset.filter(*queries)
+        teacher_skills = self.request.query_params.getlist('skill', [])
+        if teacher_skills:
+            teacher_skills = [skill.strip().lower() for skill in teacher_skills]
+            skill_query = Q()
+            for skill in teacher_skills:
+                skill_query |= Q(teacherskill__skill__name__iexact=skill)
+            queryset = queryset.filter(skill_query)
 
-        qualification_filter = self.request.query_params.get('qualification', None)
-        if qualification_filter:
-            qualifications = [qualification.strip().lower() for qualification in qualification_filter.split(',')]
-            queries = [self.fuzzy_filter(queryset, 'qualification__name', qualification) for qualification in qualifications]
-            queryset = queryset.filter(*queries)
+        teacher_qualifications = self.request.query_params.getlist('qualification', [])
+        if teacher_qualifications:
+            teacher_qualifications = [qualification.strip().lower() for qualification in teacher_qualifications]
+            qualification_query = Q()
+            for qualification in teacher_qualifications:
+                qualification_query |= Q(teacherqualifications__qualification__name__iexact=qualification)
+            queryset = queryset.filter(qualification_query)
 
-        # Other filters
-        filters = {            
-            'state': self.request.query_params.get('state', None),
-            'district': self.request.query_params.get('district', None),
-            'division': self.request.query_params.get('division', None),
-            'pincode': self.request.query_params.get('pincode', None),
-            'block': self.request.query_params.get('block', None),
-            'village': self.request.query_params.get('village', None),
-            'experience': self.request.query_params.get('experience', None),
-            'class_category': self.request.query_params.get('class_category', None),
-            'subject': self.request.query_params.get('subject', None),
-            'job_role': self.request.query_params.get('job_role', None),
-            'teacher_job_type': self.request.query_params.get('teacher_job_type', None),
+
+        filters = {
+        'state': self.request.query_params.get('state', []),
+        'district': self.request.query_params.getlist('district', []),
+        'division': self.request.query_params.get('division', []),
+        'pincode': self.request.query_params.getlist('pincode', []),
+        'block': self.request.query_params.getlist('block', []),
+        'village': self.request.query_params.getlist('village', []),
+        'experience': self.request.query_params.get('experience', None),
+        'class_category': self.request.query_params.getlist('class_category', []),
+        'subject': self.request.query_params.getlist('subject', []),
+        'job_role': self.request.query_params.getlist('job_role', []),
+        'teacher_job_type': self.request.query_params.getlist('teacher_job_type', []),
         }
 
         # Experience filter
@@ -557,29 +560,31 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
         job_role_filter = filters['job_role']
         if job_role_filter:
-            job_roles = [role.strip().lower() for role in job_role_filter.split(',')]
+            job_roles = [role.strip().lower() for role in job_role_filter]
             job_role_query = Q()
             for role in job_roles:
                 job_role_query |= Q(preferences__job_role__jobrole_name__iexact=role)
             queryset = queryset.filter(job_role_query)
+        
         class_category_filter = filters['class_category']
         if class_category_filter:
-            class_categories = [class_category.strip().lower() for class_category in class_category_filter.split(',')]
+            class_categories = [class_category.strip().lower() for class_category in class_category_filter]
             class_category_query = Q()
             for class_category in class_categories:
                 class_category_query |= Q(preferences__class_category__name__iexact=class_category)
             queryset = queryset.filter(class_category_query)
-        
+
         subject_filter = filters['subject']
         if subject_filter:
-            prefere_subject = [subject.strip().lower() for subject in subject_filter.split(',')]
+            prefer_subjects = [subject.strip().lower() for subject in subject_filter]
             subject_query = Q()
-            for subject in prefere_subject:
+            for subject in prefer_subjects:
                 subject_query |= Q(preferences__prefered_subject__subject_name__iexact=subject)
             queryset = queryset.filter(subject_query)
+        
         teacher_job_type = filters['teacher_job_type']
         if teacher_job_type:
-            teacher_job_types = [teacher_job_type.strip().lower() for teacher_job_type in teacher_job_type.split(',')]
+            teacher_job_types = [teacher_job_type.strip().lower() for teacher_job_type in teacher_job_type]
             teacher_job_type_query = Q()
             for teacher_job_type in teacher_job_types:
                 teacher_job_type_query |= Q(preferences__teacher_job_type__teacher_job_name__iexact=teacher_job_type)
@@ -587,7 +592,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
 
         if filters['pincode']:
-            pincodes = filters['pincode'].split(',')
+            pincodes = filters['pincode']
             queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
 
         queryset = queryset.distinct()
@@ -595,9 +600,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
     def filter_by_address_field(self, queryset, field, filter_value):
         if filter_value:
-            field_values = filter_value.split(',')
             q_objects = Q()  
-            for value in field_values:
+            for value in filter_value:
                 value = value.strip()
                 best_match = process.extractOne(value.lower(), queryset.values_list(f'teachersaddress__{field}', flat=True))
                 
