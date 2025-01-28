@@ -701,10 +701,10 @@ class TeacherReportSerializer(serializers.ModelSerializer):
     teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
     teacherexamresult = TeacherExamResultSerializer(many=True, required=False)
     preference = PreferenceSerializer(many=True, required=False)  
-    rate = serializers.SerializerMethodField()
+    rate = serializers.CharField(max_length=10, required=False)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
+        fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
 
     
