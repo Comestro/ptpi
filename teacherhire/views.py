@@ -594,7 +594,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
         if filters['pincode']:
             pincodes = filters['pincode']
             queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
-
+        queryset = queryset.distinct()
         return queryset
 
     def filter_by_address_field(self, queryset, field, filter_value):
