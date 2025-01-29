@@ -519,7 +519,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
         queryset = queryset.prefetch_related('preferences')
         
-        teacher_skills = self.request.query_params.getlist('skill', [])
+        teacher_skills = self.request.query_params.getlist('skill[]', [])
         if teacher_skills:
             teacher_skills = [skill.strip().lower() for skill in teacher_skills]
             skill_query = Q()
@@ -527,7 +527,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 skill_query |= Q(teacherskill__skill__name__iexact=skill)
             queryset = queryset.filter(skill_query)
 
-        teacher_qualifications = self.request.query_params.getlist('qualification', [])
+        teacher_qualifications = self.request.query_params.getlist('qualification[]', [])
         if teacher_qualifications:
             teacher_qualifications = [qualification.strip().lower() for qualification in teacher_qualifications]
             qualification_query = Q()
@@ -538,9 +538,9 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
         filters = {
         'state': self.request.query_params.get('state', []),
-        'district': self.request.query_params.getlist('district', []),
+        'district': self.request.query_params.getlist('district[]', []),
         'division': self.request.query_params.get('division', []),
-        'pincode': self.request.query_params.getlist('pincode', []),
+        'pincode': self.request.query_params.getlist('pincode[]', []),
         'block': self.request.query_params.getlist('block', []),
         'village': self.request.query_params.getlist('village', []),
         'experience': self.request.query_params.get('experience', None),
@@ -595,7 +595,6 @@ class TeacherViewSet(viewsets.ModelViewSet):
             pincodes = filters['pincode']
             queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
 
-        queryset = queryset.distinct()
         return queryset
 
     def filter_by_address_field(self, queryset, field, filter_value):
