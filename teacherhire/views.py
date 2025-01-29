@@ -5032,50 +5032,62 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
             return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
 
     
+import random
+from django.http import JsonResponse
+from django.contrib.auth.hashers import make_password
+
 def insert_data_examcenter(request):
-    data_to_insert = { 
-    "exam_centers": {
-            "model": ExamCenter,
-            "field": "center_name",
-            "data": [
-                {"center_name": "Alpha Exam Center", "pincode": "111111", "state": "State A", "city": "City A", "area": "Area A"},
-                {"center_name": "Beta Exam Center", "pincode": "222222", "state": "State B", "city": "City B", "area": "Area B"},
-                {"center_name": "Gamma Exam Center", "pincode": "333333", "state": "State C", "city": "City C", "area": "Area C"},
-                {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
-                {"center_name": "Epsilon Exam Center", "pincode": "555555", "state": "State E", "city": "City E", "area": "Area E"},
-            ]
-        },
-    }
-    response_data = {}
-    for key, config in data_to_insert.items():
-        model = config["model"]
-        entries = config["data"]
-        added_count = 0
-        for entry in entries:
-            if key == "exam_centers":  # Handle ExamCenter data
-                user = CustomUser.objects.order_by('?').first()  # Random user
-                if not model.objects.filter(center_name=entry["center_name"]).exists():
-                    model.objects.create(
-                        user=user, 
-                        center_name=entry["center_name"],
-                        pincode=entry["pincode"],
-                        state=entry["state"],
-                        city=entry["city"],
-                        area=entry["area"]
-                    )
-                    added_count += 1
-            # Handle other models like Exams, Roles, Subjects, etc.
-            else:
-                field = config["field"]
-                for entry_value in entry:
-                    if not model.objects.filter(**{field: entry_value}).exists():
-                        model.objects.create(**{field: entry_value})
-                        added_count += 1
-        response_data[key] = {
-            "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
-            "added_count": added_count
-        }
-    return JsonResponse(response_data) 
+    users_data = [
+        {"username": "komal", "email": "ks@gmail.com", "password": "12345",  "Fname": "Komal", "Lname": "Raj"},
+        {"username": "rahul", "email": "rahul@gmail.com", "password": "12345","Fname": "Rahul", "Lname": "Sharma"},
+        {"username": "priya", "email": "priya@gmail.com", "password": "12345", "Fname": "Priya", "Lname": "Verma"},
+        {"username": "aman", "email": "aman@gmail.com", "password": "12345", "Fname": "Aman", "Lname": "Kumar"},
+        {"username": "neha", "email": "neha@gmail.com", "password": "12345",  "Fname": "Neha", "Lname": "Singh"},
+    ]
+
+    centers_data = [
+        {"center_name": "Alpha Exam Center", "pincode": "111111", "state": "State A", "city": "City A", "area": "Area A"},
+        {"center_name": "Beta Exam Center", "pincode": "222222", "state": "State B", "city": "City B", "area": "Area B"},
+        {"center_name": "Gamma Exam Center", "pincode": "333333", "state": "State C", "city": "City C", "area": "Area C"},
+        {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
+        {"center_name": "Epsilon Exam Center", "pincode": "555555", "state": "State E", "city": "City E", "area": "Area E"},
+    ]
+
+    response_data = {"users_added": 0, "centers_added": 0}
+
+    for user in users_data:
+        if not CustomUser.objects.filter(username=user["username"]).exists():
+            CustomUser.objects.create(
+                username=user["username"],
+                email=user["email"],
+                password=make_password(user["password"]), 
+                is_centeruser = True,
+                Fname=user["Fname"],
+                Lname=user["Lname"]
+            )
+            response_data["users_added"] += 1
+
+    users = list(CustomUser.objects.all())
+
+    for center in centers_data:
+        if not ExamCenter.objects.filter(center_name=center["center_name"]).exists():
+            assigned_user = random.choice(users) if users else None  
+            ExamCenter.objects.create(
+                user=assigned_user,
+                center_name=center["center_name"],
+                pincode=center["pincode"],
+                state=center["state"],
+                city=center["city"],
+                area=center["area"]
+            )
+            response_data["centers_added"] += 1
+
+    return JsonResponse({
+        "message": "Seeding completed",
+        "users_added": response_data["users_added"],
+        "centers_added": response_data["centers_added"]
+    })
+
 
 class TeacherReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
