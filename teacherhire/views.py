@@ -537,17 +537,17 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
 
         filters = {
-        'state': self.request.query_params.get('state', []),
+        'state': self.request.query_params.get('state[]', []),
         'district': self.request.query_params.getlist('district[]', []),
         'division': self.request.query_params.get('division', []),
         'pincode': self.request.query_params.getlist('pincode[]', []),
-        'block': self.request.query_params.getlist('block', []),
-        'village': self.request.query_params.getlist('village', []),
+        'block': self.request.query_params.getlist('block[]', []),
+        'village': self.request.query_params.getlist('village[]', []),
         'experience': self.request.query_params.get('experience', None),
-        'class_category': self.request.query_params.getlist('class_category', []),
-        'subject': self.request.query_params.getlist('subject', []),
-        'job_role': self.request.query_params.getlist('job_role', []),
-        'teacher_job_type': self.request.query_params.getlist('teacher_job_type', []),
+        'class_category': self.request.query_params.getlist('class_category[]', []),
+        'subject': self.request.query_params.getlist('subject[]', []),
+        'job_role': self.request.query_params.getlist('job_role[]', []),
+        'teacher_job_type': self.request.query_params.getlist('teacher_job_type[]', []),
         }
 
         # Experience filter
