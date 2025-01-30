@@ -516,6 +516,22 @@ class TeacherViewSet(viewsets.ModelViewSet):
             queryset = CustomUser.objects.filter(is_teacher=True)
         else:
             queryset = CustomUser.objects.filter(is_teacher=True)
+        
+        teacher_name = self.request.query_params.getlist('name[]', [])
+        if teacher_name:
+            teacher_name = [name.strip().lower() for name in teacher_name]
+            name_query = Q()
+            for name in teacher_name:
+                name_parts = name.split()
+                if len(name_parts) >= 2:
+                    fname = name_parts[0]
+                    lname = name_parts[-1]
+                    name_query |= Q(Fname__icontains=fname) & Q(Lname__icontains=lname)
+                elif len(name_parts) == 1:
+                    fname = name_parts[0]
+                    name_query |= Q(Fname__icontains=fname) | Q(Lname__icontains=fname)
+            queryset = queryset.filter(name_query)
+
 
         queryset = queryset.prefetch_related('preferences')
         
