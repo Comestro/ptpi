@@ -5153,6 +5153,169 @@ class TeacherReportViewSet(viewsets.ModelViewSet):
             return Response({"error": "Teacher not found."}, status=404)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+def insert_data_teachers(request):
+    users_data = [
+        {"username": "john", "email": "john@gmail.com", "password": "12345", "Fname": "John", "Lname": "Doe"},
+        {"username": "alice", "email": "alice@gmail.com", "password": "12345", "Fname": "Alice", "Lname": "Brown"},
+        {"username": "mark", "email": "mark@gmail.com", "password": "12345", "Fname": "Mark", "Lname": "Smith"},
+    ]
+
+    skills_data = ["Python", "Java", "Mathematics", "Physics", "History"]
+    subjects_data = ["Science", "Math", "English", "Computer Science"]
+    class_categories_data = ["Primary", "Secondary", "Higher Secondary"]
+    job_types_data = ["Full-Time", "Part-Time", "Guest Lecturer"]
+    addresses_data = [
+        {"city": "New York", "state": "NY", "pincode": "10001", "area": "Downtown"},
+        {"city": "Los Angeles", "state": "CA", "pincode": "90001", "area": "Uptown"},
+    ]
+    experiences_data = [
+    {"institution": "XYZ School", "role": "Teacher", "start_date": "2015-06-01", "end_date": "2018-05-31", "description": "Taught various subjects", "achievements": "Awarded Best Teacher 2017"},
+    {"institution": "ABC College", "role": "Lecturer", "start_date": "2019-08-01", "end_date": "Present", "description": "Lecturing Mathematics", "achievements": "Published research paper"}
+    ]
+    qualifications_data = ["B.Ed", "M.Ed", "PhD"]
+    exam_results_data = [
+        {"exam_name": "NET", "score": 85},
+        {"exam_name": "TET", "score": 90},
+    ]
     
+    response_data = {"users_added": 0, "skills_added": 0, "subjects_added": 0, "classes_added": 0, 
+                     "addresses_added": 0, "results_added": 0, "job_types_added": 0, 
+                     "experiences_added": 0, "qualifications_added": 0}
+    
+    for user in users_data:
+        if not CustomUser.objects.filter(username=user["username"]).exists():
+            CustomUser.objects.create(
+                username=user["username"],
+                email=user["email"],
+                password=make_password(user["password"]), 
+                is_teacher=True,
+                Fname=user["Fname"],
+                Lname=user["Lname"]
+            )
+            response_data["users_added"] += 1
+
+    users = list(CustomUser.objects.all())
+    
+    for skill_name in skills_data:
+        skill_obj, created = Skill.objects.get_or_create(name=skill_name)
+
+        assigned_user = random.choice(users) if users else None
+        if assigned_user:
+            TeacherSkill.objects.create(user=assigned_user, skill=skill_obj)
+            response_data["skills_added"] += 1
+
+    for subject_name in subjects_data:
+        subject_obj, created = Subject.objects.get_or_create(subject_name=subject_name)
+        assigned_user = random.choice(users) if users else None
+        if assigned_user:
+            TeacherSubject.objects.create(user=assigned_user, subject=subject_obj)
+            response_data["subjects_added"] += 1
+
+    for category in class_categories_data:
+        class_category_obj, created = ClassCategory.objects.get_or_create(name=category)
+
+        assigned_user = random.choice(users) if users else None
+        if assigned_user:
+            TeacherClassCategory.objects.create(
+                user=assigned_user,
+                class_category=class_category_obj  
+            )
+            response_data["classes_added"] += 1
+    for address in addresses_data:
+        assigned_user = random.choice(users) if users else None
+        if not assigned_user:
+            continue  
+        city = address.get("city", "")
+        state = address.get("state", "")
+        pincode = address.get("pincode", "")
+        area = address.get("area", "")
+    TeachersAddress.objects.create(
+    user=assigned_user,
+    address_type="current",  
+    state="Bihar",
+    division="Some Division",
+    district="Some District",
+    block="Some Block",
+    village="Some Village",
+    area="Some Area",
+    pincode="123456" 
+)
+    response_data["addresses_added"] += 1
+    
+    for result in exam_results_data:
+        assigned_user = random.choice(users) if users else None
+        if not assigned_user:
+            continue  
+        class_category_obj, _ = ClassCategory.objects.get_or_create(name="Default Category")
+
+        subject_obj, created = Subject.objects.get_or_create(
+            subject_name="Default Subject", 
+            subject_description="A default subject"
+        )
+        level_obj, created = Level.objects.get_or_create(name="Default Level")
+
+        exam_obj, created = Exam.objects.get_or_create(
+            name=result["exam_name"],
+            defaults={
+                "total_marks": 100,
+                "duration": 60,
+                "class_category": class_category_obj,
+                "level": level_obj,
+                "subject": subject_obj 
+            }
+        )
+        correct_answer = result.get("correct_answer", 0)
+        incorrect_answer = result.get("incorrect_answer", 0)
+        is_unanswered = result.get("is_unanswered", 0)
+
+        TeacherExamResult.objects.create(
+            user=assigned_user,
+            exam=exam_obj,
+            correct_answer=correct_answer,
+            incorrect_answer=incorrect_answer,
+            is_unanswered=is_unanswered
+        )
+        response_data["results_added"] += 1
+
+    for job_type in job_types_data:
+        TeacherJobType.objects.create(teacher_job_name=job_type)  
+        response_data["job_types_added"] += 1
+    
+    for experience_data in experiences_data:
+        assigned_user = random.choice(users) if users else None
+        if assigned_user:
+            role_obj, created = Role.objects.get_or_create(jobrole_name=experience_data.get("role", ""))  # Ensure correct field name
+
+            end_date = experience_data.get("end_date", None)
+            if end_date == "Present":
+                end_date = None  
+
+            TeacherExperiences.objects.create(
+                user=assigned_user,
+                institution=experience_data.get("institution", ""),
+                role=role_obj,
+                start_date=experience_data.get("start_date", None),
+                end_date=end_date,  
+                description=experience_data.get("description", ""),
+                achievements=experience_data.get("achievements", "")
+            )
+            response_data["experiences_added"] += 1
+    for qualification_name in qualifications_data:
+        assigned_user = random.choice(users) if users else None
+        if assigned_user:
+            qualification_obj, created = EducationalQualification.objects.get_or_create(name=qualification_name)
+
+            TeacherQualification.objects.create(user=assigned_user, qualification=qualification_obj)
+            response_data["qualifications_added"] += 1
+    return JsonResponse({
+        "message": "Seeding completed",
+        **response_data
+    })
+
+
+
+
+
     
 

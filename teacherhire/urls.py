@@ -72,6 +72,7 @@ urlpatterns = [
     path('approve-passkey/', ApprovePasscodeView.as_view(), name='approve_passkey'),
     path('verify-passcode/', VerifyPasscodeView.as_view(), name='verify_passcode'),
     path('insert/examcenter/data/', insert_data_examcenter, name='insert_data_examcenter'),
+    path('insert/data/teacher/', insert_data_teachers, name='insert_data_teachers')
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
 ]
