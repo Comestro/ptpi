@@ -1804,9 +1804,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def exams(self, request):
         user = request.user
-        level_id = request.query_params.get('level_id', None)
         subject_id = request.query_params.get('subject_id', None)
-        type = request.query_params.get('type', None)
         class_category_id = request.query_params.get('class_category_id', None)
 
         try:
@@ -1828,13 +1826,16 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 {"message": "Please complete your qualification details first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         exams = Exam.objects.all()
 
+        # Ensure class category is selected
         if not class_category_id:
             return Response(
                 {"message": "Please choose a class category first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         teacher_class_category = ClassCategory.objects.filter(preference__user=user, id=class_category_id).first()
         if teacher_class_category:
             exams = exams.filter(class_category=class_category_id)
@@ -1844,10 +1845,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
-        # If no subject_id is provided, return error
+        # Ensure subject is selected
         if not subject_id:
             return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
+
         teacher_subject = Subject.objects.filter(preference__user=user, id=subject_id).first()
         if teacher_subject:
             exams = exams.filter(subject=subject_id)
@@ -1858,68 +1859,50 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             )
         
         # Check qualification for Level 1 and Level 2 exams
-        qualified_level_1 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id,exam__class_category_id=class_category_id,exam__level_id=1).exists()
-        qualified_level_2 = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2).exists()
+        qualified_level_1 = TeacherExamResult.objects.filter(
+            user=user, isqualified=True, exam__subject_id=subject_id,
+            exam__class_category_id=class_category_id, exam__level_id=1
+        ).exists()
 
-        # exist_passcode_request = Passkey.objects.filter(user=user,status=False)
-        
-        # Handle level filter
-        if level_id:
-            if level_id == '1':
-                exams = exams.filter(level__id=1)
-            elif level_id == '2':
-                if type:
-                    if type not in ['online', 'offline']:
-                        return Response({"message": "Invalid type. Choose 'online' or 'offline'."}, status=status.HTTP_400_BAD_REQUEST)
-
-                    if type == 'offline' and not qualified_level_2:
-                        return Response({"message": "You must qualify Level 2 online exam before taking the offline exam."},
-                                        status=status.HTTP_404_NOT_FOUND)
-                     
-                    # if type == "offline" and exist_passcode_request.exists():
-                    #     return Response({"message": "You already request for offline exam. you can only request for passcode one time."}, status=status.HTTP_409_CONFLICT)
-
-                    exams = exams.filter(type=type)
-                if qualified_level_1:
-                    level_2_exams = exams.filter(level__id=2)
-                    attempted_exam_ids = TeacherExamResult.objects.filter(user=user).values_list('exam_id', flat=True)
-                    level_2_exams = level_2_exams.exclude(id__in=attempted_exam_ids)
-
-                    online_exam = level_2_exams.filter(type='online').order_by('created_at').first()
-                    
-                    offline_exam = level_2_exams.filter(type='offline').order_by('created_at').first()
-                    if not online_exam and not offline_exam:
-                        return Response({"message": "No new exams available for Level 2."},
-                                        status=status.HTTP_404_NOT_FOUND)
-
-                    # Serialize exams separately
-                    response_data = {}
-
-                    if online_exam:
-                        response_data['online_exam'] = ExamSerializer(online_exam).data
-                    if offline_exam:
-                        response_data['offline_exam'] = ExamSerializer(offline_exam).data
-
-                    return Response(response_data, status=status.HTTP_200_OK)
-                else:
-                    return Response({"message": "You must complete Level 1 before accessing Level 2."},
-                                    status=status.HTTP_404_NOT_FOUND)
-            else:
-                return Response({"error": "Invalid level ID."}, status=status.HTTP_400_BAD_REQUEST)
-
-        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id',flat=True)
+        online_qualified_level_2 = TeacherExamResult.objects.filter(
+            user=user, exam__type='online', isqualified=True,
+            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2
+        ).exists()
+        # Filter exams based on qualifications
+        if not qualified_level_1:
+            exams = exams.filter(level_id=1)  # If not qualified for Level 1, return only Level 1 exams
+        elif qualified_level_1 and not online_qualified_level_2:
+            print("after online_qualified_level_1",exams)
+            exams = exams.filter(level_id__in=[1, 2], type='online')  # If qualified for Level 1, show Level 1 and Level 2 exams
+        elif online_qualified_level_2:
+            print("after online_qualified_level_2",exams)
+            exams = exams.filter(level_id__in=[1, 2])  # If qualified for Level 2 online, show Level 2 offline exams
+            print("online_qualified_level_2",exams)
+        # Exclude exams the user has already qualified for
+        unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
 
-        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id',flat=True)
+        qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=qualified_exam_ids)
+        exam_set = exams.order_by('created_at')  # Get the first exam based on the creation date
 
-        exam_set = exams.order_by('created_at').first()
-        if not exam_set:
+        level_1_exam = exam_set.filter(level_id=1).first()
+        level_2_online_exam = exam_set.filter(level_id=2, type='online').first()
+        level_2_offline_exam = exam_set.filter(level_id=2, type='offline').first()
+
+        final_exam_set = []
+        if level_1_exam:
+            final_exam_set.append(level_1_exam)
+        if level_2_online_exam:
+            final_exam_set.append(level_2_online_exam)
+        if level_2_offline_exam:
+            final_exam_set.append(level_2_offline_exam)
+
+        if not final_exam_set:
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ExamSerializer(exam_set)
+        serializer = ExamSerializer(final_exam_set, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 def insert_data(request):
     data_to_insert = {
