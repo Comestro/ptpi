@@ -28,6 +28,7 @@ from django.db.models import Q
 import re
 from datetime import date
 from django.db.models import Count
+from django.contrib.auth.hashers import make_password
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
@@ -5027,11 +5028,6 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
         else:
             return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
 
-    
-import random
-from django.http import JsonResponse
-from django.contrib.auth.hashers import make_password
-
 def insert_data_examcenter(request):
     users_data = [
         {"username": "komal", "email": "ks@gmail.com", "password": "12345",  "Fname": "Komal", "Lname": "Raj"},
@@ -5083,7 +5079,6 @@ def insert_data_examcenter(request):
         "users_added": response_data["users_added"],
         "centers_added": response_data["centers_added"]
     })
-
 
 class TeacherReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
