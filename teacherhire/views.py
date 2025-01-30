@@ -1872,12 +1872,9 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         if not qualified_level_1:
             exams = exams.filter(level_id=1)  # If not qualified for Level 1, return only Level 1 exams
         elif qualified_level_1 and not online_qualified_level_2:
-            print("after online_qualified_level_1",exams)
             exams = exams.filter(level_id__in=[1, 2], type='online')  # If qualified for Level 1, show Level 1 and Level 2 exams
         elif online_qualified_level_2:
-            print("after online_qualified_level_2",exams)
             exams = exams.filter(level_id__in=[1, 2])  # If qualified for Level 2 online, show Level 2 offline exams
-            print("online_qualified_level_2",exams)
         # Exclude exams the user has already qualified for
         unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
