@@ -995,7 +995,6 @@ class RoleViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Role deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 class PreferenceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1023,7 +1022,6 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-
         # Check if the user has an existing preference
         profile = Preference.objects.filter(user=request.user).first()
 
@@ -1046,7 +1044,6 @@ class PreferenceViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 model_class=Preference
             )
-
     def get_queryset(self):
         return Preference.objects.filter(user=self.request.user)
 
@@ -1099,7 +1096,6 @@ class TeacherSubjectViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teachersubject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1152,8 +1148,6 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
             return Response({"detail": "TeacherSubject deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except TeacherSubject.DoesNotExist:
             return Response({"detail": "TeacherSubject not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
 class TeacherClassCategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1195,8 +1189,6 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # def list(self, request, *args, **kwargs):
-    #     return self.retrieve(request, *args, **kwargs)
     def get_object(self):
         try:
             return TeacherClassCategory.objects.get(user=self.request.user)
@@ -1410,11 +1402,6 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
             # Option 2: Raise an error response if creation fails
             raise Response({"detail": "Profile not found and could not be created."},status=status.HTTP_400_BAD_REQUEST)
 
-    # def get_object(self):
-    #     try:
-    #         return BasicProfile.objects.get(user=self.request.user)
-    #     except BasicProfile.DoesNotExist:
-    #         raise Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
     def delete(self, request):
         try:
             profile = BasicProfile.objects.get(user=request.user)
@@ -5192,7 +5179,6 @@ def insert_data_teachers(request):
                 Lname=user["Lname"]
             )
             response_data["users_added"] += 1
-
     users = list(CustomUser.objects.all())
     
     for skill_name in skills_data:
