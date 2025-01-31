@@ -5069,7 +5069,8 @@ def insert_data_examcenter(request):
                 pincode=center["pincode"],
                 state=center["state"],
                 city=center["city"],
-                area=center["area"]
+                area=center["area"],
+                status = True,
             )
             response_data["centers_added"] += 1
 
