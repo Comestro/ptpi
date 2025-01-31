@@ -809,6 +809,15 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=['get'])
+    def suggest_institutes(self, request):
+        query = request.query_params.get('q','').strip()
+        if not query:
+            return Response({"error":"Please enter a search term."}, status=status.HTTP_400_BAD_REQUEST)
+        suggestions = TeacherQualification.objects.filter(institution__icontains=query).values_list('institution',flat=True).distinct()
+        return Response({"suggestions": list(suggestions)}, status=status.HTTP_200_OK)
+
 
     def get_queryset(self):
         return TeacherQualification.objects.filter(user=self.request.user)
@@ -853,6 +862,14 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
             user=request.user,
             model_class=TeacherExperiences
         )
+           
+    @action(detail=False, methods=['get'])
+    def suggest_institutes(self, request):
+        query = request.query_params.get('q','').strip()
+        if not query:
+            return Response({"error":"Please enter a search term."}, status=status.HTTP_400_BAD_REQUEST)
+        suggestions = TeacherExperiences.objects.filter(institution__icontains=query).values_list('institution',flat=True).distinct()
+        return Response({"suggestions": list(suggestions)}, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
