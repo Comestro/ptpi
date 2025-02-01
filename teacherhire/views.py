@@ -23,6 +23,9 @@ from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import random
 from django.utils.html import format_html
+from django.core.cache import cache
+import requests
+import logging
 from django.contrib.auth.forms import SetPasswordForm
 from django.conf import settings
 from fuzzywuzzy import process, fuzz
@@ -508,6 +511,33 @@ class SelfViewSet(viewsets.ModelViewSet):
         queryset =  CustomUser.objects.filter(id=user.id,is_teacher=True)    
         return queryset
 
+def get_pincodes_by_post_office(post_office_name):
+    cache_key = f"post_office_{post_office_name.lower()}"
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        return cached_data
+
+    url = f"https://api.postalpincode.in/postoffice/{post_office_name}"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        data = response.json()
+
+        if data and isinstance(data, list) and data[0].get('Status') == 'Success':
+            post_offices = data[0].get('PostOffice', [])
+            pincodes = [post_office['Pincode'] for post_office in post_offices]
+            cache.set(cache_key, pincodes, timeout=60 * 60 * 24)
+            return pincodes
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching pincode data for post office {post_office_name}: {e}")
+
+    return []
+
+
 class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -536,8 +566,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(name_query)
 
 
-        queryset = queryset.prefetch_related('preferences')
-        
+        queryset = queryset.prefetch_related('preferences')        
+      
         teacher_skills = self.request.query_params.getlist('skill[]', [])
         if teacher_skills:
             teacher_skills = [skill.strip().lower() for skill in teacher_skills]
@@ -567,9 +597,17 @@ class TeacherViewSet(viewsets.ModelViewSet):
         'subject': self.request.query_params.getlist('subject[]', []),
         'job_role': self.request.query_params.getlist('job_role[]', []),
         'teacher_job_type': self.request.query_params.getlist('teacher_job_type[]', []),
+        'postOffice': self.request.query_params.get('postOffice', None),
+
         }
 
-        # Experience filter
+        post_office_filter = filters.get('postOffice', None)
+        if post_office_filter:
+            pincodes = get_pincodes_by_post_office(post_office_filter)
+            if pincodes:
+                filters['pincode'] = pincodes
+        print(post_office_filter)
+
         experience_filter = self.get_experience_filter(filters['experience'])
         if experience_filter:
             queryset = queryset.filter(experience_filter)       
@@ -608,14 +646,14 @@ class TeacherViewSet(viewsets.ModelViewSet):
             for teacher_job_type in teacher_job_types:
                 teacher_job_type_query |= Q(preferences__teacher_job_type__teacher_job_name__iexact=teacher_job_type)
             queryset = queryset.filter(teacher_job_type_query)
-
+        
 
         if filters['pincode']:
             pincodes = filters['pincode']
             queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
         queryset = queryset.distinct()
         return queryset
-
+    
     def filter_by_address_field(self, queryset, field, filter_value):
         if filter_value:
             q_objects = Q()  
@@ -660,6 +698,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 return Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
                     teacherexperiences__start_date__lt=end_date_threshold)
         return None   
+    
 
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
