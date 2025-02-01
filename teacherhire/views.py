@@ -1683,13 +1683,11 @@ class CheckoutView(APIView):
     authentication_classes = [ExpiringTokenAuthentication]
 
     def get(self, request, *args, **kwargs):
-        user = request.user
-        class_category_id = request.query_params.get('class_category_id')  
-        
+        user = request.user        
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
             user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user, class_category=class_category_id) if class_category_id else Preference.objects.get(user=user)
+            user_preference = Preference.objects.get(user=user)
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
@@ -1705,27 +1703,27 @@ class CheckoutView(APIView):
                 {"message": "Please complete your qualification details first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        user_subjects = user_preference.prefered_subject.all()
-        level_1_subjects = [{"subject_id": subject.id, "subject_name": subject.subject_name} for subject in user_subjects]
-
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
-        if class_category_id:
-            qualified_exams = qualified_exams.filter(exam__class_category_id=class_category_id)
-
+        
         level_2_online_subjects = qualified_exams.filter(
             exam__level_id=1, exam__type="online"
-        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name'),class_category_id=F('exam__class_category__id'), class_category_name=F('exam__class_category__name')).distinct()
 
         level_2_offline_subjects = qualified_exams.filter(
             exam__level_id=2, exam__type="online"
-        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name')).distinct()
+        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name'),class_category_id=F('exam__class_category__id'), class_category_name=F('exam__class_category__name')).distinct()
         
         levels = [
             {
                 "level_id": 1,
                 "level_name": "Level 1",
-                "subjects": level_1_subjects,
-            },
+                "subject_id": subject.id, 
+                "subject_name": subject.subject_name,
+                "classcategory_id": class_category.id,
+                "classcategory_name": class_category.name
+            }
+            for subject in user_preference.prefered_subject.all()
+            for class_category in user_preference.class_category.all()
         ]
 
         if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
