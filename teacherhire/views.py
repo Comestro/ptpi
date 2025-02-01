@@ -1677,7 +1677,7 @@ class ProfilecompletedView(APIView):
                 {"error": "An error occurred while calculating profile completed.", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
+# Increase level based on qualified exam
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1703,42 +1703,38 @@ class CheckoutView(APIView):
                 {"message": "Please complete your qualification details first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
-        
-        level_2_online_subjects = qualified_exams.filter(
-            exam__level_id=1, exam__type="online"
-        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name'),class_category_id=F('exam__class_category__id'), class_category_name=F('exam__class_category__name')).distinct()
 
-        level_2_offline_subjects = qualified_exams.filter(
-            exam__level_id=2, exam__type="online"
-        ).values(subject_id=F('exam__subject__id'), subject_name=F('exam__subject__subject_name'),class_category_id=F('exam__class_category__id'), class_category_name=F('exam__class_category__name')).distinct()
-        
-        levels = [
-            {
-                "level_id": 1,
-                "level_name": "Level 1",
-                "subject_id": subject.id, 
-                "subject_name": subject.subject_name,
-                "classcategory_id": class_category.id,
-                "classcategory_name": class_category.name
-            }
-            for subject in user_preference.prefered_subject.all()
-            for class_category in user_preference.class_category.all()
-        ]
+        levels = []
+        for subject in user_preference.prefered_subject.all():
+            for class_category in user_preference.class_category.all():
+                unlocked_levels = ["Level 1"]
 
-        if qualified_exams.filter(exam__level_id=1, exam__type="online").exists():
-            levels.append(
-                {
-                    "level_id": 2,
-                    "level_name": "Level 2",
-                    "subjects_by_type": {
-                        "online": list(level_2_online_subjects),
-                        "offline": list(level_2_offline_subjects),
-                        "interview": list(level_2_offline_subjects),
-                    },
-                }
-            )
+                has_level_1 = qualified_exams.filter(exam__level_id=1, exam__type="online",
+                                                     exam__subject=subject, exam__class_category=class_category).exists()
+                has_level_2_online = qualified_exams.filter(exam__level_id=2, exam__type="online",
+                                                            exam__subject=subject, exam__class_category=class_category).exists()
+                has_level_2_offline = qualified_exams.filter(exam__level_id=2, exam__type="offline",
+                                                             exam__subject=subject, exam__class_category=class_category).exists()
+
+                if has_level_1:
+                    unlocked_levels.append("Level 2 Online")
+                if has_level_2_online:
+                    unlocked_levels.append("Level 2 Offline")
+                if has_level_2_offline:
+                    unlocked_levels.append("Interview")
+
+                levels.append({
+                    "subject_id": subject.id, 
+                    "subject_name": subject.subject_name,
+                    "classcategory_id": class_category.id,
+                    "classcategory_name": class_category.name,
+                    "levels": unlocked_levels
+                })
+
         return Response(levels, status=status.HTTP_200_OK)
+
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
