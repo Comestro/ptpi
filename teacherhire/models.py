@@ -65,8 +65,7 @@ class TeachersAddress(models.Model):
     block = models.CharField(max_length=100, null=True, blank=True)
     village = models.CharField(max_length=100, null=True, blank=True)
     area = models.TextField(null=True, blank=True)
-    pincode = models.CharField(max_length=6, null=True, blank=True)
-    postOffice = models.CharField(max_length=100, null=True, blank=True)
+    pincode = models.CharField(max_length=6, null=True, blank=True)    
     def __str__(self):
         return f'{self.address_type} address of {self.user.username}'
     

@@ -178,7 +178,7 @@ class LoginUser(APIView):
                 'refresh_token': refresh_token,
                 'Fname': user.Fname,
                 'email': user.email,
-                'role': role,
+                'role': role,                
                 # 'refresh_expires_at': refresh_expires_at,  
                 'message': 'Login successful'
             }, status=status.HTTP_200_OK)
@@ -537,6 +537,11 @@ def get_pincodes_by_post_office(post_office_name):
 
     return []
 
+class RecruiterViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = CustomUser.objects.filter(is_recruiter=True)
+    serializer_class = RecruiterSerializer
 
 class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
