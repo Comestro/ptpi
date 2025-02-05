@@ -1537,7 +1537,7 @@ class SendPasswordResetEmailViewSet(APIView):
                 return Response({"msg": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
             token = default_token_generator.make_token(user)
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_password_link = f'https://ptpi.tech/reset-password/{uidb64}/{token}'
+            reset_password_link = f'https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net/reset-password/{uidb64}/{token}'
             subject = 'Reset Your Password'
             message = f'Click the following link to reset your password: {reset_password_link}'
 
