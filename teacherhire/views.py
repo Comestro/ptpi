@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 from .permissions import IsRecruiterPermission, IsAdminPermission
 import uuid
 import random
+from django.core.mail import send_mail
 import re
 from django.utils import timezone
 from datetime import date, timedelta
