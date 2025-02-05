@@ -9,7 +9,6 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
 from datetime import date
-from django.core.exceptions import ObjectDoesNotExist
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -590,13 +589,26 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=200)
     class Meta:
         fields = ['email']
-    def validate_email(self, value):
-        try:
-            CustomUser.objects.get(email=value)  
-        except ObjectDoesNotExist:
-            raise ValidationError("Email not found. Please provide a valid Email.")
-        
-        return value
+    def validate(self, attrs):
+        email = attrs.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            user = CustomUser.objects.get(email=email)
+            uid = urlsafe_base64_encode(force_bytes(user.id))
+            print('Encoded UID', uid)
+            token = PasswordResetTokenGenerator().make_token(user)
+            print('Password reset token: ', token)
+            reset_link = 'http://localhost:8000/api/reset-password/'+uid+'/'+token
+            print('Password reset link ', reset_link)
+            body = 'Click Following Link to Reset Your Password '+reset_link
+            data = {
+                'subject':'Reset your Password',
+                'body':body,
+                'to_email':user.email
+            }
+            Util.send_email(data)
+            return attrs
+        else:
+            raise ValidationError('Not a valid Email. Please provide a valid Email.')
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)
