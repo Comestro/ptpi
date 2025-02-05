@@ -135,7 +135,7 @@ def calculate_profile_completed(user):
         else:
             feedback.append(f"TeachersAddress is incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
-        feedback.append("No TeachersAddress found for the user.")
+        feedback.append("Add Address")
 
 
     # Check Job Preferences
@@ -147,7 +147,7 @@ def calculate_profile_completed(user):
         else:
             feedback.append(f"Job Preferences are incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
-        feedback.append("Job Preferences are missing entirely.")
+        feedback.append("Add Job Preferences")
 
 
     # Check JobPreferenceLocation
@@ -159,7 +159,7 @@ def calculate_profile_completed(user):
         else:
             feedback.append(f"Job Preference Location is incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
-        feedback.append("Job Preference Location is incomplete.")
+        feedback.append("Add Job Preference Location")
 
 
     # Check TeacherQualification
@@ -171,7 +171,7 @@ def calculate_profile_completed(user):
         else:
             feedback.append(f"Teacher Qualification is incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
-        feedback.append("Teacher Qualification is incomplete.")
+        feedback.append("Add Qualification")
 
     # Ensure the total does not exceed 100%
     return min(complete_profile, 100), feedback
