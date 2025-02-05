@@ -6,6 +6,7 @@ from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
 from teacherhire.serializers import *
+from teacherhire.utils import send_otp_via_email
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
 from .permissions import IsRecruiterPermission, IsAdminPermission
