@@ -6,7 +6,7 @@ from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
 from teacherhire.serializers import *
-from teacherhire.utils import send_otp_via_email
+from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
 from .permissions import IsRecruiterPermission, IsAdminPermission
@@ -14,7 +14,7 @@ import uuid
 import random
 import re
 from django.utils import timezone
-from datetime import date
+from datetime import date, timedelta
 from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
