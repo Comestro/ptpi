@@ -9,12 +9,13 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         if not CustomUser.objects.filter(email='admin@example.com').exists():
             CustomUser.objects.create_superuser(
-                email='admin@example.com',
+                email='kumarsaurav17742@gmail.com',
                 username='admin',
                 password='adminpassword',
                 Fname='Admin',
                 Lname='User',
-                is_verified=True
+                is_verified=True,
+                is_staff=True
             )
             self.stdout.write(self.style.SUCCESS('Successfully created admin user'))
         else:
