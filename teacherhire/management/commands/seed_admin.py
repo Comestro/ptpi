@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = 'Seed the database with an admin user'
 
     def handle(self, *args, **kwargs):
-        if not CustomUser.objects.filter(email='admin@example.com').exists():
+        if not CustomUser.objects.filter(email='kumarsaurav17742@gmail.com').exists():
             CustomUser.objects.create_superuser(
                 email='kumarsaurav17742@gmail.com',
                 username='admin',
