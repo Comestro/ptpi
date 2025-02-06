@@ -747,4 +747,8 @@ class TeacherReportSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
 
+class RecruiterSerializer(serializers.ModelSerializer):
     
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'Fname', 'Lname', 'email', 'email']

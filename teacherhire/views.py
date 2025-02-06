@@ -6,14 +6,16 @@ from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
 from teacherhire.serializers import *
+from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
-from .permissions import IsRecruiterPermission, IsAdminPermission
+from .permissions import *
 import uuid
 import random
+from django.core.mail import send_mail
 import re
 from django.utils import timezone
-from datetime import date
+from datetime import date, timedelta
 from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -178,7 +180,7 @@ class LoginUser(APIView):
                 'refresh_token': refresh_token,
                 'Fname': user.Fname,
                 'email': user.email,
-                'role': role,
+                'role': role,                
                 # 'refresh_expires_at': refresh_expires_at,  
                 'message': 'Login successful'
             }, status=status.HTTP_200_OK)
@@ -389,7 +391,7 @@ class LevelViewSet(viewsets.ModelViewSet):
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class SkillViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Skill.objects.all()    
     serializer_class = SkillSerializer
@@ -485,7 +487,7 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class SubjectViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission] 
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
@@ -537,9 +539,14 @@ def get_pincodes_by_post_office(post_office_name):
 
     return []
 
+# class RecruiterViewSet(viewsets.ModelViewSet):
+#     permission_classes = [IsAuthenticated]
+#     authentication_classes = [ExpiringTokenAuthentication]
+#     queryset = CustomUser.objects.filter(is_recruiter=True)
+#     serializer_class = RecruiterSerializer
 
 class TeacherViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRecruiterPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer    
     
@@ -702,7 +709,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset= ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
@@ -721,7 +728,7 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class ReasonViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset= Reason.objects.all()
     serializer_class = ReasonSerializer
@@ -939,7 +946,7 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
         return TeacherExperiences.objects.filter(user=self.request.user)
 
 class QuestionViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
@@ -1019,7 +1026,7 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RoleViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset= Role.objects.all()
     serializer_class = RoleSerializer
@@ -1530,7 +1537,7 @@ class SendPasswordResetEmailViewSet(APIView):
                 return Response({"msg": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
             token = default_token_generator.make_token(user)
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_password_link = f'http://localhost:5173/reset-password/{uidb64}/{token}'
+            reset_password_link = f'https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net/reset-password/{uidb64}/{token}'
             subject = 'Reset Your Password'
             message = f'Click the following link to reset your password: {reset_password_link}'
 
@@ -1764,7 +1771,7 @@ class CheckoutView(APIView):
         return Response(levels, status=status.HTTP_200_OK)
 
 class ExamViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
@@ -4704,7 +4711,7 @@ def insert_data(request):
     return JsonResponse(response_data)
 
 class ReportViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
@@ -4866,7 +4873,7 @@ class VerifyPasscodeView(APIView):
             status=status.HTTP_200_OK,
         )
 class InterviewViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Interview.objects.all()
     serializer_class = InterviewSerializer
@@ -4945,7 +4952,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
 
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
