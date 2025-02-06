@@ -34,7 +34,6 @@ from fuzzywuzzy import process, fuzz
 from django.db.models import Q
 import re
 from datetime import date
-from googletrans import Translator
 from django.db.models import Count
 from django.contrib.auth.hashers import make_password
 class RecruiterView(APIView):
