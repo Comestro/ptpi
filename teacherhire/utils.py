@@ -143,23 +143,11 @@ def calculate_profile_completed(user):
     if preference:
         is_complete, missing_fields = preference.is_complete()
         if is_complete:
-            complete_profile += 16
+            complete_profile += 24
         # else:
         #     feedback.append(f"Job Preferences are incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
         feedback.append("Add Job Preferences")
-
-
-    # Check JobPreferenceLocation
-    job_preference_location = JobPreferenceLocation.objects.filter(preference__user=user).first()
-    if job_preference_location:
-        is_complete, missing_fields = job_preference_location.is_complete()
-        if is_complete:
-            complete_profile += 16
-        # else:
-        #     feedback.append(f"Job Preference Location is incomplete. Missing fields: {', '.join(missing_fields)}")
-    else:
-        feedback.append("Add Job Preference Location")
 
 
     # Check TeacherQualification
@@ -167,7 +155,7 @@ def calculate_profile_completed(user):
     if teacher_qualification:
         is_complete, missing_fields = teacher_qualification.is_complete()
         if is_complete:
-            complete_profile += 20
+            complete_profile += 24
         # else:
         #     feedback.append(f"Teacher Qualification is incomplete. Missing fields: {', '.join(missing_fields)}")
     else:
