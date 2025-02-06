@@ -79,7 +79,7 @@ jobs:
           python manage.py makemigrations
           python manage.py migrate
       #added seeder for admin, examcenter, data, teacher
-      - seeder: Run seeder
+      - name: Run seeder
         run: |
           source venv/bin/activate
           python manage.py seed_admin
