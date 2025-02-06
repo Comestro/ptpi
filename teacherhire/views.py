@@ -539,11 +539,11 @@ def get_pincodes_by_post_office(post_office_name):
 
     return []
 
-class RecruiterViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication]
-    queryset = CustomUser.objects.filter(is_recruiter=True)
-    serializer_class = RecruiterSerializer
+# class RecruiterViewSet(viewsets.ModelViewSet):
+#     permission_classes = [IsAuthenticated]
+#     authentication_classes = [ExpiringTokenAuthentication]
+#     queryset = CustomUser.objects.filter(is_recruiter=True)
+#     serializer_class = RecruiterSerializer
 
 class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
