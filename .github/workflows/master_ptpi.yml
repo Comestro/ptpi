@@ -78,15 +78,6 @@ jobs:
           source venv/bin/activate
           python manage.py makemigrations
           python manage.py migrate
-      #added seeder for admin, examcenter, data, teacher
-      - name: Run seeder
-        run: |
-          source venv/bin/activate
-          python manage.py seed_admin
-          python manage.py seed_examcenter
-          python manage.py seed_data
-          python manage.py seed_teacher
-
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
@@ -94,3 +85,12 @@ jobs:
           app-name: 'ptpi'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7D9709C31F484BB4A4D99B64C79E8481 }}
+            
+            #added seeder for admin, examcenter, data, teacher
+            - name: Run seeder
+              run: |
+                source venv/bin/activate
+                python manage.py seed_admin
+                python manage.py seed_examcenter
+                python manage.py seed_data
+                python manage.py seed_teacher
