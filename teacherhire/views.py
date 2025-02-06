@@ -546,7 +546,7 @@ def get_pincodes_by_post_office(post_office_name):
 #     serializer_class = RecruiterSerializer
 
 class TeacherViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRecruiterPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer    
     
