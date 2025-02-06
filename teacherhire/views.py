@@ -9,7 +9,7 @@ from teacherhire.serializers import *
 from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
-from .permissions import IsRecruiterPermission, IsAdminPermission
+from .permissions import *
 import uuid
 import random
 from django.core.mail import send_mail
@@ -391,7 +391,7 @@ class LevelViewSet(viewsets.ModelViewSet):
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class SkillViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminPermission]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Skill.objects.all()    
     serializer_class = SkillSerializer
