@@ -947,7 +947,7 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
         return TeacherExperiences.objects.filter(user=self.request.user)
 
 class QuestionViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
@@ -1157,7 +1157,7 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(datRa=data)
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -1522,7 +1522,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Customuser not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
@@ -1772,7 +1772,7 @@ class CheckoutView(APIView):
         return Response(levels, status=status.HTTP_200_OK)
 
 class ExamViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
@@ -4874,7 +4874,7 @@ class VerifyPasscodeView(APIView):
             status=status.HTTP_200_OK,
         )
 class InterviewViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Interview.objects.all()
     serializer_class = InterviewSerializer
@@ -4953,7 +4953,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
 
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
