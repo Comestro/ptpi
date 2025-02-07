@@ -14,6 +14,7 @@ import uuid
 import random
 from django.core.mail import send_mail
 import re
+from translate import Translator
 from django.utils import timezone
 from datetime import date, timedelta
 from django.utils.timezone import now
@@ -41,6 +42,13 @@ class RecruiterView(APIView):
 
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
+    
+class TranslatorView(APIView):
+    def get(self, request):
+        translator = Translator(to_lang="hi")
+        translation = translator.translate("What are the functions of a DBMS?")
+        return Response(data={"translation": translation}, status=status.HTTP_200_OK)
+    
 class AdminView(APIView):
     permission_classes = [IsAdminPermission]
 
