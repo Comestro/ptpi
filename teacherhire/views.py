@@ -5682,41 +5682,37 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
                 "message": "User creation failed"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save the user
         user = user_serializer.save()
 
-        # Get subject data
-        assign_user_subject = request.data.get("subject")
-        if not assign_user_subject:
+        assign_user_subjects = request.data.get("subject", [])  
+        if not assign_user_subjects or not isinstance(assign_user_subjects, list):
             return Response({
-                "error": "Subject not provided",
-                "message": "Please include a subject."
+                "error": "Subjects not provided",
+                "message": "Please provide a subject."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        if AssignedQuestionUser.objects.filter(subject_id=assign_user_subject).exists():
-            return Response({
-                "error": "User is already assigned to this subject",
-                "message": "This user is already assigned to the selected subject."
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Prepare data for assignment
-        assign_user_subject_data = {
-            "user": user.id,  
-            "subject": assign_user_subject
-        }
+        # Get existing assignments for this user
+        existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
 
-        # Validate and save AssignedQuestionUser
-        assign_user_subject_serializer = AssignedQuestionUserSerializer(data=assign_user_subject_data)
-        if not assign_user_subject_serializer.is_valid():
+        # Check for duplicate assignments
+        already_assigned = set(assign_user_subjects) & set(existing_subjects)
+        if already_assigned:
             return Response({
-                "error": assign_user_subject_serializer.errors,
-                "message": "Assignment creation failed"
+                "error": "User is already assigned to some subjects",
+                "message": f"This user is already assigned to subjects with IDs: {list(already_assigned)}"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        assigned_user_subject = assign_user_subject_serializer.save()
+        # Create or get AssignedQuestionUser instance
+        assigned_user_subject, created = AssignedQuestionUser.objects.get_or_create(user=user)
+        subjects_to_assign = Subject.objects.filter(id__in=assign_user_subjects)
 
+        # Assign subjects to the user
+        assigned_user_subject.subject.set(subjects_to_assign)
+
+        # Serialize and return response
+        assign_user_subject_serializer = AssignedQuestionUserSerializer(assigned_user_subject)
         return Response({
             "user": user_serializer.data,
-            "subject": assign_user_subject_serializer.data,
-            "message": "User and Subject assigned successfully"
+            "subjects": assign_user_subject_serializer.data,
+            "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)

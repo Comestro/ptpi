@@ -117,4 +117,6 @@ class ExamCenter(admin.ModelAdmin):
 
 @admin.register(AssignedQuestionUser)
 class AssignedQuestionUserAdmin(admin.ModelAdmin):
-    list_display = ['user', 'subject']
+    list_display = ['user', 'get_subject']
+    def get_subject(self, obj):
+        return ", ".join([str(subject) for subject in obj.subject.all()])
