@@ -114,3 +114,7 @@ class InterviewAdmin(admin.ModelAdmin):
 @admin.register(ExamCenter)
 class ExamCenter(admin.ModelAdmin):
     list_display = ['user', 'center_name', 'pincode', 'state', 'city', 'status','area']
+
+@admin.register(AssignedQuestionUser)
+class AssignedQuestionUserAdmin(admin.ModelAdmin):
+    list_display = ['user', 'subject']

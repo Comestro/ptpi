@@ -962,23 +962,29 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         data = request.data
-        translator = Translator()
-
-        # Get the exam ID from request
         exam_id = data.get("exam")
+
         if not exam_id:
             return Response({"error": "Exam ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Ensure exam exists
+        # Ensure the exam exists
         try:
             exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Check if the user is assigned to this subject
+        try:
+            assigneduser = AssignedQuestionUser.objects.get(user=request.user, subject=exam.subject)
+        except AssignedQuestionUser.DoesNotExist:
+            return Response({"error": "You are not assigned to post questions for this subject."}, status=status.HTTP_403_FORBIDDEN)
+
+        translator = Translator()
+
         # Create English version
         english_serializer = QuestionSerializer(data=data)
         if english_serializer.is_valid():
-            english_question = english_serializer.save()
+            english_question = english_serializer.save(assigneduser=assigneduser)
         else:
             return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -996,18 +1002,17 @@ class QuestionViewSet(viewsets.ModelViewSet):
             if isinstance(data["options"], dict):
                 for key, value in data["options"].items():
                     hindi_options[key] = translator.translate(value, src="en", dest="hi").text
-            elif isinstance(data["options"], list):
+            elif isinstance(data["options"], list):  # ✅ FIX: Handle list-type options
                 hindi_options = [translator.translate(option, src="en", dest="hi").text for option in data["options"]]
 
             hindi_data["options"] = hindi_options
-            hindi_data["language"] = "Hindi" 
-
-            hindi_data["exam"] = exam_id  
-
-            # Create Hindi question
+            hindi_data["language"] = "Hindi"
+            hindi_data["exam"] = exam_id 
+            
+            # ✅ FIX: Assign assigneduser explicitly
             hindi_serializer = QuestionSerializer(data=hindi_data)
             if hindi_serializer.is_valid():
-                hindi_question = hindi_serializer.save()
+                hindi_question = hindi_serializer.save(assigneduser=assigneduser)  # ✅ FIXED
             else:
                 return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2212,9 +2217,11 @@ def insert_data(request):
         }
 
     exams = Exam.objects.all()
+    user = AssignedQuestionUser.objects.get(id=1)
     if exams.exists():
         questions_data = [
     {
+                "assigneduser": user,
                 "exam": exams[0],
                 "time": 1.5,
                 "language": "English",
@@ -2224,6 +2231,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[2],
                 "time": 2.5,
                 "language": "English",
@@ -2234,6 +2242,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[3],
                 "time": 2.5,
                 "language": "English",
@@ -2243,6 +2252,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[4],
                 "language": "English",
                 "time": 1.5,
@@ -2252,6 +2262,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[5],
                 "language": "English",
                 "time": 1.5,
@@ -2263,6 +2274,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[6],
                 "time": 1.5,
                 "language": "English",
@@ -2272,6 +2284,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[7],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2281,6 +2294,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[8],
                 "time": 1.5,
                 "language": "English",
@@ -2290,6 +2304,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[9],
                 "time": 1.5,
                 "language": "English",
@@ -2299,6 +2314,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[9],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2308,6 +2324,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[10],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2317,6 +2334,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[11],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2326,6 +2344,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[5],
                 "time": 1.5,
                 "language": "English",
@@ -2335,6 +2354,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[0],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2344,6 +2364,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[1],
                 "time": 1.5,
                 "language": "English",
@@ -2353,6 +2374,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[2],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2362,6 +2384,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[3],
                 "time": 1.5,
                 "language": "English",
@@ -2371,6 +2394,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[4],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2381,6 +2405,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[5],
                 "time": 1.5,
                 "language": "English",
@@ -2390,6 +2415,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[6],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2399,6 +2425,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[7],
                 "time": 1.5,
                 "language": "English",
@@ -2408,6 +2435,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[8],
                 "time": 1.5,
                 "language": "English",
@@ -2417,6 +2445,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[9],
                 "time": 1.5,
                 "language": "English",
@@ -2426,6 +2455,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[10],
                 "time": 1.5,
                 "language": "English",
@@ -2435,6 +2465,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[1],
                 "time": 1.5,
                 "language": "English",
@@ -2444,6 +2475,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[2],
                 "time": 1.5,
                 "language": "English",
@@ -2453,6 +2485,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[3],
                 "time": 1.5,
                 "language": "English",
@@ -2462,6 +2495,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[4],
                 "time": 2.5,
                 "language": "English",
@@ -2471,6 +2505,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[5],
                 "time": 2.5,
                 "language": "English",
@@ -2480,6 +2515,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[6],
                 "time": 2.5,
                 "language": "English",
@@ -2489,6 +2525,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[1],
                 "time": 2.5,
                 "language": "English",
@@ -2498,6 +2535,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[2],
                 "time": 2.5,
                 "language": "English",
@@ -2507,6 +2545,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[3],
                 "time": 2.5,
                 "language": "English",
@@ -2516,6 +2555,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[4],
                 "time": 2.5,
                 "language": "English",
@@ -2525,6 +2565,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[5],
                 "time": 2.5,
                 "language": "English",
@@ -2534,6 +2575,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[6],
                 "time": 2.5,
                 "language": "English",
@@ -2543,6 +2585,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[7],
                 "time": 2.5,
                 "language": "English",
@@ -2552,6 +2595,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[8],
                 "time": 2.5,
                 "language": "English",
@@ -2561,6 +2605,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[9],
                 "time": 2.5,
                 "language": "English",
@@ -2570,6 +2615,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[10],
                 "time": 2.5,
                 "language": "English",
@@ -2579,6 +2625,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[0],
                 "time": 2.5,
                 "language": "English",
@@ -2588,6 +2635,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[1],
                 "time": 2.5,
                 "language": "English",
@@ -2597,6 +2645,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[2],
                 "time": 2.5,
                 "language": "English",
@@ -2606,6 +2655,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[3],
                 "time": 2.5,
                 "language": "English",
@@ -2615,6 +2665,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[4],
                 "time": 2.5,
                 "language": "English",
@@ -2624,6 +2675,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[5],
                 "time": 2.5,
                 "language": "English",
@@ -2633,6 +2685,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[6],
                 "time": 2.5,
                 "language": "English",
@@ -2642,6 +2695,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
+                "assigneduser": user,
                 "exam": exams[7],
                 "time": 2.5,
                 "language": "English",
@@ -2651,6 +2705,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[8],
                 "time": 2.5,
                 "language": "English",
@@ -2660,6 +2715,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[9],
                 "time": 2.5,
                 "language": "English",
@@ -2669,6 +2725,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[12],
                 "time": 2.5,
                 "language": "English",
@@ -2678,6 +2735,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[12],
                 "time": 2.5,
                 "language": "English",
@@ -2687,6 +2745,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[13],
                 "time": 2.5,
                 "language": "English",
@@ -2701,6 +2760,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[13],
                 "time": 2.5,
                 "language": "English",
@@ -2710,6 +2770,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
+                "assigneduser": user,
                 "exam": exams[14],
                 "time": 2.5,
                 "language": "English",
@@ -2724,6 +2785,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
+                "assigneduser": user,
                 "exam": exams[14],
                 "time": 2.5,
                 "language": "English",
@@ -2738,7 +2800,8 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-        "exam": exams[15],
+        "assigneduser": user,
+                "exam": exams[15],
         "time": 2.5,
         "language": "English",
         "text": "Solve: 5 + 3 × 2.",
@@ -2747,7 +2810,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[15],
+        "assigneduser": user,
+                "exam": exams[15],
         "time": 2.5,
         "language": "English",
         "text": "What is the square root of 81?",
@@ -2756,7 +2820,8 @@ def insert_data(request):
         "correct_option": 3
     },
     { 
-        "exam": exams[16],
+        "assigneduser": user,
+                "exam": exams[16],
         "time": 1.5,
         "language": "English",
         "text": "Find the value of 12 ÷ 4 × 3.",
@@ -2765,7 +2830,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[16],
+        "assigneduser": user,
+                "exam": exams[16],
         "time": 1.5,
         "language": "English",
         "text": "Solve: 7 × (8 - 3).",
@@ -2774,7 +2840,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[17],
+        "assigneduser": user,
+                "exam": exams[17],
         "time": 1.5,
         "language": "English",
         "text": "What is 50% of 200?",
@@ -2783,7 +2850,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What is 2 + 3?",
@@ -2792,7 +2860,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What comes after 7?",
@@ -2801,7 +2870,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 - 4?",
@@ -2810,7 +2880,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a triangle have?",
@@ -2819,7 +2890,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "English",
         "text": "What is the smallest two-digit number?",
@@ -2828,7 +2900,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "2 + 3 कितना है?",
@@ -2837,7 +2910,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "7 के बाद कौन सा नंबर आता है?",
@@ -2846,7 +2920,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 - 4 कितना है?",
@@ -2855,7 +2930,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "त्रिभुज के कितने भुजाएँ होती हैं?",
@@ -2864,7 +2940,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[0],
+        "assigneduser": user,
+                "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
         "text": "सबसे छोटा दो-अंकीय नंबर कौन सा है?",
@@ -2873,7 +2950,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "What is 2 + 2?",
@@ -2882,7 +2960,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "What is the next number after 5?",
@@ -2891,7 +2970,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a triangle have?",
@@ -2900,7 +2980,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 minus 4?",
@@ -2909,7 +2990,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "English",
         "text": "How many hours are there in a day?",
@@ -2918,7 +3000,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "2 + 2 कितना होता है?",
@@ -2927,7 +3010,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "5 के बाद कौन सा संख्या आती है?",
@@ -2936,7 +3020,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "त्रिभुज में कितने भुजाएं होती हैं?",
@@ -2945,7 +3030,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 में से 4 घटाएं तो कितना होगा?",
@@ -2954,7 +3040,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[1],
+        "assigneduser": user,
+                "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
         "text": "एक दिन में कितने घंटे होते हैं?",
@@ -2963,7 +3050,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is 5 + 3?",
@@ -2972,7 +3060,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a square have?",
@@ -2981,7 +3070,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 divided by 2?",
@@ -2990,7 +3080,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is 2 times 4?",
@@ -2999,7 +3090,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "English",
         "text": "What is the smallest two-digit number?",
@@ -3008,7 +3100,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "5 और 3 का योगफल क्या है?",
@@ -3017,7 +3110,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "एक वर्ग में कितने भुजाएँ होती हैं?",
@@ -3026,7 +3120,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 को 2 से विभाजित करें।",
@@ -3035,7 +3130,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "2 और 4 का गुणा क्या है?",
@@ -3044,7 +3140,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[2],
+        "assigneduser": user,
+                "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
         "text": "सबसे छोटा दो अंकों का अंक कौन सा है?",
@@ -3053,7 +3150,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "What is the force that pulls objects towards the Earth?",
@@ -3062,7 +3160,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "वह कौन सी ताकत है जो वस्तुओं को पृथ्वी की ओर खींचती है?",
@@ -3071,7 +3170,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is a source of light?",
@@ -3080,7 +3180,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन सा प्रकाश का स्रोत है?",
@@ -3089,7 +3190,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "What is the change in position of an object called?",
@@ -3098,7 +3200,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "वस्तु की स्थिति में परिवर्तन को क्या कहा जाता है?",
@@ -3107,7 +3210,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "What do we use to measure temperature?",
@@ -3116,7 +3220,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "हम तापमान मापने के लिए किसका उपयोग करते हैं?",
@@ -3125,7 +3230,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is a form of energy?",
@@ -3134,7 +3240,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[3],
+        "assigneduser": user,
+                "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन सा ऊर्जा का रूप है?",
@@ -3143,7 +3250,8 @@ def insert_data(request):
         "correct_option": 2
     },
      {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the unit of force?",
@@ -3152,7 +3260,8 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "बल की इकाई क्या है?",
@@ -3161,7 +3270,8 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the boiling point of water?",
@@ -3170,7 +3280,8 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "पानी का उबालने का बिंदु क्या है?",
@@ -3179,7 +3290,8 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the force that attracts objects towards the Earth?",
@@ -3188,7 +3300,8 @@ def insert_data(request):
     "correct_option": 1
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "वह बल जो वस्तुओं को पृथ्वी की ओर आकर्षित करता है, क्या कहलाता है?",
@@ -3197,7 +3310,8 @@ def insert_data(request):
     "correct_option": 1
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the shape of the Earth?",
@@ -3206,7 +3320,8 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "पृथ्वी का आकार क्या है?",
@@ -3215,7 +3330,8 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "English",
     "text": "What is the source of light in the daytime?",
@@ -3224,7 +3340,8 @@ def insert_data(request):
     "correct_option": 3
   },
   {
-    "exam": exams[4],
+    "assigneduser": user,
+                "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
     "text": "दिन के समय प्रकाश का स्रोत क्या है?",
@@ -3233,7 +3350,8 @@ def insert_data(request):
     "correct_option": 3
   },
   {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "What is the main source of light on Earth?",
@@ -3242,7 +3360,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "What is water in its solid form?",
@@ -3251,7 +3370,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is a gas?",
@@ -3260,7 +3380,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "What is the force that slows down a moving object?",
@@ -3269,7 +3390,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "English",
         "text": "Which of these is an example of an insulator?",
@@ -3278,7 +3400,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "पृथ्वी पर मुख्य प्रकाश स्रोत क्या है?",
@@ -3287,7 +3410,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "पानी अपनी ठोस अवस्था में क्या होता है?",
@@ -3296,7 +3420,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन गैस है?",
@@ -3305,7 +3430,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "वह कौन सा बल है जो चलती हुई वस्तु को धीमा कर देता है?",
@@ -3314,7 +3440,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[5],
+        "assigneduser": user,
+                "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
         "text": "इनमें से कौन सा उदाहरण इंसुलेटर का है?",
@@ -3323,7 +3450,8 @@ def insert_data(request):
         "correct_option": 1
     },
      {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is 5 + 3?",
@@ -3332,7 +3460,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is 10 - 4?",
@@ -3341,7 +3470,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is the shape of a ball?",
@@ -3350,7 +3480,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "How many sides does a triangle have?",
@@ -3359,7 +3490,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "English",
         "text": "What is 7 × 2?",
@@ -3368,7 +3500,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "5 + 3 क्या है?",
@@ -3377,7 +3510,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "10 - 4 क्या है?",
@@ -3386,7 +3520,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "गेंद का आकार क्या है?",
@@ -3395,7 +3530,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "त्रिभुज के कितने भुजाएँ होती हैं?",
@@ -3404,7 +3540,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[6],
+        "assigneduser": user,
+                "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
         "text": "7 × 2 क्या है?",
@@ -3413,7 +3550,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "English",
         "text": "What is 15 - 7?",
         "options": ["6", "7", "8", "9"],
@@ -3421,7 +3559,8 @@ def insert_data(request):
         "solution": "15 - 7 = 8."
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "English",
         "text": "What is the smallest 2-digit number?",
         "options": ["9", "10", "11", "12"],
@@ -3429,7 +3568,8 @@ def insert_data(request):
         "solution": "The smallest two-digit number is 10."
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "English",
         "text": "How many sides does a pentagon have?",
         "options": ["3", "4", "5", "6"],
@@ -3437,7 +3577,8 @@ def insert_data(request):
         "solution": "A pentagon has 5 sides."
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "English",
         "text": "What is 25 ÷ 5?",
         "options": ["4", "5", "6", "7"],
@@ -3445,7 +3586,8 @@ def insert_data(request):
         "solution": "25 ÷ 5 = 5."
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "English",
         "text": "What comes after 499?",
         "options": ["498", "500", "501", "502"],
@@ -3453,7 +3595,8 @@ def insert_data(request):
         "solution": "The number after 499 is 500."
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "Hindi",
         "text": "15 - 7 क्या है?",
         "options": ["6", "7", "8", "9"],
@@ -3461,7 +3604,8 @@ def insert_data(request):
         "solution": "15 - 7 = 8।"
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "Hindi",
         "text": "सबसे छोटी दो-अंकीय संख्या क्या है?",
         "options": ["9", "10", "11", "12"],
@@ -3469,7 +3613,8 @@ def insert_data(request):
         "solution": "सबसे छोटी दो-अंकीय संख्या 10 है।"
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "Hindi",
         "text": "पंचभुज में कितने भुजाएँ होती हैं?",
         "options": ["3", "4", "5", "6"],
@@ -3477,7 +3622,8 @@ def insert_data(request):
         "solution": "पंचभुज में 5 भुजाएँ होती हैं।"
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "Hindi",
         "text": "25 ÷ 5 कितना है?",
         "options": ["4", "5", "6", "7"],
@@ -3485,7 +3631,8 @@ def insert_data(request):
         "solution": "25 ÷ 5 = 5।"
     },
     {
-        "exam": exams[7],
+        "assigneduser": user,
+                "exam": exams[7],
         "language": "Hindi",
         "text": "499 के बाद कौन सी संख्या आती है?",
         "options": ["498", "500", "501", "502"],
@@ -3493,7 +3640,8 @@ def insert_data(request):
         "solution": "499 के बाद 500 आती है।"
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "English",
         "text": "What is 12 + 8?",
         "options": ["18", "19", "20", "21"],
@@ -3501,7 +3649,8 @@ def insert_data(request):
         "solution": "12 + 8 = 20."
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "English",
         "text": "How many hours are there in 2 days?",
         "options": ["24", "36", "48", "60"],
@@ -3509,7 +3658,8 @@ def insert_data(request):
         "solution": "2 days × 24 hours/day = 48 hours."
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "English",
         "text": "Which shape has 4 equal sides?",
         "options": ["Triangle", "Square", "Rectangle", "Circle"],
@@ -3517,7 +3667,8 @@ def insert_data(request):
         "solution": "A square has 4 equal sides."
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "English",
         "text": "What is 5 × 6?",
         "options": ["25", "30", "35", "40"],
@@ -3525,7 +3676,8 @@ def insert_data(request):
         "solution": "5 × 6 = 30."
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "English",
         "text": "What is 100 minus 45?",
         "options": ["55", "50", "60", "45"],
@@ -3533,7 +3685,8 @@ def insert_data(request):
         "solution": "100 - 45 = 55."
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "Hindi",
         "text": "12 + 8 क्या है?",
         "options": ["18", "19", "20", "21"],
@@ -3541,7 +3694,8 @@ def insert_data(request):
         "solution": "12 + 8 = 20।"
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "Hindi",
         "text": "2 दिनों में कितने घंटे होते हैं?",
         "options": ["24", "36", "48", "60"],
@@ -3549,7 +3703,8 @@ def insert_data(request):
         "solution": "2 दिनों में 48 घंटे होते हैं।"
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "Hindi",
         "text": "कौन सा आकार चार बराबर भुजाएँ रखता है?",
         "options": ["त्रिभुज", "वर्ग", "आयत", "वृत्त"],
@@ -3557,7 +3712,8 @@ def insert_data(request):
         "solution": "वर्ग चार बराबर भुजाएँ रखता है।"
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "Hindi",
         "text": "5 × 6 कितना है?",
         "options": ["25", "30", "35", "40"],
@@ -3565,7 +3721,8 @@ def insert_data(request):
         "solution": "5 × 6 = 30।"
     },
     {
-        "exam": exams[8],
+        "assigneduser": user,
+                "exam": exams[8],
         "language": "Hindi",
         "text": "100 में से 45 घटाने पर क्या प्राप्त होगा?",
         "options": ["55", "50", "60", "45"],
@@ -3573,7 +3730,8 @@ def insert_data(request):
         "solution": "100 - 45 = 55।"
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "English",
         "text": "What is the source of energy for the sun?",
         "options": ["Nuclear fusion", "Electric energy", "Chemical reaction", "Magnetic field"],
@@ -3581,7 +3739,8 @@ def insert_data(request):
         "solution": "The sun's energy comes from nuclear fusion, where hydrogen atoms combine to form helium, releasing a vast amount of energy."
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "English",
         "text": "What force pulls objects towards the Earth?",
         "options": ["Friction", "Magnetism", "Gravity", "Air resistance"],
@@ -3589,7 +3748,8 @@ def insert_data(request):
         "solution": "Gravity is the force that pulls objects towards the Earth's center due to its mass."
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "English",
         "text": "Which is the lightest planet in the solar system?",
         "options": ["Earth", "Mars", "Jupiter", "Mercury"],
@@ -3597,7 +3757,8 @@ def insert_data(request):
         "solution": "Mercury is the lightest planet in the solar system due to its small size and low mass."
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "English",
         "text": "What do we use to see very small objects?",
         "options": ["Telescope", "Binoculars", "Microscope", "Magnifying glass"],
@@ -3605,7 +3766,8 @@ def insert_data(request):
         "solution": "A microscope is used to observe very small objects by magnifying them to make them visible."
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "English",
         "text": "What is formed when light passes through a prism?",
         "options": ["Shadow", "Spectrum", "Reflection", "Absorption"],
@@ -3613,7 +3775,8 @@ def insert_data(request):
         "solution": "When light passes through a prism, it splits into its constituent colors, forming a spectrum."
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "Hindi",
         "text": "सूरज का ऊर्जा स्रोत क्या है?",
         "options": ["नाभिकीय संलयन", "विद्युत ऊर्जा", "रासायनिक प्रतिक्रिया", "चुंबकीय क्षेत्र"],
@@ -3621,7 +3784,8 @@ def insert_data(request):
         "solution": "सूरज की ऊर्जा का स्रोत नाभिकीय संलयन है, जिसमें हाइड्रोजन परमाणु मिलकर हीलियम बनाते हैं और ऊर्जा उत्पन्न करते हैं।"
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "Hindi",
         "text": "पृथ्वी की ओर वस्तुओं को खींचने वाला बल कौन सा है?",
         "options": ["घर्षण", "चुंबकत्व", "गुरुत्वाकर्षण", "वायुरोध"],
@@ -3629,7 +3793,8 @@ def insert_data(request):
         "solution": "गुरुत्वाकर्षण बल पृथ्वी की ओर वस्तुओं को खींचता है क्योंकि यह पृथ्वी के द्रव्यमान के कारण उत्पन्न होता है।"
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "Hindi",
         "text": "सौरमंडल में सबसे हल्का ग्रह कौन सा है?",
         "options": ["पृथ्वी", "मंगल", "बृहस्पति", "बुध"],
@@ -3637,7 +3802,8 @@ def insert_data(request):
         "solution": "बुध सौरमंडल का सबसे हल्का ग्रह है क्योंकि इसका आकार और द्रव्यमान बहुत छोटा है।"
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "Hindi",
         "text": "बहुत छोटे वस्तुओं को देखने के लिए हम क्या उपयोग करते हैं?",
         "options": ["दूरबीन", "दूरदर्शी", "सूक्ष्मदर्शी", "आवर्धक काँच"],
@@ -3645,7 +3811,8 @@ def insert_data(request):
         "solution": "बहुत छोटे वस्तुओं को देखने के लिए सूक्ष्मदर्शी का उपयोग किया जाता है, जो वस्तुओं को बड़ा दिखाने में मदद करता है।"
     },
     {
-        "exam": exams[9],
+        "assigneduser": user,
+                "exam": exams[9],
         "language": "Hindi",
         "text": "प्रिज्म से प्रकाश गुजरने पर क्या बनता है?",
         "options": ["छाया", "वर्णक्रम", "परावर्तन", "अवशोषण"],
@@ -3654,7 +3821,8 @@ def insert_data(request):
     },
 
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "English",
         "text": "What happens when you place an object in water, and it floats?",
@@ -3663,7 +3831,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "English",
         "text": "What is the natural satellite of Earth?",
@@ -3672,7 +3841,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "English",
         "text": "Which force slows down a moving ball on the ground?",
@@ -3681,7 +3851,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "English",
         "text": "Which of these can change the shape of an object?",
@@ -3690,7 +3861,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "English",
         "text": "What do plants use from sunlight to make food?",
@@ -3699,7 +3871,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
         "text": "जब आप किसी वस्तु को पानी में रखते हैं और वह तैरती है, तो क्या होता है?",
@@ -3708,7 +3881,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
         "text": "पृथ्वी का प्राकृतिक उपग्रह क्या है?",
@@ -3717,7 +3891,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
         "text": "कौन सा बल जमीन पर चल रही गेंद को धीमा कर देता है?",
@@ -3726,7 +3901,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
         "text": "इनमें से कौन सी चीज किसी वस्तु का आकार बदल सकती है?",
@@ -3735,7 +3911,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[10],
+        "assigneduser": user,
+                "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
         "text": "पौधे भोजन बनाने के लिए सूर्य के प्रकाश से क्या उपयोग करते हैं?",
@@ -3744,7 +3921,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "English",
         "text": "What is the force that pulls objects towards the Earth?",
         "options": ["Magnetism", "Friction", "Gravity", "Electricity"],
@@ -3752,7 +3930,8 @@ def insert_data(request):
         "solution": "Gravity is the force that pulls objects towards the Earth."
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "English",
         "text": "Which of the following is the source of light during the day?",
         "options": ["Moon", "Stars", "Sun", "Streetlight"],
@@ -3760,7 +3939,8 @@ def insert_data(request):
         "solution": "The Sun is the source of light during the day."
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "English",
         "text": "What is the state of water when it freezes?",
         "options": ["Liquid", "Gas", "Solid", "Plasma"],
@@ -3768,7 +3948,8 @@ def insert_data(request):
         "solution": "Water turns into a solid state when it freezes."
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "English",
         "text": "What tool do we use to measure the weight of an object?",
         "options": ["Thermometer", "Barometer", "Spring scale", "Compass"],
@@ -3776,7 +3957,8 @@ def insert_data(request):
         "solution": "A spring scale is used to measure the weight of an object."
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "English",
         "text": "What happens when you heat a solid?",
         "options": ["It becomes liquid", "It becomes gas", "It stays the same", "It becomes smaller"],
@@ -3784,7 +3966,8 @@ def insert_data(request):
         "solution": "When you heat a solid, it can melt and turn into a liquid."
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "Hindi",
         "text": "वह कौन सा बल है जो वस्तुओं को पृथ्वी की ओर खींचता है?",
         "options": ["चुंबकत्व", "घर्षण", "गुरुत्वाकर्षण", "विद्युत ऊर्जा"],
@@ -3792,7 +3975,8 @@ def insert_data(request):
         "solution": "गुरुत्वाकर्षण वह बल है जो वस्तुओं को पृथ्वी की ओर खींचता है।"
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "Hindi",
         "text": "दिन के समय प्रकाश का स्रोत क्या है?",
         "options": ["चाँद", "तारे", "सूरज", "सड़क की बत्तियाँ"],
@@ -3800,7 +3984,8 @@ def insert_data(request):
         "solution": "सूरज दिन के समय प्रकाश का मुख्य स्रोत है।"
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "Hindi",
         "text": "जब पानी जमता है, तो उसकी अवस्था क्या होती है?",
         "options": ["तरल", "गैस", "ठोस", "प्लाज्मा"],
@@ -3808,7 +3993,8 @@ def insert_data(request):
         "solution": "जब पानी जमता है, तो वह ठोस अवस्था में बदल जाता है।"
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "Hindi",
         "text": "हम किसी वस्तु का वजन मापने के लिए कौन सा यंत्र उपयोग करते हैं?",
         "options": ["थर्मामीटर", "वायुदाबमापी", "स्प्रिंग स्केल", "कंपास"],
@@ -3816,7 +4002,8 @@ def insert_data(request):
         "solution": "वजन मापने के लिए हम स्प्रिंग स्केल का उपयोग करते हैं।"
     },
     {
-        "exam": exams[11],
+        "assigneduser": user,
+                "exam": exams[11],
         "language": "Hindi",
         "text": "जब आप किसी ठोस को गरम करते हैं, तो क्या होता है?",
         "options": ["यह तरल बन जाता है", "यह गैस बन जाता है", "यह वैसा का वैसा रहता है", "यह छोटा हो जाता है"],
@@ -3824,7 +4011,8 @@ def insert_data(request):
         "solution": "जब आप किसी ठोस को गरम करते हैं, तो वह पिघलकर तरल में बदल सकता है।"
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "English",
         "text": "What is the sum of 56 and 78?",
         "options": ["134", "136", "148", "138"],
@@ -3832,7 +4020,8 @@ def insert_data(request):
         "solution": "The sum of 56 and 78 is 134."
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "English",
         "text": "What is the product of 12 and 9?",
         "options": ["108", "96", "72", "110"],
@@ -3840,7 +4029,8 @@ def insert_data(request):
         "solution": "The product of 12 and 9 is 108."
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "English",
         "text": "What is 36 divided by 4?",
         "options": ["9", "8", "7", "10"],
@@ -3848,7 +4038,8 @@ def insert_data(request):
         "solution": "36 divided by 4 equals 9."
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "English",
         "text": "What is the square of 7?",
         "options": ["49", "56", "72", "64"],
@@ -3856,7 +4047,8 @@ def insert_data(request):
         "solution": "The square of 7 is 49."
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "English",
         "text": "What is the perimeter of a rectangle with length 8 cm and width 5 cm?",
         "options": ["26 cm", "32 cm", "16 cm", "18 cm"],
@@ -3864,7 +4056,8 @@ def insert_data(request):
         "solution": "The perimeter of the rectangle is 26 cm (2 × (8 + 5))."
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "Hindi",
         "text": "56 और 78 का योगफल क्या है?",
         "options": ["134", "136", "148", "138"],
@@ -3872,7 +4065,8 @@ def insert_data(request):
         "solution": "56 और 78 का योगफल 134 है।"
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "Hindi",
         "text": "12 और 9 का गुणनफल क्या है?",
         "options": ["108", "96", "72", "110"],
@@ -3880,7 +4074,8 @@ def insert_data(request):
         "solution": "12 और 9 का गुणनफल 108 है।"
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "Hindi",
         "text": "36 को 4 से भाग देने पर क्या प्राप्त होता है?",
         "options": ["9", "8", "7", "10"],
@@ -3888,7 +4083,8 @@ def insert_data(request):
         "solution": "36 को 4 से भाग देने पर 9 प्राप्त होता है।"
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "Hindi",
         "text": "7 का वर्गफल क्या है?",
         "options": ["49", "56", "72", "64"],
@@ -3896,7 +4092,8 @@ def insert_data(request):
         "solution": "7 का वर्गफल 49 है।"
     },
     {
-        "exam": exams[18],
+        "assigneduser": user,
+                "exam": exams[18],
         "language": "Hindi",
         "text": "8 सेंटीमीटर लंबाई और 5 सेंटीमीटर चौड़ाई वाले आयत का परिमाप क्या होगा?",
         "options": ["26 सेंटीमीटर", "32 सेंटीमीटर", "16 सेंटीमीटर", "18 सेंटीमीटर"],
@@ -3904,7 +4101,8 @@ def insert_data(request):
         "solution": "आयत का परिमाप 26 सेंटीमीटर होगा (2 × (8 + 5))."
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "English",
         "text": "What is the sum of 45 and 63?",
         "options": ["108", "110", "112", "114"],
@@ -3912,7 +4110,8 @@ def insert_data(request):
         "solution": "The sum of 45 and 63 is 108."
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "English",
         "text": "What is the difference between 95 and 47?",
         "options": ["48", "50", "52", "58"],
@@ -3920,7 +4119,8 @@ def insert_data(request):
         "solution": "The difference between 95 and 47 is 48."
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "English",
         "text": "What is 15 multiplied by 6?",
         "options": ["90", "96", "84", "72"],
@@ -3928,7 +4128,8 @@ def insert_data(request):
         "solution": "15 multiplied by 6 is 90."
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "English",
         "text": "What is the area of a rectangle with length 10 cm and width 5 cm?",
         "options": ["50 cm²", "55 cm²", "60 cm²", "45 cm²"],
@@ -3936,7 +4137,8 @@ def insert_data(request):
         "solution": "The area of the rectangle is 50 cm² (length × width)."
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "English",
         "text": "What is the square root of 49?",
         "options": ["7", "6", "8", "9"],
@@ -3944,7 +4146,8 @@ def insert_data(request):
         "solution": "The square root of 49 is 7."
     },
      {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "Hindi",
         "text": "45 और 63 का योगफल क्या है?",
         "options": ["108", "110", "112", "114"],
@@ -3952,7 +4155,8 @@ def insert_data(request):
         "solution": "45 और 63 का योगफल 108 है।"
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "Hindi",
         "text": "95 और 47 के बीच का अंतर क्या है?",
         "options": ["48", "50", "52", "58"],
@@ -3960,7 +4164,8 @@ def insert_data(request):
         "solution": "95 और 47 के बीच का अंतर 48 है।"
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "Hindi",
         "text": "15 को 6 से गुणा करने पर क्या मिलता है?",
         "options": ["90", "96", "84", "72"],
@@ -3968,7 +4173,8 @@ def insert_data(request):
         "solution": "15 को 6 से गुणा करने पर 90 मिलता है।"
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "Hindi",
         "text": "10 सेंटीमीटर लंबाई और 5 सेंटीमीटर चौड़ाई वाले आयत का क्षेत्रफल क्या है?",
         "options": ["50 सेमी²", "55 सेमी²", "60 सेमी²", "45 सेमी²"],
@@ -3976,7 +4182,8 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 50 सेमी² है (लंबाई × चौड़ाई)।"
     },
     {
-        "exam": exams[19],
+        "assigneduser": user,
+                "exam": exams[19],
         "language": "Hindi",
         "text": "49 का वर्गमूल क्या है?",
         "options": ["7", "6", "8", "9"],
@@ -3984,7 +4191,8 @@ def insert_data(request):
         "solution": "49 का वर्गमूल 7 है।"
     },
      {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "English",
         "text": "What is the sum of 125 and 75?",
         "options": ["200", "210", "190", "180"],
@@ -3992,7 +4200,8 @@ def insert_data(request):
         "solution": "The sum of 125 and 75 is 200."
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "English",
         "text": "What is the product of 12 and 8?",
         "options": ["96", "98", "100", "104"],
@@ -4000,7 +4209,8 @@ def insert_data(request):
         "solution": "The product of 12 and 8 is 96."
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "English",
         "text": "What is the perimeter of a square with side length 6 cm?",
         "options": ["24 cm", "18 cm", "20 cm", "22 cm"],
@@ -4008,7 +4218,8 @@ def insert_data(request):
         "solution": "The perimeter of the square is 24 cm (4 × side length)."
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "English",
         "text": "What is 72 divided by 9?",
         "options": ["8", "7", "9", "6"],
@@ -4016,7 +4227,8 @@ def insert_data(request):
         "solution": "72 divided by 9 equals 8."
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "English",
         "text": "What is the value of 15 raised to the power of 2?",
         "options": ["225", "250", "200", "300"],
@@ -4024,7 +4236,8 @@ def insert_data(request):
         "solution": "15 raised to the power of 2 equals 225."
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "Hindi",
         "text": "125 और 75 का योगफल क्या है?",
         "options": ["200", "210", "190", "180"],
@@ -4032,7 +4245,8 @@ def insert_data(request):
         "solution": "125 और 75 का योगफल 200 है।"
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "Hindi",
         "text": "12 और 8 का गुणनफल क्या है?",
         "options": ["96", "98", "100", "104"],
@@ -4040,7 +4254,8 @@ def insert_data(request):
         "solution": "12 और 8 का गुणनफल 96 है।"
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "Hindi",
         "text": "6 सेंटीमीटर लंबाई वाले वर्ग का परिमाप क्या है?",
         "options": ["24 सेमी", "18 सेमी", "20 सेमी", "22 सेमी"],
@@ -4048,7 +4263,8 @@ def insert_data(request):
         "solution": "वर्ग का परिमाप 24 सेमी है (4 × लंबाई)।"
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "Hindi",
         "text": "72 को 9 से भाग करने पर क्या मिलता है?",
         "options": ["8", "7", "9", "6"],
@@ -4056,7 +4272,8 @@ def insert_data(request):
         "solution": "72 को 9 से भाग करने पर 8 मिलता है।"
     },
     {
-        "exam": exams[20],
+        "assigneduser": user,
+                "exam": exams[20],
         "language": "Hindi",
         "text": "15 का वर्गमूल क्या है?",
         "options": ["225", "250", "200", "300"],
@@ -4064,7 +4281,8 @@ def insert_data(request):
         "solution": "15 का वर्गमूल 225 है।"
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "English",
         "text": "What is the square root of 81?",
         "options": ["8", "9", "7", "6"],
@@ -4072,7 +4290,8 @@ def insert_data(request):
         "solution": "The square root of 81 is 9."
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "English",
         "text": "What is the result of 15 × 4?",
         "options": ["60", "55", "65", "70"],
@@ -4080,7 +4299,8 @@ def insert_data(request):
         "solution": "15 multiplied by 4 is 60."
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "English",
         "text": "If a rectangle has a length of 8 cm and a width of 5 cm, what is its area?",
         "options": ["40 cm²", "50 cm²", "60 cm²", "45 cm²"],
@@ -4088,7 +4308,8 @@ def insert_data(request):
         "solution": "The area of the rectangle is 40 cm² (length × width)."
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "English",
         "text": "What is the sum of 56 and 44?",
         "options": ["90", "100", "110", "120"],
@@ -4096,7 +4317,8 @@ def insert_data(request):
         "solution": "The sum of 56 and 44 is 100."
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "English",
         "text": "What is the value of 100 ÷ 5?",
         "options": ["25", "20", "30", "15"],
@@ -4104,7 +4326,8 @@ def insert_data(request):
         "solution": "100 divided by 5 is 20."
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "Hindi",
         "text": "81 का वर्गमूल क्या है?",
         "options": ["8", "9", "7", "6"],
@@ -4112,7 +4335,8 @@ def insert_data(request):
         "solution": "81 का वर्गमूल 9 है।"
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "Hindi",
         "text": "15 × 4 का परिणाम क्या है?",
         "options": ["60", "55", "65", "70"],
@@ -4120,7 +4344,8 @@ def insert_data(request):
         "solution": "15 गुणा 4 का परिणाम 60 है।"
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "Hindi",
         "text": "यदि आयत की लंबाई 8 सेंटीमीटर और चौड़ाई 5 सेंटीमीटर है, तो उसका क्षेत्रफल क्या होगा?",
         "options": ["40 वर्ग सेंटीमीटर", "50 वर्ग सेंटीमीटर", "60 वर्ग सेंटीमीटर", "45 वर्ग सेंटीमीटर"],
@@ -4128,7 +4353,8 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 40 वर्ग सेंटीमीटर है (लंबाई × चौड़ाई)।"
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "Hindi",
         "text": "56 और 44 का योगफल क्या है?",
         "options": ["90", "100", "110", "120"],
@@ -4136,7 +4362,8 @@ def insert_data(request):
         "solution": "56 और 44 का योगफल 100 है।"
     },
     {
-        "exam": exams[21],
+        "assigneduser": user,
+                "exam": exams[21],
         "language": "Hindi",
         "text": "100 ÷ 5 का मान क्या है?",
         "options": ["25", "20", "30", "15"],
@@ -4144,7 +4371,8 @@ def insert_data(request):
         "solution": "100 को 5 से विभाजित करने पर 20 मिलता है।"
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "English",
         "text": "What is 18 ÷ 3?",
         "options": ["5", "6", "7", "8"],
@@ -4152,7 +4380,8 @@ def insert_data(request):
         "solution": "18 divided by 3 is 6."
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "English",
         "text": "What is the perimeter of a square with each side measuring 4 cm?",
         "options": ["12 cm", "14 cm", "16 cm", "20 cm"],
@@ -4160,7 +4389,8 @@ def insert_data(request):
         "solution": "The perimeter of a square is 4 times the length of one side. 4 × 4 = 16 cm."
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "English",
         "text": "What is 25 × 3?",
         "options": ["70", "75", "80", "85"],
@@ -4168,7 +4398,8 @@ def insert_data(request):
         "solution": "25 multiplied by 3 is 75."
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "English",
         "text": "What is the area of a rectangle with a length of 6 cm and width of 3 cm?",
         "options": ["15 cm²", "18 cm²", "20 cm²", "24 cm²"],
@@ -4176,7 +4407,8 @@ def insert_data(request):
         "solution": "The area of the rectangle is 18 cm² (length × width)."
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "English",
         "text": "What is the sum of 45 and 35?",
         "options": ["70", "75", "80", "85"],
@@ -4184,7 +4416,8 @@ def insert_data(request):
         "solution": "The sum of 45 and 35 is 80."
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "Hindi",
         "text": "18 ÷ 3 क्या है?",
         "options": ["5", "6", "7", "8"],
@@ -4192,7 +4425,8 @@ def insert_data(request):
         "solution": "18 को 3 से विभाजित करने पर 6 मिलता है।"
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "Hindi",
         "text": "एक वर्ग का परिधि क्या है जिसका प्रत्येक किनारा 4 सेंटीमीटर है?",
         "options": ["12 सेंटीमीटर", "14 सेंटीमीटर", "16 सेंटीमीटर", "20 सेंटीमीटर"],
@@ -4200,7 +4434,8 @@ def insert_data(request):
         "solution": "वर्ग का परिधि 4 गुना एक किनारे की लंबाई होती है। 4 × 4 = 16 सेंटीमीटर।"
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "Hindi",
         "text": "25 × 3 क्या है?",
         "options": ["70", "75", "80", "85"],
@@ -4208,7 +4443,8 @@ def insert_data(request):
         "solution": "25 को 3 से गुणा करने पर 75 मिलता है।"
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "Hindi",
         "text": "एक आयत का क्षेत्रफल क्या होगा जिसकी लंबाई 6 सेंटीमीटर और चौड़ाई 3 सेंटीमीटर है?",
         "options": ["15 वर्ग सेंटीमीटर", "18 वर्ग सेंटीमीटर", "20 वर्ग सेंटीमीटर", "24 वर्ग सेंटीमीटर"],
@@ -4216,7 +4452,8 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 18 वर्ग सेंटीमीटर होगा (लंबाई × चौड़ाई)।"
     },
     {
-        "exam": exams[22],
+        "assigneduser": user,
+                "exam": exams[22],
         "language": "Hindi",
         "text": "45 और 35 का योगफल क्या है?",
         "options": ["70", "75", "80", "85"],
@@ -4224,7 +4461,8 @@ def insert_data(request):
         "solution": "45 और 35 का योगफल 80 है।"
     },
      {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "English",
         "text": "What is the square root of 64?",
         "options": ["6", "7", "8", "9"],
@@ -4232,7 +4470,8 @@ def insert_data(request):
         "solution": "The square root of 64 is 8."
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "English",
         "text": "What is 9 × 7?",
         "options": ["56", "63", "72", "81"],
@@ -4240,7 +4479,8 @@ def insert_data(request):
         "solution": "9 multiplied by 7 is 63."
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "English",
         "text": "What is the area of a triangle with base 10 cm and height 6 cm?",
         "options": ["30 cm²", "40 cm²", "50 cm²", "60 cm²"],
@@ -4248,7 +4488,8 @@ def insert_data(request):
         "solution": "The area of the triangle is 30 cm² (base × height ÷ 2)."
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "English",
         "text": "What is the sum of 150 and 275?",
         "options": ["425", "450", "475", "500"],
@@ -4256,7 +4497,8 @@ def insert_data(request):
         "solution": "The sum of 150 and 275 is 425."
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "English",
         "text": "What is 12 ÷ 4?",
         "options": ["2", "3", "4", "5"],
@@ -4264,7 +4506,8 @@ def insert_data(request):
         "solution": "12 divided by 4 is 3."
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "Hindi",
         "text": "64 का वर्गमूल क्या है?",
         "options": ["6", "7", "8", "9"],
@@ -4272,7 +4515,8 @@ def insert_data(request):
         "solution": "64 का वर्गमूल 8 है।"
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "Hindi",
         "text": "9 × 7 क्या है?",
         "options": ["56", "63", "72", "81"],
@@ -4280,7 +4524,8 @@ def insert_data(request):
         "solution": "9 को 7 से गुणा करने पर 63 मिलता है।"
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "Hindi",
         "text": "एक त्रिकोण का क्षेत्रफल क्या होगा जिसकी आधार 10 सेंटीमीटर और ऊंचाई 6 सेंटीमीटर है?",
         "options": ["30 वर्ग सेंटीमीटर", "40 वर्ग सेंटीमीटर", "50 वर्ग सेंटीमीटर", "60 वर्ग सेंटीमीटर"],
@@ -4288,7 +4533,8 @@ def insert_data(request):
         "solution": "त्रिकोण का क्षेत्रफल 30 वर्ग सेंटीमीटर होगा (आधार × ऊंचाई ÷ 2)।"
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "Hindi",
         "text": "150 और 275 का योगफल क्या है?",
         "options": ["425", "450", "475", "500"],
@@ -4296,7 +4542,8 @@ def insert_data(request):
         "solution": "150 और 275 का योगफल 425 है।"
     },
     {
-        "exam": exams[23],
+        "assigneduser": user,
+                "exam": exams[23],
         "language": "Hindi",
         "text": "12 ÷ 4 क्या है?",
         "options": ["2", "3", "4", "5"],
@@ -4304,7 +4551,8 @@ def insert_data(request):
         "solution": "12 को 4 से विभाजित करने पर 3 मिलता है।"
     },
      {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "English",
         "text": "What is 15 × 8?",
         "options": ["120", "130", "140", "150"],
@@ -4312,7 +4560,8 @@ def insert_data(request):
         "solution": "15 multiplied by 8 is 120."
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "English",
         "text": "What is the perimeter of a rectangle with length 12 cm and width 8 cm?",
         "options": ["40 cm", "50 cm", "60 cm", "70 cm"],
@@ -4320,7 +4569,8 @@ def insert_data(request):
         "solution": "The perimeter of a rectangle is 2 × (length + width), so 2 × (12 + 8) = 40 cm."
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "English",
         "text": "What is 45 ÷ 9?",
         "options": ["3", "4", "5", "6"],
@@ -4328,7 +4578,8 @@ def insert_data(request):
         "solution": "45 divided by 9 is 5."
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "English",
         "text": "What is the product of 12 and 7?",
         "options": ["72", "75", "78", "84"],
@@ -4336,7 +4587,8 @@ def insert_data(request):
         "solution": "The product of 12 and 7 is 84."
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "English",
         "text": "What is the area of a square with side length 6 cm?",
         "options": ["30 cm²", "36 cm²", "42 cm²", "48 cm²"],
@@ -4344,7 +4596,8 @@ def insert_data(request):
         "solution": "The area of a square is side × side, so 6 × 6 = 36 cm²."
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "Hindi",
         "text": "15 × 8 क्या है?",
         "options": ["120", "130", "140", "150"],
@@ -4352,7 +4605,8 @@ def insert_data(request):
         "solution": "15 को 8 से गुणा करने पर 120 मिलता है।"
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "Hindi",
         "text": "एक आयत का परिधि क्या होगा, जिसकी लंबाई 12 सेंटीमीटर और चौड़ाई 8 सेंटीमीटर है?",
         "options": ["40 सेंटीमीटर", "50 सेंटीमीटर", "60 सेंटीमीटर", "70 सेंटीमीटर"],
@@ -4360,7 +4614,8 @@ def insert_data(request):
         "solution": "आयत का परिधि 2 × (लंबाई + चौड़ाई) होता है, तो 2 × (12 + 8) = 40 सेंटीमीटर।"
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "Hindi",
         "text": "45 ÷ 9 क्या है?",
         "options": ["3", "4", "5", "6"],
@@ -4368,7 +4623,8 @@ def insert_data(request):
         "solution": "45 को 9 से विभाजित करने पर 5 मिलता है।"
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "Hindi",
         "text": "12 और 7 का गुणनफल क्या है?",
         "options": ["72", "75", "78", "84"],
@@ -4376,7 +4632,8 @@ def insert_data(request):
         "solution": "12 और 7 का गुणनफल 84 है।"
     },
     {
-        "exam": exams[24],
+        "assigneduser": user,
+                "exam": exams[24],
         "language": "Hindi",
         "text": "एक वर्ग का क्षेत्रफल क्या होगा, जिसका एक भुजा 6 सेंटीमीटर है?",
         "options": ["30 वर्ग सेंटीमीटर", "36 वर्ग सेंटीमीटर", "42 वर्ग सेंटीमीटर", "48 वर्ग सेंटीमीटर"],
@@ -4384,7 +4641,8 @@ def insert_data(request):
         "solution": "वर्ग का क्षेत्रफल भुजा × भुजा होता है, तो 6 × 6 = 36 वर्ग सेंटीमीटर।"
     },
      {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "English",
         "text": "What is the dimensional formula of force?",
@@ -4393,7 +4651,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "English",
         "text": "Which physical quantity is measured in Hertz?",
@@ -4402,7 +4661,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "English",
         "text": "What is the value of acceleration due to gravity on Earth?",
@@ -4411,7 +4671,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is a scalar quantity?",
@@ -4420,7 +4681,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "English",
         "text": "What is the SI unit of work?",
@@ -4429,7 +4691,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
         "text": "बल का विमीय सूत्र क्या है?",
@@ -4438,7 +4701,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
         "text": "कौन सा भौतिक मात्रा हर्ट्ज़ में मापा जाता है?",
@@ -4447,7 +4711,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
         "text": "पृथ्वी पर गुरुत्वाकर्षण के कारण त्वरण का मान क्या है?",
@@ -4456,7 +4721,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन एक अदिश मात्रा है?",
@@ -4465,7 +4731,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[25],
+        "assigneduser": user,
+                "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
         "text": "कार्य की एसआई इकाई क्या है?",
@@ -4474,7 +4741,8 @@ def insert_data(request):
         "correct_option": 1
     },
      {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "English",
         "text": "What is the derivative of (x^2)?",
@@ -4483,7 +4751,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "English",
         "text": "If the matrix A is of order 2x2, how many elements does it have?",
@@ -4492,7 +4761,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "English",
         "text": "What is the integral of (1/x)?",
@@ -4501,7 +4771,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "English",
         "text": "What is the sum of the angles in a triangle?",
@@ -4510,7 +4781,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "English",
         "text": "Solve for x: (2x + 3 = 7)",
@@ -4519,7 +4791,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
         "text": "क्या है (x^2) का अवकलन?",
@@ -4528,7 +4801,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
         "text": "यदि मैट्रिक्स A का क्रम 2x2 है, तो इसमें कितने तत्व होते हैं?",
@@ -4537,7 +4811,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
         "text": "(1/x) का समाकलन क्या है?",
@@ -4546,7 +4821,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
         "text": "त्रिभुज में कोणों का योग कितना होता है?",
@@ -4555,7 +4831,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[26],
+        "assigneduser": user,
+                "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
         "text": "x के लिए हल करें: (2x + 3 = 7)",
@@ -4564,7 +4841,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[27],
+        "assigneduser": user,
+                "exam": exams[27],
         "time": 1.5,
         "language": "English",
         "text": "What is the derivative of (e^x)?",
@@ -4573,7 +4851,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[27],
+        "assigneduser": user,
+                "exam": exams[27],
         "time": 1.5,
         "language": "Hindi",
         "text": "समीकरण (2x - 5 = 9) का हल क्या है?",
@@ -4582,7 +4861,8 @@ def insert_data(request):
         "correct_option": 3
     },
      {
-        "exam": exams[27],
+        "assigneduser": user,
+                "exam": exams[27],
         "time": 1.5,
         "language": "Hindi",
         "text": "यदि A = {1, 2, 3}, तो A का पावर सेट क्या है?",
@@ -4591,7 +4871,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[27],
+        "assigneduser": user,
+                "exam": exams[27],
         "time": 1.5,
         "language": "English",
         "text": "What is the solution to the equation (2x - 5 = 9)?",
@@ -4600,7 +4881,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[27],
+        "assigneduser": user,
+                "exam": exams[27],
         "time": 1.5,
         "language": "English",
         "text": "What is the value of (log(1))?",
@@ -4609,7 +4891,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[28],
+        "assigneduser": user,
+                "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
         "text": "(e^x) का अवकलन क्या है?",
@@ -4618,7 +4901,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[28],
+        "assigneduser": user,
+                "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
         "text": "(sin(90^circ)) का मान क्या है?",
@@ -4627,7 +4911,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[28],
+        "assigneduser": user,
+                "exam": exams[28],
         "time": 1.5,
         "language": "English",
         "text": "What is the value of (sin(90^circ))?",
@@ -4637,7 +4922,8 @@ def insert_data(request):
     },
     
     {
-        "exam": exams[28],
+        "assigneduser": user,
+                "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
         "text": "(log(1)) का मान क्या है?",
@@ -4646,7 +4932,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[28],
+        "assigneduser": user,
+                "exam": exams[28],
         "time": 1.5,
         "language": "English",
         "text": "If A = {1, 2, 3}, what is the power set of A?",
@@ -4655,7 +4942,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "English",
         "text": "What is the unit of length?",
@@ -4664,7 +4952,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "English",
         "text": "What is the state of water at 0°C?",
@@ -4673,7 +4962,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "English",
         "text": "Which of the following is not a natural source of light?",
@@ -4682,7 +4972,8 @@ def insert_data(request):
         "correct_option": 4
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "English",
         "text": "What is the force that opposes motion between two surfaces?",
@@ -4691,7 +4982,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "English",
         "text": "What do you call the process of water changing from liquid to gas?",
@@ -4700,7 +4992,8 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
         "text": "लंबाई की इकाई क्या है?",
@@ -4709,7 +5002,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
         "text": "0°C पर पानी की अवस्था क्या होती है?",
@@ -4718,7 +5012,8 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
         "text": "निम्नलिखित में से कौन सा प्राकृतिक प्रकाश का स्रोत नहीं है?",
@@ -4727,7 +5022,8 @@ def insert_data(request):
         "correct_option": 4
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
         "text": "दो सतहों के बीच गति का विरोध करने वाली शक्ति क्या है?",
@@ -4736,7 +5032,8 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "exam": exams[29],
+        "assigneduser": user,
+                "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
         "text": "पानी का तरल से गैस में बदलने की प्रक्रिया को क्या कहते हैं?",
@@ -4744,9 +5041,7 @@ def insert_data(request):
         "solution": "पानी का तरल से गैस में बदलने की प्रक्रिया वाष्पीकरण कहलाती है।",
         "correct_option": 2
     }
-    
-
-        ]
+    ]
 
         question_added_count = 0
         for question in questions_data:
@@ -4762,7 +5057,8 @@ def insert_data(request):
                     text=question["text"],
                     options=question["options"],
                     solution=question["solution"],
-                    correct_option=question["correct_option"]
+                    correct_option=question["correct_option"],
+                    assigneduser = question["assigneduser"]
                 )
                 question_added_count += 1
 
@@ -4879,7 +5175,8 @@ class GeneratePasskeyView(APIView):
         center_serializer = ExamCenterSerializer(center)
         return Response({"message": "Passkey generated successfully.",
             "center":center_serializer.data,
-            "exam": exam_serializer.data
+            "assigneduser": user,
+                "exam": exam_serializer.data
             },
         status=status.HTTP_200_OK)    
  
@@ -5371,3 +5668,55 @@ def insert_data_teachers(request):
         "message": "Seeding completed",
         **response_data
     })
+
+class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
+    serializer_class = AssignedQuestionUserSerializer
+    queryset = AssignedQuestionUser.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        # Validate user data first
+        user_serializer = CenterUserSerializer(data=request.data.get("user"))
+        if not user_serializer.is_valid():
+            return Response({
+                "error": user_serializer.errors,
+                "message": "User creation failed"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save the user
+        user = user_serializer.save()
+
+        # Get subject data
+        assign_user_subject = request.data.get("subject")
+        if not assign_user_subject:
+            return Response({
+                "error": "Subject not provided",
+                "message": "Please include a subject."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if AssignedQuestionUser.objects.filter(subject_id=assign_user_subject).exists():
+            return Response({
+                "error": "User is already assigned to this subject",
+                "message": "This user is already assigned to the selected subject."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Prepare data for assignment
+        assign_user_subject_data = {
+            "user": user.id,  
+            "subject": assign_user_subject
+        }
+
+        # Validate and save AssignedQuestionUser
+        assign_user_subject_serializer = AssignedQuestionUserSerializer(data=assign_user_subject_data)
+        if not assign_user_subject_serializer.is_valid():
+            return Response({
+                "error": assign_user_subject_serializer.errors,
+                "message": "Assignment creation failed"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        assigned_user_subject = assign_user_subject_serializer.save()
+
+        return Response({
+            "user": user_serializer.data,
+            "subject": assign_user_subject_serializer.data,
+            "message": "User and Subject assigned successfully"
+        }, status=status.HTTP_201_CREATED)
