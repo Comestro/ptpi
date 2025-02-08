@@ -773,10 +773,10 @@ class RecruiterSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'email']
+        fields = ['id', 'Fname', 'Lname', 'email']
 
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
-    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all()) 
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
     
     class Meta:
         model = AssignedQuestionUser

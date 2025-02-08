@@ -37,7 +37,7 @@ import re
 from datetime import date
 from django.db.models import Count
 from django.contrib.auth.hashers import make_password
-from googletrans import Translator
+
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
@@ -947,7 +947,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         except AssignedQuestionUser.DoesNotExist:
             return Response({"error": "You are not assigned to post questions for this subject."}, status=status.HTTP_403_FORBIDDEN)
 
-        translator = Translator()
+        translator = Translator(to_lang="hi")  
 
         # Create English version
         english_serializer = QuestionSerializer(data=data)
@@ -961,26 +961,25 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if data.get("language") == "English":
             hindi_data = data.copy()
 
-            # Translate fields
-            hindi_data["text"] = translator.translate(data.get("text", ""), src="en", dest="hi").text
-            hindi_data["solution"] = translator.translate(data.get("solution", ""), src="en", dest="hi").text if data.get("solution") else ""
+            # Translate fields 
+            hindi_data["text"] = translator.translate(data.get("text", ""))
+            hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
 
-            # Translate options (JSON field)
+            # Translate options
             hindi_options = {}
             if isinstance(data["options"], dict):
                 for key, value in data["options"].items():
-                    hindi_options[key] = translator.translate(value, src="en", dest="hi").text
-            elif isinstance(data["options"], list):  # ✅ FIX: Handle list-type options
-                hindi_options = [translator.translate(option, src="en", dest="hi").text for option in data["options"]]
+                    hindi_options[key] = translator.translate(value)
+            elif isinstance(data["options"], list):
+                hindi_options = [translator.translate(option) for option in data["options"]]
 
             hindi_data["options"] = hindi_options
             hindi_data["language"] = "Hindi"
             hindi_data["exam"] = exam_id 
             
-            # ✅ FIX: Assign assigneduser explicitly
             hindi_serializer = QuestionSerializer(data=hindi_data)
             if hindi_serializer.is_valid():
-                hindi_question = hindi_serializer.save(assigneduser=assigneduser)  # ✅ FIXED
+                hindi_question = hindi_serializer.save(assigneduser=assigneduser) 
             else:
                 return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -5765,3 +5764,51 @@ class AllTeacherViewSet(viewsets.ModelViewSet):
                 return Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
                     teacherexperiences__start_date__lt=end_date_threshold)
         return None
+
+class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
+    serializer_class = AssignedQuestionUserSerializer
+    queryset = AssignedQuestionUser.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        # Validate user data first
+        user_serializer = CenterUserSerializer(data=request.data.get("user"))
+        if not user_serializer.is_valid():
+            return Response({
+                "error": user_serializer.errors,
+                "message": "User creation failed"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user = user_serializer.save()
+
+        assign_user_subjects = request.data.get("subject", [])  
+        if not assign_user_subjects or not isinstance(assign_user_subjects, list):
+            return Response({
+                "error": "Subjects not provided",
+                "message": "Please provide a subject."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get existing assignments for this user
+        existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
+
+        # Check for duplicate assignments
+        already_assigned = set(assign_user_subjects) & set(existing_subjects)
+        if already_assigned:
+            return Response({
+                "error": "User is already assigned to some subjects",
+                "message": f"This user is already assigned to subjects with IDs: {list(already_assigned)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create or get AssignedQuestionUser instance
+        assigned_user_subject, created = AssignedQuestionUser.objects.get_or_create(user=user)
+        subjects_to_assign = Subject.objects.filter(id__in=assign_user_subjects)
+
+        # Assign subjects to the user
+        assigned_user_subject.subject.set(subjects_to_assign)
+
+        # Serialize and return response
+        assign_user_subject_serializer = AssignedQuestionUserSerializer(assigned_user_subject)
+        return Response({
+            "user": user_serializer.data,
+            "subjects": assign_user_subject_serializer.data,
+            "message": "User and subjects assigned successfully"
+        }, status=status.HTTP_201_CREATED)

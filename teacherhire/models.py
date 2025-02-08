@@ -298,8 +298,8 @@ class Exam(models.Model):
 
 class AssignedQuestionUser(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    
+    subject = models.ManyToManyField(Subject)
+
     def __str__(self):
         return str(self.user.id)
 
