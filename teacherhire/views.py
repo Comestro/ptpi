@@ -37,7 +37,6 @@ import re
 from datetime import date
 from django.db.models import Count
 from django.contrib.auth.hashers import make_password
-# from googletrans import Translator
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
@@ -994,11 +993,11 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if data.get("language") == "English":
             hindi_data = data.copy()
 
-            # Translate fields using the `translate` package
+            # Translate fields 
             hindi_data["text"] = translator.translate(data.get("text", ""))
             hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
 
-            # Translate options (JSON field)
+            # Translate options
             hindi_options = {}
             if isinstance(data["options"], dict):
                 for key, value in data["options"].items():
