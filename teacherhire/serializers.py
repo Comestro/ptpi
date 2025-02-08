@@ -513,7 +513,7 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExamResult
-        fields = '__all__'
+        fields = ['exam', 'correct_answer', 'created_at']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -672,6 +672,8 @@ class InterviewSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         return representation
+    
+
 class TeacherSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
     profiles = BasicProfileSerializer(required=False)
@@ -679,17 +681,27 @@ class TeacherSerializer(serializers.ModelSerializer):
     teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
     teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
     preferences = PreferenceSerializer(many=True, required=False)
+    total_marks = serializers.SerializerMethodField()
 
     class Meta:
-        model = CustomUser 
+        model = CustomUser
         fields = [
-            'id', 'Fname', 'Lname', 'email', 'profiles', 
+            'id', 'Fname', 'Lname', 'email', 'profiles',
             'teacherskill', 'teachersaddress', 
-            'teacherexperiences', 'teacherqualifications', 'preferences'
+            'teacherexperiences', 'teacherqualifications', 
+            'preferences', 'total_marks'
         ]
+
+    def get_total_marks(self, instance):
+        last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').first()
+        return last_result.correct_answer if last_result else 0
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        
+        if 'total_marks' not in representation:
+            representation['total_marks'] = self.get_total_marks(instance)
+        
         if 'teacherskill' in representation:
             representation['teacherskill'] = [
                 {'skill': skill.get('skill')} for skill in representation['teacherskill']
@@ -700,20 +712,28 @@ class TeacherSerializer(serializers.ModelSerializer):
             ]
         if 'teacherexperiences' in representation:
             representation['teacherexperiences'] = [
-                {'start_date': experience.get('start_date'), 'end_date': experience.get('end_date'),'achievements': experience.get('achievements')}
+                {'start_date': experience.get('start_date'), 'end_date': experience.get('end_date'), 'achievements': experience.get('achievements')}
                 for experience in representation['teacherexperiences']
             ]
         if 'profiles' in representation and representation['profiles'] is not None:
-            representation['profiles'] = {
-                'bio': representation['profiles'].get('bio', ''),
-                'phone_number': representation['profiles'].get('phone_number', None),
-                'religion': representation['profiles'].get('religion', None),
-                'profile_picture': representation['profiles'].get('profile_picture', None),
-                'date_of_birth': representation['profiles'].get('date_of_birth', None),
-                'marital_status': representation['profiles'].get('marital_status', None),
-                'gender': representation['profiles'].get('gender', None),
-                'language': representation['profiles'].get('language', None),
+            # Filter out empty/None fields if you want to reduce unnecessary data
+            profile_data = representation['profiles']
+            profile_filtered = {
+                'bio': profile_data.get('bio', ''),
+                'phone_number': profile_data.get('phone_number', None),
+                'religion': profile_data.get('religion', None),
+                'profile_picture': profile_data.get('profile_picture', None),
+                'date_of_birth': profile_data.get('date_of_birth', None),
+                'marital_status': profile_data.get('marital_status', None),
+                'gender': profile_data.get('gender', None),
+                'language': profile_data.get('language', None),
             }
+            # Only include profiles if there's actual data
+            if any(value is not None for value in profile_filtered.values()):
+                representation['profiles'] = profile_filtered
+            else:
+                del representation['profiles']
+
         if 'preferences' in representation:
             representation['preferences'] = [
                 {
@@ -723,7 +743,9 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'teacher_job_type': preference.get('teacher_job_type'),
                 } for preference in representation['preferences']
             ]
+        
         return representation
+
 
 class ExamCenterSerializer(serializers.ModelSerializer):
     class Meta:
