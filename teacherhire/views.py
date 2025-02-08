@@ -9,11 +9,12 @@ from teacherhire.serializers import *
 from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
-from .permissions import IsRecruiterPermission, IsAdminPermission
+from .permissions import *
 import uuid
 import random
 from django.core.mail import send_mail
 import re
+from translate import Translator
 from django.utils import timezone
 from datetime import date, timedelta
 from django.utils.timezone import now
@@ -36,11 +37,19 @@ import re
 from datetime import date
 from django.db.models import Count
 from django.contrib.auth.hashers import make_password
+from googletrans import Translator
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
+    
+class TranslatorView(APIView):
+    def get(self, request):
+        translator = Translator(to_lang="hi")
+        translation = translator.translate("What are the functions of a DBMS?")
+        return Response(data={"translation": translation}, status=status.HTTP_200_OK)
+    
 class AdminView(APIView):
     permission_classes = [IsAdminPermission]
 
@@ -391,7 +400,7 @@ class LevelViewSet(viewsets.ModelViewSet):
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class SkillViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Skill.objects.all()    
     serializer_class = SkillSerializer
@@ -487,7 +496,7 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class SubjectViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission] 
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
@@ -546,7 +555,7 @@ def get_pincodes_by_post_office(post_office_name):
 #     serializer_class = RecruiterSerializer
 
 class TeacherViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRecruiterPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer    
     
@@ -677,7 +686,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
         return None
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset= ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
@@ -696,7 +705,7 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class ReasonViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset= Reason.objects.all()
     serializer_class = ReasonSerializer
@@ -920,7 +929,61 @@ class QuestionViewSet(viewsets.ModelViewSet):
     serializer_class = QuestionSerializer
 
     def create(self, request):
-        return create_object(QuestionSerializer, request.data, Question)
+        data = request.data
+        translator = Translator()
+
+        # Get the exam ID from request
+        exam_id = data.get("exam")
+        if not exam_id:
+            return Response({"error": "Exam ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure exam exists
+        try:
+            exam = Exam.objects.get(pk=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Create English version
+        english_serializer = QuestionSerializer(data=data)
+        if english_serializer.is_valid():
+            english_question = english_serializer.save()
+        else:
+            return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create Hindi version if the question is in English
+        hindi_serializer = None
+        if data.get("language") == "English":
+            hindi_data = data.copy()
+
+            # Translate fields
+            hindi_data["text"] = translator.translate(data.get("text", ""), src="en", dest="hi").text
+            hindi_data["solution"] = translator.translate(data.get("solution", ""), src="en", dest="hi").text if data.get("solution") else ""
+
+            # Translate options (JSON field)
+            hindi_options = {}
+            if isinstance(data["options"], dict):
+                for key, value in data["options"].items():
+                    hindi_options[key] = translator.translate(value, src="en", dest="hi").text
+            elif isinstance(data["options"], list):
+                hindi_options = [translator.translate(option, src="en", dest="hi").text for option in data["options"]]
+
+            hindi_data["options"] = hindi_options
+            hindi_data["language"] = "Hindi" 
+
+            hindi_data["exam"] = exam_id  
+
+            # Create Hindi question
+            hindi_serializer = QuestionSerializer(data=hindi_data)
+            if hindi_serializer.is_valid():
+                hindi_question = hindi_serializer.save()
+            else:
+                return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "message": "Question stored in English and Hindi",
+            "english_data": english_serializer.data,
+            "hindi_data": hindi_serializer.data if hindi_serializer else None
+        }, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'])
     def count(self, request):
@@ -994,7 +1057,7 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RoleViewSet(viewsets.ModelViewSet):    
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication] 
     queryset= Role.objects.all()
     serializer_class = RoleSerializer
@@ -1124,7 +1187,7 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(datRa=data)
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -1489,7 +1552,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Customuser not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
@@ -4679,7 +4742,7 @@ def insert_data(request):
     return JsonResponse(response_data)
 
 class ReportViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacherPermission]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
