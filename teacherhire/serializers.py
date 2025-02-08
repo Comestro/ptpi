@@ -781,3 +781,9 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = AssignedQuestionUser
         fields = ['user', 'subject']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+        return representation
