@@ -37,7 +37,8 @@ import re
 from datetime import date
 from django.db.models import Count
 from django.contrib.auth.hashers import make_password
-from googletrans import Translator
+# from googletrans import Translator
+
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
 
@@ -979,7 +980,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         except AssignedQuestionUser.DoesNotExist:
             return Response({"error": "You are not assigned to post questions for this subject."}, status=status.HTTP_403_FORBIDDEN)
 
-        translator = Translator()
+        translator = Translator(to_lang="hi")  
 
         # Create English version
         english_serializer = QuestionSerializer(data=data)
@@ -993,26 +994,25 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if data.get("language") == "English":
             hindi_data = data.copy()
 
-            # Translate fields
-            hindi_data["text"] = translator.translate(data.get("text", ""), src="en", dest="hi").text
-            hindi_data["solution"] = translator.translate(data.get("solution", ""), src="en", dest="hi").text if data.get("solution") else ""
+            # Translate fields using the `translate` package
+            hindi_data["text"] = translator.translate(data.get("text", ""))
+            hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
 
             # Translate options (JSON field)
             hindi_options = {}
             if isinstance(data["options"], dict):
                 for key, value in data["options"].items():
-                    hindi_options[key] = translator.translate(value, src="en", dest="hi").text
-            elif isinstance(data["options"], list):  # ✅ FIX: Handle list-type options
-                hindi_options = [translator.translate(option, src="en", dest="hi").text for option in data["options"]]
+                    hindi_options[key] = translator.translate(value)
+            elif isinstance(data["options"], list):
+                hindi_options = [translator.translate(option) for option in data["options"]]
 
             hindi_data["options"] = hindi_options
             hindi_data["language"] = "Hindi"
             hindi_data["exam"] = exam_id 
             
-            # ✅ FIX: Assign assigneduser explicitly
             hindi_serializer = QuestionSerializer(data=hindi_data)
             if hindi_serializer.is_valid():
-                hindi_question = hindi_serializer.save(assigneduser=assigneduser)  # ✅ FIXED
+                hindi_question = hindi_serializer.save(assigneduser=assigneduser) 
             else:
                 return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
