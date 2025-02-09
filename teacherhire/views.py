@@ -25,6 +25,7 @@ from fuzzywuzzy import process, fuzz
 from django.db.models import Q
 from datetime import date
 from django.db.models import Count
+from django.core.mail import send_mail
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterPermission]
