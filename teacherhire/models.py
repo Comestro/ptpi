@@ -274,8 +274,16 @@ class ExamCenter(models.Model):
 
     def __str__(self):
         return self.center_name
+    
+class AssignedQuestionUser(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    subject = models.ManyToManyField(Subject)
+
+    def __str__(self):
+        return str(self.user.id)
 
 class Exam(models.Model):
+    assigneduser = models.ForeignKey(AssignedQuestionUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
@@ -296,16 +304,8 @@ class Exam(models.Model):
     def __str__(self):
         return self.name 
 
-class AssignedQuestionUser(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    subject = models.ManyToManyField(Subject)
-
-    def __str__(self):
-        return str(self.user.id)
-
 class Question(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
-    assigneduser = models.ForeignKey(AssignedQuestionUser, on_delete=models.CASCADE)
     time = models.FloatField(default=2.5)
     language = models.CharField(
         max_length=20,

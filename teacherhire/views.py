@@ -780,7 +780,10 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data.copy()
         qualification = data.get('qualification')  # Slug value of the qualification
-        year_of_passing = int(data.get('year_of_passing')) if data.get('year_of_passing') else None
+        try:
+            year_of_passing = int(data.get('year_of_passing'))  
+        except (ValueError, TypeError):
+            return Response({"error":"Please Enter a valid year."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not qualification or not year_of_passing:
             return Response(
@@ -935,24 +938,24 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if not exam_id:
             return Response({"error": "Exam ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Ensure the exam exists
+        # Ensure the user is assigned to an `AssignedQuestionUser` instance
         try:
-            exam = Exam.objects.get(pk=exam_id)
-        except Exam.DoesNotExist:
-            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check if the user is assigned to this subject
-        try:
-            assigneduser = AssignedQuestionUser.objects.get(user=request.user, subject=exam.subject)
+            assigned_user = AssignedQuestionUser.objects.get(user=request.user)
         except AssignedQuestionUser.DoesNotExist:
-            return Response({"error": "You are not assigned to post questions for this subject."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
 
-        translator = Translator(to_lang="hi")  
+        # Ensure the exam exists and is assigned to the correct `AssignedQuestionUser`
+        try:
+            exam = Exam.objects.get(pk=exam_id, assigneduser=assigned_user)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found or you do not have permission."}, status=status.HTTP_404_NOT_FOUND)
+
+        translator = Translator(to_lang="hi")
 
         # Create English version
         english_serializer = QuestionSerializer(data=data)
         if english_serializer.is_valid():
-            english_question = english_serializer.save(assigneduser=assigneduser)
+            english_question = english_serializer.save()
         else:
             return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -976,10 +979,10 @@ class QuestionViewSet(viewsets.ModelViewSet):
             hindi_data["options"] = hindi_options
             hindi_data["language"] = "Hindi"
             hindi_data["exam"] = exam_id 
-            
+
             hindi_serializer = QuestionSerializer(data=hindi_data)
             if hindi_serializer.is_valid():
-                hindi_question = hindi_serializer.save(assigneduser=assigneduser) 
+                hindi_question = hindi_serializer.save() 
             else:
                 return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1812,8 +1815,21 @@ class ExamViewSet(viewsets.ModelViewSet):
     serializer_class = ExamSerializer
 
     def create(self, request):
-        return create_object(ExamSerializer, request.data, Exam)
+        user = request.user
+        subject = request.data.get('subject')
 
+        # Check if the user is assigned to this subject
+        try:
+            assigned_user = AssignedQuestionUser.objects.get(user=user, subject=subject)
+        except AssignedQuestionUser.DoesNotExist:
+            return Response({"error": "You are not assigned to post questions for this subject."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Proceed with exam creation
+        serializer = ExamSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(assigneduser=assigned_user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(Exam)
@@ -2054,70 +2070,70 @@ def insert_data(request):
                 {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
                 {"center_name": "Epsilon Exam Center", "pincode": "555555", "state": "State E", "city": "City E", "area": "Area E"},
             ]
-        },
+        },   
         "Exams": {
             "model": Exam,
             "field": "name",
             "data": [
-                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set A", "assigneduser": 1, "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
                  "total_marks": 100, "duration": 180, "type": "online"},
-                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set B", "assigneduser": 1, "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set C", "assigneduser": 1, "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
                  "total_marks": 200, "duration": 240, "type": "online"},
-                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                {"name": "Set A", "assigneduser": 1, "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
                  "total_marks": 100, "duration": 180, "type": "online"},
-                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                {"name": "Set B", "assigneduser": 1, "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                {"name": "Set C", "assigneduser": 1, "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                {"name": "Set A", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                {"name": "Set B", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                {"name": "Set C", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 200, "duration": 240, "type": "online"},
-                {"name": "Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                {"name": "Set A", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 100, "duration": 180, "type": "online"},
-                {"name": "Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                {"name": "Set B", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                {"name": "Set C", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Offline Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                {"name": "Offline Set A", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                {"name": "Offline Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                {"name": "Offline Set B", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
+                {"name": "Offline Set C", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set A", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 {"name": "Offline Set A", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set B", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 {"name": "Offline Set B", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set C", "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
+                 {"name": "Offline Set C", "assigneduser": 1, "class_category": "1 to 5", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set A", "assigneduser": 1, "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set B", "assigneduser": 1, "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set C", "assigneduser": 1, "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 {"name": "Set A", "assigneduser": 1, "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 {"name": "Set B", "assigneduser": 1, "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
+                 {"name": "Set C", "assigneduser": 1, "class_category": "6 to 10", "level": "2nd Level", "subject": "Maths",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set A", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 {"name": "Set A", "assigneduser": 1, "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 {"name": "Set B", "assigneduser": 1, "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 {"name": "Set C", "assigneduser": 1, "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set A", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 {"name": "Set A", "assigneduser": 1, "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 {"name": "Set B", "assigneduser": 1, "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
+                 {"name": "Set C", "assigneduser": 1, "class_category": "6 to 10", "level": "2nd Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
             ]
         },
@@ -2150,18 +2166,20 @@ def insert_data(request):
                 class_category_name = entry.get("class_category")
                 level_name = entry.get("level")
                 subject_name = entry.get("subject")
+                assigneduser = entry.get("assigneduser")
 
                 # Fetch related objects
                 class_category, _ = ClassCategory.objects.get_or_create(name=class_category_name)
                 level, _ = Level.objects.get_or_create(name=level_name)
                 subject, _ = Subject.objects.get_or_create(subject_name=subject_name)
-
+                assigneduser, _ = AssignedQuestionUser.objects.get_or_create(id=assigneduser)
                 if not model.objects.filter(
                         name=name,
                         class_category=class_category,
                         level=level,
                         subject=subject,
-                        type=type
+                        type=type,
+                        assigneduser=assigneduser
                 ).exists():
                     model.objects.create(
                         name=name,
@@ -2170,7 +2188,8 @@ def insert_data(request):
                         class_category=class_category,
                         level=level,
                         subject=subject,
-                        type=type
+                        type=type,
+                        assigneduser=assigneduser
                     )
                     added_count += 1
             else:  # Handle other data
@@ -2184,11 +2203,10 @@ def insert_data(request):
         }
 
     exams = Exam.objects.all()
-    user = AssignedQuestionUser.objects.get(id=1)
     if exams.exists():
         questions_data = [
     {
-                "assigneduser": user,
+                
                 "exam": exams[0],
                 "time": 1.5,
                 "language": "English",
@@ -2198,7 +2216,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[2],
                 "time": 2.5,
                 "language": "English",
@@ -2209,7 +2227,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[3],
                 "time": 2.5,
                 "language": "English",
@@ -2219,7 +2237,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[4],
                 "language": "English",
                 "time": 1.5,
@@ -2229,7 +2247,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[5],
                 "language": "English",
                 "time": 1.5,
@@ -2241,7 +2259,6 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
                 "exam": exams[6],
                 "time": 1.5,
                 "language": "English",
@@ -2250,8 +2267,7 @@ def insert_data(request):
                 "solution": "The correct answer is 'All of the above'. INNER JOIN, OUTER JOIN, and CROSS JOIN are all types of SQL joins.",
                 "correct_option": 3
             },
-            {
-                "assigneduser": user,
+            {               
                 "exam": exams[7],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2260,8 +2276,7 @@ def insert_data(request):
                 "solution": "नई दिल्ली भारत की राजधानी है।",
                 "correct_option": 1
             },
-            {
-                "assigneduser": user,
+            { 
                 "exam": exams[8],
                 "time": 1.5,
                 "language": "English",
@@ -2271,7 +2286,6 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
                 "exam": exams[9],
                 "time": 1.5,
                 "language": "English",
@@ -2281,7 +2295,6 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
                 "exam": exams[9],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2291,7 +2304,6 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
                 "exam": exams[10],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2301,7 +2313,6 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
                 "exam": exams[11],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2311,7 +2322,6 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
                 "exam": exams[5],
                 "time": 1.5,
                 "language": "English",
@@ -2321,7 +2331,6 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
                 "exam": exams[0],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2331,7 +2340,6 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
                 "exam": exams[1],
                 "time": 1.5,
                 "language": "English",
@@ -2341,7 +2349,6 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
                 "exam": exams[2],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2351,7 +2358,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[3],
                 "time": 1.5,
                 "language": "English",
@@ -2361,7 +2368,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[4],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2372,7 +2379,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[5],
                 "time": 1.5,
                 "language": "English",
@@ -2382,7 +2389,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[6],
                 "time": 1.5,
                 "language": "Hindi",
@@ -2392,7 +2399,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[7],
                 "time": 1.5,
                 "language": "English",
@@ -2402,7 +2409,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[8],
                 "time": 1.5,
                 "language": "English",
@@ -2412,7 +2419,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[9],
                 "time": 1.5,
                 "language": "English",
@@ -2422,7 +2429,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[10],
                 "time": 1.5,
                 "language": "English",
@@ -2432,7 +2439,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[1],
                 "time": 1.5,
                 "language": "English",
@@ -2442,7 +2449,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[2],
                 "time": 1.5,
                 "language": "English",
@@ -2452,7 +2459,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[3],
                 "time": 1.5,
                 "language": "English",
@@ -2462,7 +2469,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[4],
                 "time": 2.5,
                 "language": "English",
@@ -2472,7 +2479,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[5],
                 "time": 2.5,
                 "language": "English",
@@ -2482,7 +2489,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[6],
                 "time": 2.5,
                 "language": "English",
@@ -2492,7 +2499,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[1],
                 "time": 2.5,
                 "language": "English",
@@ -2502,7 +2509,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[2],
                 "time": 2.5,
                 "language": "English",
@@ -2512,7 +2519,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[3],
                 "time": 2.5,
                 "language": "English",
@@ -2522,7 +2529,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[4],
                 "time": 2.5,
                 "language": "English",
@@ -2532,7 +2539,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[5],
                 "time": 2.5,
                 "language": "English",
@@ -2542,7 +2549,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[6],
                 "time": 2.5,
                 "language": "English",
@@ -2552,7 +2559,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[7],
                 "time": 2.5,
                 "language": "English",
@@ -2562,7 +2569,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[8],
                 "time": 2.5,
                 "language": "English",
@@ -2572,7 +2579,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[9],
                 "time": 2.5,
                 "language": "English",
@@ -2582,7 +2589,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[10],
                 "time": 2.5,
                 "language": "English",
@@ -2592,7 +2599,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[0],
                 "time": 2.5,
                 "language": "English",
@@ -2602,7 +2609,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[1],
                 "time": 2.5,
                 "language": "English",
@@ -2612,7 +2619,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[2],
                 "time": 2.5,
                 "language": "English",
@@ -2622,7 +2629,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[3],
                 "time": 2.5,
                 "language": "English",
@@ -2632,7 +2639,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[4],
                 "time": 2.5,
                 "language": "English",
@@ -2642,7 +2649,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[5],
                 "time": 2.5,
                 "language": "English",
@@ -2652,7 +2659,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[6],
                 "time": 2.5,
                 "language": "English",
@@ -2662,7 +2669,7 @@ def insert_data(request):
                 "correct_option": 3
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[7],
                 "time": 2.5,
                 "language": "English",
@@ -2672,7 +2679,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[8],
                 "time": 2.5,
                 "language": "English",
@@ -2682,7 +2689,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[9],
                 "time": 2.5,
                 "language": "English",
@@ -2692,7 +2699,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[12],
                 "time": 2.5,
                 "language": "English",
@@ -2702,7 +2709,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[12],
                 "time": 2.5,
                 "language": "English",
@@ -2712,7 +2719,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[13],
                 "time": 2.5,
                 "language": "English",
@@ -2727,7 +2734,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[13],
                 "time": 2.5,
                 "language": "English",
@@ -2737,7 +2744,7 @@ def insert_data(request):
                 "correct_option": 2
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[14],
                 "time": 2.5,
                 "language": "English",
@@ -2752,7 +2759,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-                "assigneduser": user,
+                
                 "exam": exams[14],
                 "time": 2.5,
                 "language": "English",
@@ -2767,7 +2774,7 @@ def insert_data(request):
                 "correct_option": 1
             },
             {
-        "assigneduser": user,
+        
                 "exam": exams[15],
         "time": 2.5,
         "language": "English",
@@ -2777,7 +2784,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[15],
         "time": 2.5,
         "language": "English",
@@ -2787,7 +2794,7 @@ def insert_data(request):
         "correct_option": 3
     },
     { 
-        "assigneduser": user,
+        
                 "exam": exams[16],
         "time": 1.5,
         "language": "English",
@@ -2797,7 +2804,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[16],
         "time": 1.5,
         "language": "English",
@@ -2807,7 +2814,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[17],
         "time": 1.5,
         "language": "English",
@@ -2817,7 +2824,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "English",
@@ -2827,7 +2834,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "English",
@@ -2837,7 +2844,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "English",
@@ -2847,7 +2854,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "English",
@@ -2857,7 +2864,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "English",
@@ -2867,7 +2874,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
@@ -2877,7 +2884,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
@@ -2887,7 +2894,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
@@ -2897,7 +2904,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
@@ -2907,7 +2914,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[0],
         "time": 1.5,
         "language": "Hindi",
@@ -2917,7 +2924,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "English",
@@ -2927,7 +2934,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "English",
@@ -2937,7 +2944,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "English",
@@ -2947,7 +2954,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "English",
@@ -2957,7 +2964,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "English",
@@ -2967,7 +2974,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
@@ -2977,7 +2984,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
@@ -2987,7 +2994,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
@@ -2997,7 +3004,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
@@ -3007,7 +3014,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[1],
         "time": 1.5,
         "language": "Hindi",
@@ -3017,7 +3024,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "English",
@@ -3027,7 +3034,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "English",
@@ -3037,7 +3044,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "English",
@@ -3047,7 +3054,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "English",
@@ -3057,7 +3064,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "English",
@@ -3067,7 +3074,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
@@ -3077,7 +3084,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
@@ -3087,7 +3094,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
@@ -3097,7 +3104,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
@@ -3107,7 +3114,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[2],
         "time": 1.5,
         "language": "Hindi",
@@ -3117,7 +3124,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "English",
@@ -3127,7 +3134,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
@@ -3137,7 +3144,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "English",
@@ -3147,7 +3154,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
@@ -3157,7 +3164,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "English",
@@ -3167,7 +3174,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
@@ -3177,7 +3184,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "English",
@@ -3187,7 +3194,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
@@ -3197,7 +3204,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "English",
@@ -3207,7 +3214,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[3],
         "time": 1.5,
         "language": "Hindi",
@@ -3217,7 +3224,7 @@ def insert_data(request):
         "correct_option": 2
     },
      {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "English",
@@ -3227,7 +3234,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
@@ -3237,7 +3244,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "English",
@@ -3247,7 +3254,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
@@ -3257,7 +3264,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "English",
@@ -3267,7 +3274,7 @@ def insert_data(request):
     "correct_option": 1
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
@@ -3277,7 +3284,7 @@ def insert_data(request):
     "correct_option": 1
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "English",
@@ -3287,7 +3294,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
@@ -3297,7 +3304,7 @@ def insert_data(request):
     "correct_option": 2
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "English",
@@ -3307,7 +3314,7 @@ def insert_data(request):
     "correct_option": 3
   },
   {
-    "assigneduser": user,
+    
                 "exam": exams[4],
     "time": 1.5,
     "language": "Hindi",
@@ -3317,7 +3324,7 @@ def insert_data(request):
     "correct_option": 3
   },
   {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "English",
@@ -3327,7 +3334,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "English",
@@ -3337,7 +3344,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "English",
@@ -3347,7 +3354,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "English",
@@ -3357,7 +3364,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "English",
@@ -3367,7 +3374,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
@@ -3377,7 +3384,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
@@ -3387,7 +3394,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
@@ -3397,7 +3404,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
@@ -3407,7 +3414,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[5],
         "time": 1.5,
         "language": "Hindi",
@@ -3417,7 +3424,7 @@ def insert_data(request):
         "correct_option": 1
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "English",
@@ -3427,7 +3434,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "English",
@@ -3437,7 +3444,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "English",
@@ -3447,7 +3454,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "English",
@@ -3457,7 +3464,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "English",
@@ -3467,7 +3474,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
@@ -3477,7 +3484,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
@@ -3487,7 +3494,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
@@ -3497,7 +3504,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
@@ -3507,7 +3514,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[6],
         "time": 1.5,
         "language": "Hindi",
@@ -3517,7 +3524,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "English",
         "text": "What is 15 - 7?",
@@ -3526,7 +3533,7 @@ def insert_data(request):
         "solution": "15 - 7 = 8."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "English",
         "text": "What is the smallest 2-digit number?",
@@ -3535,7 +3542,7 @@ def insert_data(request):
         "solution": "The smallest two-digit number is 10."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "English",
         "text": "How many sides does a pentagon have?",
@@ -3544,7 +3551,7 @@ def insert_data(request):
         "solution": "A pentagon has 5 sides."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "English",
         "text": "What is 25 ÷ 5?",
@@ -3553,7 +3560,7 @@ def insert_data(request):
         "solution": "25 ÷ 5 = 5."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "English",
         "text": "What comes after 499?",
@@ -3562,7 +3569,7 @@ def insert_data(request):
         "solution": "The number after 499 is 500."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "Hindi",
         "text": "15 - 7 क्या है?",
@@ -3571,7 +3578,7 @@ def insert_data(request):
         "solution": "15 - 7 = 8।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "Hindi",
         "text": "सबसे छोटी दो-अंकीय संख्या क्या है?",
@@ -3580,7 +3587,7 @@ def insert_data(request):
         "solution": "सबसे छोटी दो-अंकीय संख्या 10 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "Hindi",
         "text": "पंचभुज में कितने भुजाएँ होती हैं?",
@@ -3589,7 +3596,7 @@ def insert_data(request):
         "solution": "पंचभुज में 5 भुजाएँ होती हैं।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "Hindi",
         "text": "25 ÷ 5 कितना है?",
@@ -3598,7 +3605,7 @@ def insert_data(request):
         "solution": "25 ÷ 5 = 5।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[7],
         "language": "Hindi",
         "text": "499 के बाद कौन सी संख्या आती है?",
@@ -3607,7 +3614,7 @@ def insert_data(request):
         "solution": "499 के बाद 500 आती है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "English",
         "text": "What is 12 + 8?",
@@ -3616,7 +3623,7 @@ def insert_data(request):
         "solution": "12 + 8 = 20."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "English",
         "text": "How many hours are there in 2 days?",
@@ -3625,7 +3632,7 @@ def insert_data(request):
         "solution": "2 days × 24 hours/day = 48 hours."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "English",
         "text": "Which shape has 4 equal sides?",
@@ -3634,7 +3641,7 @@ def insert_data(request):
         "solution": "A square has 4 equal sides."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "English",
         "text": "What is 5 × 6?",
@@ -3643,7 +3650,7 @@ def insert_data(request):
         "solution": "5 × 6 = 30."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "English",
         "text": "What is 100 minus 45?",
@@ -3652,7 +3659,7 @@ def insert_data(request):
         "solution": "100 - 45 = 55."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "Hindi",
         "text": "12 + 8 क्या है?",
@@ -3661,7 +3668,7 @@ def insert_data(request):
         "solution": "12 + 8 = 20।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "Hindi",
         "text": "2 दिनों में कितने घंटे होते हैं?",
@@ -3670,7 +3677,7 @@ def insert_data(request):
         "solution": "2 दिनों में 48 घंटे होते हैं।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "Hindi",
         "text": "कौन सा आकार चार बराबर भुजाएँ रखता है?",
@@ -3679,7 +3686,7 @@ def insert_data(request):
         "solution": "वर्ग चार बराबर भुजाएँ रखता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "Hindi",
         "text": "5 × 6 कितना है?",
@@ -3688,7 +3695,7 @@ def insert_data(request):
         "solution": "5 × 6 = 30।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[8],
         "language": "Hindi",
         "text": "100 में से 45 घटाने पर क्या प्राप्त होगा?",
@@ -3697,7 +3704,7 @@ def insert_data(request):
         "solution": "100 - 45 = 55।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "English",
         "text": "What is the source of energy for the sun?",
@@ -3706,7 +3713,7 @@ def insert_data(request):
         "solution": "The sun's energy comes from nuclear fusion, where hydrogen atoms combine to form helium, releasing a vast amount of energy."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "English",
         "text": "What force pulls objects towards the Earth?",
@@ -3715,7 +3722,7 @@ def insert_data(request):
         "solution": "Gravity is the force that pulls objects towards the Earth's center due to its mass."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "English",
         "text": "Which is the lightest planet in the solar system?",
@@ -3724,7 +3731,7 @@ def insert_data(request):
         "solution": "Mercury is the lightest planet in the solar system due to its small size and low mass."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "English",
         "text": "What do we use to see very small objects?",
@@ -3733,7 +3740,7 @@ def insert_data(request):
         "solution": "A microscope is used to observe very small objects by magnifying them to make them visible."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "English",
         "text": "What is formed when light passes through a prism?",
@@ -3742,7 +3749,7 @@ def insert_data(request):
         "solution": "When light passes through a prism, it splits into its constituent colors, forming a spectrum."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "Hindi",
         "text": "सूरज का ऊर्जा स्रोत क्या है?",
@@ -3751,7 +3758,7 @@ def insert_data(request):
         "solution": "सूरज की ऊर्जा का स्रोत नाभिकीय संलयन है, जिसमें हाइड्रोजन परमाणु मिलकर हीलियम बनाते हैं और ऊर्जा उत्पन्न करते हैं।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "Hindi",
         "text": "पृथ्वी की ओर वस्तुओं को खींचने वाला बल कौन सा है?",
@@ -3760,7 +3767,7 @@ def insert_data(request):
         "solution": "गुरुत्वाकर्षण बल पृथ्वी की ओर वस्तुओं को खींचता है क्योंकि यह पृथ्वी के द्रव्यमान के कारण उत्पन्न होता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "Hindi",
         "text": "सौरमंडल में सबसे हल्का ग्रह कौन सा है?",
@@ -3769,7 +3776,7 @@ def insert_data(request):
         "solution": "बुध सौरमंडल का सबसे हल्का ग्रह है क्योंकि इसका आकार और द्रव्यमान बहुत छोटा है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "Hindi",
         "text": "बहुत छोटे वस्तुओं को देखने के लिए हम क्या उपयोग करते हैं?",
@@ -3778,7 +3785,7 @@ def insert_data(request):
         "solution": "बहुत छोटे वस्तुओं को देखने के लिए सूक्ष्मदर्शी का उपयोग किया जाता है, जो वस्तुओं को बड़ा दिखाने में मदद करता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[9],
         "language": "Hindi",
         "text": "प्रिज्म से प्रकाश गुजरने पर क्या बनता है?",
@@ -3788,7 +3795,7 @@ def insert_data(request):
     },
 
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "English",
@@ -3798,7 +3805,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "English",
@@ -3808,7 +3815,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "English",
@@ -3818,7 +3825,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "English",
@@ -3828,7 +3835,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "English",
@@ -3838,7 +3845,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
@@ -3848,7 +3855,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
@@ -3858,7 +3865,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
@@ -3868,7 +3875,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
@@ -3878,7 +3885,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[10],
         "time": 1.5,
         "language": "Hindi",
@@ -3888,7 +3895,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "English",
         "text": "What is the force that pulls objects towards the Earth?",
@@ -3897,7 +3904,7 @@ def insert_data(request):
         "solution": "Gravity is the force that pulls objects towards the Earth."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "English",
         "text": "Which of the following is the source of light during the day?",
@@ -3906,7 +3913,7 @@ def insert_data(request):
         "solution": "The Sun is the source of light during the day."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "English",
         "text": "What is the state of water when it freezes?",
@@ -3915,7 +3922,7 @@ def insert_data(request):
         "solution": "Water turns into a solid state when it freezes."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "English",
         "text": "What tool do we use to measure the weight of an object?",
@@ -3924,7 +3931,7 @@ def insert_data(request):
         "solution": "A spring scale is used to measure the weight of an object."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "English",
         "text": "What happens when you heat a solid?",
@@ -3933,7 +3940,7 @@ def insert_data(request):
         "solution": "When you heat a solid, it can melt and turn into a liquid."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "Hindi",
         "text": "वह कौन सा बल है जो वस्तुओं को पृथ्वी की ओर खींचता है?",
@@ -3942,7 +3949,7 @@ def insert_data(request):
         "solution": "गुरुत्वाकर्षण वह बल है जो वस्तुओं को पृथ्वी की ओर खींचता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "Hindi",
         "text": "दिन के समय प्रकाश का स्रोत क्या है?",
@@ -3951,7 +3958,7 @@ def insert_data(request):
         "solution": "सूरज दिन के समय प्रकाश का मुख्य स्रोत है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "Hindi",
         "text": "जब पानी जमता है, तो उसकी अवस्था क्या होती है?",
@@ -3960,7 +3967,7 @@ def insert_data(request):
         "solution": "जब पानी जमता है, तो वह ठोस अवस्था में बदल जाता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "Hindi",
         "text": "हम किसी वस्तु का वजन मापने के लिए कौन सा यंत्र उपयोग करते हैं?",
@@ -3969,7 +3976,7 @@ def insert_data(request):
         "solution": "वजन मापने के लिए हम स्प्रिंग स्केल का उपयोग करते हैं।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[11],
         "language": "Hindi",
         "text": "जब आप किसी ठोस को गरम करते हैं, तो क्या होता है?",
@@ -3978,7 +3985,7 @@ def insert_data(request):
         "solution": "जब आप किसी ठोस को गरम करते हैं, तो वह पिघलकर तरल में बदल सकता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "English",
         "text": "What is the sum of 56 and 78?",
@@ -3987,7 +3994,7 @@ def insert_data(request):
         "solution": "The sum of 56 and 78 is 134."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "English",
         "text": "What is the product of 12 and 9?",
@@ -3996,7 +4003,7 @@ def insert_data(request):
         "solution": "The product of 12 and 9 is 108."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "English",
         "text": "What is 36 divided by 4?",
@@ -4005,7 +4012,7 @@ def insert_data(request):
         "solution": "36 divided by 4 equals 9."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "English",
         "text": "What is the square of 7?",
@@ -4014,7 +4021,7 @@ def insert_data(request):
         "solution": "The square of 7 is 49."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "English",
         "text": "What is the perimeter of a rectangle with length 8 cm and width 5 cm?",
@@ -4023,7 +4030,7 @@ def insert_data(request):
         "solution": "The perimeter of the rectangle is 26 cm (2 × (8 + 5))."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "Hindi",
         "text": "56 और 78 का योगफल क्या है?",
@@ -4032,7 +4039,7 @@ def insert_data(request):
         "solution": "56 और 78 का योगफल 134 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "Hindi",
         "text": "12 और 9 का गुणनफल क्या है?",
@@ -4041,7 +4048,7 @@ def insert_data(request):
         "solution": "12 और 9 का गुणनफल 108 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "Hindi",
         "text": "36 को 4 से भाग देने पर क्या प्राप्त होता है?",
@@ -4050,7 +4057,7 @@ def insert_data(request):
         "solution": "36 को 4 से भाग देने पर 9 प्राप्त होता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "Hindi",
         "text": "7 का वर्गफल क्या है?",
@@ -4059,7 +4066,7 @@ def insert_data(request):
         "solution": "7 का वर्गफल 49 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[18],
         "language": "Hindi",
         "text": "8 सेंटीमीटर लंबाई और 5 सेंटीमीटर चौड़ाई वाले आयत का परिमाप क्या होगा?",
@@ -4068,7 +4075,7 @@ def insert_data(request):
         "solution": "आयत का परिमाप 26 सेंटीमीटर होगा (2 × (8 + 5))."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "English",
         "text": "What is the sum of 45 and 63?",
@@ -4077,7 +4084,7 @@ def insert_data(request):
         "solution": "The sum of 45 and 63 is 108."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "English",
         "text": "What is the difference between 95 and 47?",
@@ -4086,7 +4093,7 @@ def insert_data(request):
         "solution": "The difference between 95 and 47 is 48."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "English",
         "text": "What is 15 multiplied by 6?",
@@ -4095,7 +4102,7 @@ def insert_data(request):
         "solution": "15 multiplied by 6 is 90."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "English",
         "text": "What is the area of a rectangle with length 10 cm and width 5 cm?",
@@ -4104,7 +4111,7 @@ def insert_data(request):
         "solution": "The area of the rectangle is 50 cm² (length × width)."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "English",
         "text": "What is the square root of 49?",
@@ -4113,7 +4120,7 @@ def insert_data(request):
         "solution": "The square root of 49 is 7."
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "Hindi",
         "text": "45 और 63 का योगफल क्या है?",
@@ -4122,7 +4129,7 @@ def insert_data(request):
         "solution": "45 और 63 का योगफल 108 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "Hindi",
         "text": "95 और 47 के बीच का अंतर क्या है?",
@@ -4131,7 +4138,7 @@ def insert_data(request):
         "solution": "95 और 47 के बीच का अंतर 48 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "Hindi",
         "text": "15 को 6 से गुणा करने पर क्या मिलता है?",
@@ -4140,7 +4147,7 @@ def insert_data(request):
         "solution": "15 को 6 से गुणा करने पर 90 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "Hindi",
         "text": "10 सेंटीमीटर लंबाई और 5 सेंटीमीटर चौड़ाई वाले आयत का क्षेत्रफल क्या है?",
@@ -4149,7 +4156,7 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 50 सेमी² है (लंबाई × चौड़ाई)।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[19],
         "language": "Hindi",
         "text": "49 का वर्गमूल क्या है?",
@@ -4158,7 +4165,7 @@ def insert_data(request):
         "solution": "49 का वर्गमूल 7 है।"
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "English",
         "text": "What is the sum of 125 and 75?",
@@ -4167,7 +4174,7 @@ def insert_data(request):
         "solution": "The sum of 125 and 75 is 200."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "English",
         "text": "What is the product of 12 and 8?",
@@ -4176,7 +4183,7 @@ def insert_data(request):
         "solution": "The product of 12 and 8 is 96."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "English",
         "text": "What is the perimeter of a square with side length 6 cm?",
@@ -4185,7 +4192,7 @@ def insert_data(request):
         "solution": "The perimeter of the square is 24 cm (4 × side length)."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "English",
         "text": "What is 72 divided by 9?",
@@ -4194,7 +4201,7 @@ def insert_data(request):
         "solution": "72 divided by 9 equals 8."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "English",
         "text": "What is the value of 15 raised to the power of 2?",
@@ -4203,7 +4210,7 @@ def insert_data(request):
         "solution": "15 raised to the power of 2 equals 225."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "Hindi",
         "text": "125 और 75 का योगफल क्या है?",
@@ -4212,7 +4219,7 @@ def insert_data(request):
         "solution": "125 और 75 का योगफल 200 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "Hindi",
         "text": "12 और 8 का गुणनफल क्या है?",
@@ -4221,7 +4228,7 @@ def insert_data(request):
         "solution": "12 और 8 का गुणनफल 96 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "Hindi",
         "text": "6 सेंटीमीटर लंबाई वाले वर्ग का परिमाप क्या है?",
@@ -4230,7 +4237,7 @@ def insert_data(request):
         "solution": "वर्ग का परिमाप 24 सेमी है (4 × लंबाई)।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "Hindi",
         "text": "72 को 9 से भाग करने पर क्या मिलता है?",
@@ -4239,7 +4246,7 @@ def insert_data(request):
         "solution": "72 को 9 से भाग करने पर 8 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[20],
         "language": "Hindi",
         "text": "15 का वर्गमूल क्या है?",
@@ -4248,7 +4255,7 @@ def insert_data(request):
         "solution": "15 का वर्गमूल 225 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "English",
         "text": "What is the square root of 81?",
@@ -4257,7 +4264,7 @@ def insert_data(request):
         "solution": "The square root of 81 is 9."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "English",
         "text": "What is the result of 15 × 4?",
@@ -4266,7 +4273,7 @@ def insert_data(request):
         "solution": "15 multiplied by 4 is 60."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "English",
         "text": "If a rectangle has a length of 8 cm and a width of 5 cm, what is its area?",
@@ -4275,7 +4282,7 @@ def insert_data(request):
         "solution": "The area of the rectangle is 40 cm² (length × width)."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "English",
         "text": "What is the sum of 56 and 44?",
@@ -4284,7 +4291,7 @@ def insert_data(request):
         "solution": "The sum of 56 and 44 is 100."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "English",
         "text": "What is the value of 100 ÷ 5?",
@@ -4293,7 +4300,7 @@ def insert_data(request):
         "solution": "100 divided by 5 is 20."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "Hindi",
         "text": "81 का वर्गमूल क्या है?",
@@ -4302,7 +4309,7 @@ def insert_data(request):
         "solution": "81 का वर्गमूल 9 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "Hindi",
         "text": "15 × 4 का परिणाम क्या है?",
@@ -4311,7 +4318,7 @@ def insert_data(request):
         "solution": "15 गुणा 4 का परिणाम 60 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "Hindi",
         "text": "यदि आयत की लंबाई 8 सेंटीमीटर और चौड़ाई 5 सेंटीमीटर है, तो उसका क्षेत्रफल क्या होगा?",
@@ -4320,7 +4327,7 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 40 वर्ग सेंटीमीटर है (लंबाई × चौड़ाई)।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "Hindi",
         "text": "56 और 44 का योगफल क्या है?",
@@ -4329,7 +4336,7 @@ def insert_data(request):
         "solution": "56 और 44 का योगफल 100 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[21],
         "language": "Hindi",
         "text": "100 ÷ 5 का मान क्या है?",
@@ -4338,7 +4345,7 @@ def insert_data(request):
         "solution": "100 को 5 से विभाजित करने पर 20 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "English",
         "text": "What is 18 ÷ 3?",
@@ -4347,7 +4354,7 @@ def insert_data(request):
         "solution": "18 divided by 3 is 6."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "English",
         "text": "What is the perimeter of a square with each side measuring 4 cm?",
@@ -4356,7 +4363,7 @@ def insert_data(request):
         "solution": "The perimeter of a square is 4 times the length of one side. 4 × 4 = 16 cm."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "English",
         "text": "What is 25 × 3?",
@@ -4365,7 +4372,7 @@ def insert_data(request):
         "solution": "25 multiplied by 3 is 75."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "English",
         "text": "What is the area of a rectangle with a length of 6 cm and width of 3 cm?",
@@ -4374,7 +4381,7 @@ def insert_data(request):
         "solution": "The area of the rectangle is 18 cm² (length × width)."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "English",
         "text": "What is the sum of 45 and 35?",
@@ -4383,7 +4390,7 @@ def insert_data(request):
         "solution": "The sum of 45 and 35 is 80."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "Hindi",
         "text": "18 ÷ 3 क्या है?",
@@ -4392,7 +4399,7 @@ def insert_data(request):
         "solution": "18 को 3 से विभाजित करने पर 6 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "Hindi",
         "text": "एक वर्ग का परिधि क्या है जिसका प्रत्येक किनारा 4 सेंटीमीटर है?",
@@ -4401,7 +4408,7 @@ def insert_data(request):
         "solution": "वर्ग का परिधि 4 गुना एक किनारे की लंबाई होती है। 4 × 4 = 16 सेंटीमीटर।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "Hindi",
         "text": "25 × 3 क्या है?",
@@ -4410,7 +4417,7 @@ def insert_data(request):
         "solution": "25 को 3 से गुणा करने पर 75 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "Hindi",
         "text": "एक आयत का क्षेत्रफल क्या होगा जिसकी लंबाई 6 सेंटीमीटर और चौड़ाई 3 सेंटीमीटर है?",
@@ -4419,7 +4426,7 @@ def insert_data(request):
         "solution": "आयत का क्षेत्रफल 18 वर्ग सेंटीमीटर होगा (लंबाई × चौड़ाई)।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[22],
         "language": "Hindi",
         "text": "45 और 35 का योगफल क्या है?",
@@ -4428,7 +4435,7 @@ def insert_data(request):
         "solution": "45 और 35 का योगफल 80 है।"
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "English",
         "text": "What is the square root of 64?",
@@ -4437,7 +4444,7 @@ def insert_data(request):
         "solution": "The square root of 64 is 8."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "English",
         "text": "What is 9 × 7?",
@@ -4446,7 +4453,7 @@ def insert_data(request):
         "solution": "9 multiplied by 7 is 63."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "English",
         "text": "What is the area of a triangle with base 10 cm and height 6 cm?",
@@ -4455,7 +4462,7 @@ def insert_data(request):
         "solution": "The area of the triangle is 30 cm² (base × height ÷ 2)."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "English",
         "text": "What is the sum of 150 and 275?",
@@ -4464,7 +4471,7 @@ def insert_data(request):
         "solution": "The sum of 150 and 275 is 425."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "English",
         "text": "What is 12 ÷ 4?",
@@ -4473,7 +4480,7 @@ def insert_data(request):
         "solution": "12 divided by 4 is 3."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "Hindi",
         "text": "64 का वर्गमूल क्या है?",
@@ -4482,7 +4489,7 @@ def insert_data(request):
         "solution": "64 का वर्गमूल 8 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "Hindi",
         "text": "9 × 7 क्या है?",
@@ -4491,7 +4498,7 @@ def insert_data(request):
         "solution": "9 को 7 से गुणा करने पर 63 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "Hindi",
         "text": "एक त्रिकोण का क्षेत्रफल क्या होगा जिसकी आधार 10 सेंटीमीटर और ऊंचाई 6 सेंटीमीटर है?",
@@ -4500,7 +4507,7 @@ def insert_data(request):
         "solution": "त्रिकोण का क्षेत्रफल 30 वर्ग सेंटीमीटर होगा (आधार × ऊंचाई ÷ 2)।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "Hindi",
         "text": "150 और 275 का योगफल क्या है?",
@@ -4509,7 +4516,7 @@ def insert_data(request):
         "solution": "150 और 275 का योगफल 425 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[23],
         "language": "Hindi",
         "text": "12 ÷ 4 क्या है?",
@@ -4518,7 +4525,7 @@ def insert_data(request):
         "solution": "12 को 4 से विभाजित करने पर 3 मिलता है।"
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "English",
         "text": "What is 15 × 8?",
@@ -4527,7 +4534,7 @@ def insert_data(request):
         "solution": "15 multiplied by 8 is 120."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "English",
         "text": "What is the perimeter of a rectangle with length 12 cm and width 8 cm?",
@@ -4536,7 +4543,7 @@ def insert_data(request):
         "solution": "The perimeter of a rectangle is 2 × (length + width), so 2 × (12 + 8) = 40 cm."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "English",
         "text": "What is 45 ÷ 9?",
@@ -4545,7 +4552,7 @@ def insert_data(request):
         "solution": "45 divided by 9 is 5."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "English",
         "text": "What is the product of 12 and 7?",
@@ -4554,7 +4561,7 @@ def insert_data(request):
         "solution": "The product of 12 and 7 is 84."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "English",
         "text": "What is the area of a square with side length 6 cm?",
@@ -4563,7 +4570,7 @@ def insert_data(request):
         "solution": "The area of a square is side × side, so 6 × 6 = 36 cm²."
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "Hindi",
         "text": "15 × 8 क्या है?",
@@ -4572,7 +4579,7 @@ def insert_data(request):
         "solution": "15 को 8 से गुणा करने पर 120 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "Hindi",
         "text": "एक आयत का परिधि क्या होगा, जिसकी लंबाई 12 सेंटीमीटर और चौड़ाई 8 सेंटीमीटर है?",
@@ -4581,7 +4588,7 @@ def insert_data(request):
         "solution": "आयत का परिधि 2 × (लंबाई + चौड़ाई) होता है, तो 2 × (12 + 8) = 40 सेंटीमीटर।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "Hindi",
         "text": "45 ÷ 9 क्या है?",
@@ -4590,7 +4597,7 @@ def insert_data(request):
         "solution": "45 को 9 से विभाजित करने पर 5 मिलता है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "Hindi",
         "text": "12 और 7 का गुणनफल क्या है?",
@@ -4599,7 +4606,7 @@ def insert_data(request):
         "solution": "12 और 7 का गुणनफल 84 है।"
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[24],
         "language": "Hindi",
         "text": "एक वर्ग का क्षेत्रफल क्या होगा, जिसका एक भुजा 6 सेंटीमीटर है?",
@@ -4608,7 +4615,7 @@ def insert_data(request):
         "solution": "वर्ग का क्षेत्रफल भुजा × भुजा होता है, तो 6 × 6 = 36 वर्ग सेंटीमीटर।"
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "English",
@@ -4618,7 +4625,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "English",
@@ -4628,7 +4635,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "English",
@@ -4638,7 +4645,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "English",
@@ -4648,7 +4655,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "English",
@@ -4658,7 +4665,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
@@ -4668,7 +4675,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
@@ -4678,7 +4685,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
@@ -4688,7 +4695,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
@@ -4698,7 +4705,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[25],
         "time": 1.5,
         "language": "Hindi",
@@ -4708,7 +4715,7 @@ def insert_data(request):
         "correct_option": 1
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "English",
@@ -4718,7 +4725,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "English",
@@ -4728,7 +4735,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "English",
@@ -4738,7 +4745,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "English",
@@ -4748,7 +4755,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "English",
@@ -4758,7 +4765,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
@@ -4768,7 +4775,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
@@ -4778,7 +4785,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
@@ -4788,7 +4795,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
@@ -4798,7 +4805,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[26],
         "time": 1.5,
         "language": "Hindi",
@@ -4808,7 +4815,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[27],
         "time": 1.5,
         "language": "English",
@@ -4818,7 +4825,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[27],
         "time": 1.5,
         "language": "Hindi",
@@ -4828,7 +4835,7 @@ def insert_data(request):
         "correct_option": 3
     },
      {
-        "assigneduser": user,
+        
                 "exam": exams[27],
         "time": 1.5,
         "language": "Hindi",
@@ -4838,7 +4845,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[27],
         "time": 1.5,
         "language": "English",
@@ -4848,7 +4855,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[27],
         "time": 1.5,
         "language": "English",
@@ -4858,7 +4865,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
@@ -4868,7 +4875,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
@@ -4878,7 +4885,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[28],
         "time": 1.5,
         "language": "English",
@@ -4889,7 +4896,7 @@ def insert_data(request):
     },
     
     {
-        "assigneduser": user,
+        
                 "exam": exams[28],
         "time": 1.5,
         "language": "Hindi",
@@ -4899,7 +4906,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[28],
         "time": 1.5,
         "language": "English",
@@ -4909,7 +4916,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "English",
@@ -4919,7 +4926,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "English",
@@ -4929,7 +4936,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "English",
@@ -4939,7 +4946,7 @@ def insert_data(request):
         "correct_option": 4
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "English",
@@ -4949,7 +4956,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "English",
@@ -4959,7 +4966,7 @@ def insert_data(request):
         "correct_option": 2
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
@@ -4969,7 +4976,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
@@ -4979,7 +4986,7 @@ def insert_data(request):
         "correct_option": 1
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
@@ -4989,7 +4996,7 @@ def insert_data(request):
         "correct_option": 4
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
@@ -4999,7 +5006,7 @@ def insert_data(request):
         "correct_option": 3
     },
     {
-        "assigneduser": user,
+        
                 "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
@@ -5025,7 +5032,6 @@ def insert_data(request):
                     options=question["options"],
                     solution=question["solution"],
                     correct_option=question["correct_option"],
-                    assigneduser = question["assigneduser"]
                 )
                 question_added_count += 1
 
@@ -5142,7 +5148,7 @@ class GeneratePasskeyView(APIView):
         center_serializer = ExamCenterSerializer(center)
         return Response({"message": "Passkey generated successfully.",
             "center":center_serializer.data,
-            "assigneduser": user,
+            
                 "exam": exam_serializer.data
             },
         status=status.HTTP_200_OK)    
