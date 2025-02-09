@@ -5812,3 +5812,34 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "subjects": assign_user_subject_serializer.data,
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
+
+
+class AllRecruiterViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminPermission]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = AllRecruiterSerializer
+
+    def get_queryset(self):
+        return_all = self.request.query_params.get('all', None)
+        
+        queryset = CustomUser.objects.filter(is_recruiter=True)
+
+        if return_all is None or return_all.lower() != 'true':
+            teacher_name = self.request.query_params.getlist('name[]', [])
+            if teacher_name:
+                teacher_name = [name.strip().lower() for name in teacher_name]
+                name_query = Q()
+
+                for name in teacher_name:
+                    name_parts = name.split()
+                    if len(name_parts) >= 2:
+                        fname = name_parts[0]
+                        lname = name_parts[-1]
+                        name_query |= Q(Fname__icontains=fname) & Q(Lname__icontains=lname)
+                    elif len(name_parts) == 1:
+                        fname = name_parts[0]
+                        name_query |= Q(Fname__icontains=fname) | Q(Lname__icontains=fname)
+
+                queryset = queryset.filter(name_query)
+
+        return queryset

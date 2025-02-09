@@ -27,6 +27,7 @@ router.register(r'admin/interview', InterviewViewSet, basename='interview')
 router.register(r'admin/reason', ReasonViewSet, basename='reason')
 router.register(r'admin/examcenter', ExamCenterViewSets)
 router.register(r'admin/allTeacher', AllTeacherViewSet,basename='allTeacher')
+router.register(r'admin/allRecruiter', AllRecruiterViewSet,basename='AllRecruiterSerializer')
 
 # router.register(r'recruiter',RecruiterViewSet,basename='recruiter')
 #access OnlyTeacher
