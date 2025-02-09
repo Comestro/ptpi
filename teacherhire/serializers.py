@@ -377,10 +377,12 @@ class ExamSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
+    assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False)
+
 
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
+        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
         depth = 1 
         
     def to_representation(self, instance):
@@ -389,8 +391,9 @@ class ExamSerializer(serializers.ModelSerializer):
         representation['level'] = LevelSerializer(instance.level).data
         representation['class_category'] = ClassCategorySerializer(instance.class_category).data
         representation['questions'] = QuestionSerializer(instance.questions.all(), many=True).data
-
+        representation['assigneduser'] = AssignedQuestionUserSerializer(instance.assigneduser).data
         return representation
+    
 class TeacherSkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     skill = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), required=False)
