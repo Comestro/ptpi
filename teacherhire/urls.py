@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from teacherhire.views import *
+from teacherhire.auth_view import *
 from rest_framework import routers
 from .views import ProfilecompletedView,CheckoutView
 
