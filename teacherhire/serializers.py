@@ -513,7 +513,7 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExamResult
-        fields = ['exam', 'correct_answer', 'created_at']
+        fields = '__all__'
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
