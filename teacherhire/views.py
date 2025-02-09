@@ -812,7 +812,10 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data.copy()
         qualification = data.get('qualification')  # Slug value of the qualification
-        year_of_passing = int(data.get('year_of_passing')) if data.get('year_of_passing') else None
+        try:
+            year_of_passing = int(data.get('year_of_passing'))  
+        except (ValueError, TypeError):
+            return Response({"error":"Please Enter a valid year."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not qualification or not year_of_passing:
             return Response(
