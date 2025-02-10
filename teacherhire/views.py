@@ -1553,19 +1553,35 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
     
     def put(self, request, *args, **kwargs):
         exam_id = request.data.get('id', None)
+        user = request.user
 
-        if exam_id:
-            try:
-                exam_instance = Exam.objects.get(id=exam_id)
+        if not exam_id:
+            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exam_instance = Exam.objects.get(id=exam_id)
+
+            # Check if the user is an admin
+            if user.is_staff:
                 serializer = ExamSerializer(exam_instance, data=request.data)
                 if serializer.is_valid():
                     serializer.save()
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            except Exam.DoesNotExist:
-                return create_object(ExamSerializer, request.data, Exam)
-        else:
-            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if the user is assigned to this exam
+            elif exam_instance.assigneduser.user == user:
+                serializer = ExamSerializer(exam_instance, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                return Response({"error": "You do not have permission to update this exam."}, status=status.HTTP_403_FORBIDDEN)
+
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
