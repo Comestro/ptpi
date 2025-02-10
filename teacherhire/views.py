@@ -1566,8 +1566,8 @@ class CheckoutView(APIView):
         user = request.user        
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.filter(user=user)
+            user_preference = Preference.objects.filter(user=user).first()
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
@@ -1779,7 +1779,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
             user_qualification = TeacherQualification.objects.filter(user=user).exists()
-            user_preference = Preference.objects.get(user=user)
+            user_preference = Preference.objects.filter(user=user).first()
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
