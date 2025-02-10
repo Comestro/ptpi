@@ -1018,7 +1018,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         try:
             return Preference.objects.get(user=self.request.user)
         except Preference.DoesNotExist:
-            raise NotFound({"detail": "Preference not found."}, status=status.HTTP_200_OK)
+            raise NotFound({"detail": "Preference not found."})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
