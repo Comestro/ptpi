@@ -276,14 +276,14 @@ class ExamCenter(models.Model):
         return self.center_name
     
 class AssignedQuestionUser(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     subject = models.ManyToManyField(Subject)
 
     def __str__(self):
         return str(self.user.id)
 
 class Exam(models.Model):
-    assigneduser = models.ForeignKey(AssignedQuestionUser, on_delete=models.CASCADE)
+    assigneduser = models.ForeignKey(AssignedQuestionUser, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
