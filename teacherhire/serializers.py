@@ -498,7 +498,7 @@ class TeacherSubjectSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     class Meta:
         model = TeacherSubject
-        fields = '__all__'
+        fields = ['id','user','subject']
      
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -516,7 +516,7 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExamResult
-        fields = ['exam', 'correct_answer', 'created_at']
+        fields = '__all__'
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -696,7 +696,7 @@ class TeacherSerializer(serializers.ModelSerializer):
         ]
 
     def get_total_marks(self, instance):
-        last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').first()
+        last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
         return last_result.correct_answer if last_result else 0
 
     def to_representation(self, instance):
@@ -719,7 +719,6 @@ class TeacherSerializer(serializers.ModelSerializer):
                 for experience in representation['teacherexperiences']
             ]
         if 'profiles' in representation and representation['profiles'] is not None:
-            # Filter out empty/None fields if you want to reduce unnecessary data
             profile_data = representation['profiles']
             profile_filtered = {
                 'bio': profile_data.get('bio', ''),
@@ -731,7 +730,6 @@ class TeacherSerializer(serializers.ModelSerializer):
                 'gender': profile_data.get('gender', None),
                 'language': profile_data.get('language', None),
             }
-            # Only include profiles if there's actual data
             if any(value is not None for value in profile_filtered.values()):
                 representation['profiles'] = profile_filtered
             else:
@@ -772,12 +770,6 @@ class TeacherReportSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
 
-class RecruiterSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email']
-
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
     
@@ -789,4 +781,71 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+        return representation
+class AllRecruiterSerializer(serializers.ModelSerializer):
+    profiles = BasicProfileSerializer(required=False)
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'Fname', 'Lname', 'email','profiles']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if 'profiles' in representation and representation['profiles'] is not None:
+            profile_data = representation['profiles']
+            profile_filtered = {
+                'bio': profile_data.get('bio', ''),
+                'phone_number': profile_data.get('phone_number', None),
+                'religion': profile_data.get('religion', None),
+                'profile_picture': profile_data.get('profile_picture', None),
+                'date_of_birth': profile_data.get('date_of_birth', None),
+                'marital_status': profile_data.get('marital_status', None),
+                'gender': profile_data.get('gender', None),
+            }
+            if any(value is not None for value in profile_filtered.values()):
+                representation['profiles'] = profile_filtered
+            else:
+                del representation['profiles']
+        return representation
+    
+class AllTeacherSerializer(serializers.ModelSerializer):
+    teachersaddress = TeachersAddressSerializer(many=True, required=False)
+    teachersubjects = TeacherSubjectSerializer(many=True, required=False)
+    teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
+    total_marks = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'Fname', 'Lname', 'email', 'teachersubjects',
+            'teachersaddress', 'teacherqualifications', 'total_marks'
+        ]
+
+    def get_total_marks(self, instance):
+        last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
+        return last_result.correct_answer if last_result else 0
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        if 'total_marks' not in representation:
+            representation['total_marks'] = self.get_total_marks(instance)
+
+        if 'teacherqualifications' in representation and representation['teacherqualifications']:
+            representation['teacherqualifications'] = [
+                {'qualification': qualification.get('qualification')} 
+                for qualification in representation['teacherqualifications']
+            ]
+
+        if 'teachersubjects' in representation and representation['teachersubjects']:
+            representation['teachersubjects'] = [
+                {'subject': subject.get('subject')} 
+                for subject in representation['teachersubjects']
+            ]
+
+        if 'teachersaddress' in representation and representation['teachersaddress']:
+            representation['teachersaddress'] = [
+                {'state': address.get('state')} 
+                for address in representation['teachersaddress']
+            ]
+
         return representation

@@ -196,7 +196,7 @@ class Preference(models.Model):
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
 class TeacherSubject(models.Model):	
-   user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)	
+   user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='teachersubjects')	
    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
    def __str__(self): 
