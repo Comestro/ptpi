@@ -52,6 +52,7 @@ router.register(r'self/report', SelfReportViewSet, basename='self-report')
 router.register(r'self/interview', SelfInterviewViewSet, basename='self-interview')
 router.register(r'examcenters', SelfExamCenterViewSets, basename='self-examcenter')
 router.register(r'self/teacherReport', TeacherReportViewSet, basename='self-teacherReport')
+router.register(r'examsetter', ExamSetterViewSet, basename='examsetter')
 
 
 

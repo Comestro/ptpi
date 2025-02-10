@@ -1517,7 +1517,7 @@ class CheckoutView(APIView):
 
         return Response(levels, status=status.HTTP_200_OK)
 
-class ExamViewSet(viewsets.ModelViewSet):
+class ExamSetterViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
@@ -1527,7 +1527,6 @@ class ExamViewSet(viewsets.ModelViewSet):
         user = request.user
         subject = request.data.get('subject')
 
-        # Check if the user is assigned to this subject
         try:
             assigned_user = AssignedQuestionUser.objects.get(user=user, subject=subject)
         except AssignedQuestionUser.DoesNotExist:
@@ -1539,6 +1538,30 @@ class ExamViewSet(viewsets.ModelViewSet):
             serializer.save(assigneduser=assigned_user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = Exam.objects.count()
+        return Response({"Count": count})
+
+    @action(detail=False, methods=['get'])
+    def exams(self, request):
+        user = request.user
+        exams = Exam.objects.filter(assigneduser__user=user)
+        serializer = ExamSerializer(exams, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class ExamViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Exam.objects.all()
+    serializer_class = ExamSerializer
+
+    def create(self, request):
+        return create_object(ExamSerializer, request.data, Exam)
+
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = get_count(Exam)
