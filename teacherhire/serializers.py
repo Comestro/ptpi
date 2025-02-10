@@ -270,8 +270,8 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
     
     def validate_pincode(self, value):
         # Only validate if the pincode is not empty or null
-        if value and (len(value) != 6 or not value.isdigit()):
-            raise serializers.ValidationError("Pincode must be exactly 6 digits.")
+        if value and (not str(value).isdigit() or len(str(value)) != 6 or int(value) <= 0):
+            raise serializers.ValidationError("Pincode must be a positive 6-digit integer.")
         return value
 
 # serializers.py
@@ -439,8 +439,8 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
 
     def validate_year_of_passing(self, value):
         current_year = datetime.now().year
-        if value > current_year:
-            raise serializers.ValidationError("Year of passing cannot be in the future.")
+        if not (1000 <= value <= current_year):
+            raise serializers.ValidationError("Year of passing must be a valid four-digit year and cannot be in the future.")
         return value
 
     def validate(self, data):
