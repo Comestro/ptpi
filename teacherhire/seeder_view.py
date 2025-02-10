@@ -205,7 +205,7 @@ def insert_data(request):
         "reason": {
             "model": Reason,
             "field": "issue_type",
-            "data": ["answer worng", "question worng", "spelling mistake", "question and answer worng ", "number mistake"]
+            "data": ["answer wrong", "question wrong", "spelling mistake", "question and answer wrong ", "number mistake"]
         },
         "levels": {
             "model": Level,
