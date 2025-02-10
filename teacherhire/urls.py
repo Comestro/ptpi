@@ -30,6 +30,7 @@ router.register(r'admin/reason', ReasonViewSet, basename='reason')
 router.register(r'admin/examcenter', ExamCenterViewSets)
 router.register(r'admin/allTeacher', AllTeacherViewSet,basename='allTeacher')
 router.register(r'admin/allRecruiter', AllRecruiterViewSet,basename='AllRecruiterSerializer')
+router.register(r'admin/assigneduser', AssignedQuestionUserViewSet)
 
 # router.register(r'recruiter',RecruiterViewSet,basename='recruiter')
 #access OnlyTeacher
