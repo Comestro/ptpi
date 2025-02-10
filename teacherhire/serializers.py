@@ -442,6 +442,11 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
         if value > current_year:
             raise serializers.ValidationError("Year of passing cannot be in the future.")
         return value
+    
+    def validate_grade_or_percentage(self, value):
+        if isinstance(value, (int, float)) and value < 0:
+            raise serializers.ValidationError("Grade or percentage cannot be negative.")
+        return value
 
     def validate(self, data):
         user = data.get('user')
