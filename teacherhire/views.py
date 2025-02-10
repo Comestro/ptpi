@@ -1530,7 +1530,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         try:
             assigned_user = AssignedQuestionUser.objects.get(user=user, subject=subject)
         except AssignedQuestionUser.DoesNotExist:
-            return Response({"error": "You are not assigned to post questions for this subject."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "You are not assigned to post exam set for this subject."}, status=status.HTTP_403_FORBIDDEN)
 
         # Proceed with exam creation
         serializer = ExamSerializer(data=request.data)
