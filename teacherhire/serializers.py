@@ -495,7 +495,7 @@ class TeacherSubjectSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     class Meta:
         model = TeacherSubject
-        fields = '__all__'
+        fields = ['id','user','subject']
      
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -802,4 +802,47 @@ class AllRecruiterSerializer(serializers.ModelSerializer):
                 representation['profiles'] = profile_filtered
             else:
                 del representation['profiles']
+        return representation
+    
+class AllTeacherSerializer(serializers.ModelSerializer):
+    teachersaddress = TeachersAddressSerializer(many=True, required=False)
+    teachersubjects = TeacherSubjectSerializer(many=True, required=False)
+    teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
+    total_marks = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'Fname', 'Lname', 'email', 'teachersubjects',
+            'teachersaddress', 'teacherqualifications', 'total_marks'
+        ]
+
+    def get_total_marks(self, instance):
+        last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
+        return last_result.correct_answer if last_result else 0
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        if 'total_marks' not in representation:
+            representation['total_marks'] = self.get_total_marks(instance)
+
+        if 'teacherqualifications' in representation and representation['teacherqualifications']:
+            representation['teacherqualifications'] = [
+                {'qualification': qualification.get('qualification')} 
+                for qualification in representation['teacherqualifications']
+            ]
+
+        if 'teachersubjects' in representation and representation['teachersubjects']:
+            representation['teachersubjects'] = [
+                {'subject': subject.get('subject')} 
+                for subject in representation['teachersubjects']
+            ]
+
+        if 'teachersaddress' in representation and representation['teachersaddress']:
+            representation['teachersaddress'] = [
+                {'state': address.get('state')} 
+                for address in representation['teachersaddress']
+            ]
+
         return representation
