@@ -2196,7 +2196,7 @@ class AllTeacherViewSet(viewsets.ModelViewSet):
     serializer_class = AllTeacherSerializer    
 
     def get_queryset(self):
-        queryset = CustomUser.objects.all()
+        queryset = CustomUser.objects.filter(is_staff=False)
 
         return_all = self.request.query_params.get('all', None)
         if return_all and return_all.lower() == 'true':
