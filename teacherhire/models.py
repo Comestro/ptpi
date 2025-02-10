@@ -280,7 +280,7 @@ class AssignedQuestionUser(models.Model):
     subject = models.ManyToManyField(Subject)
 
     def __str__(self):
-        return str(self.user.id)
+        return str(self.user.id) if self.user else "Unassigned User"
 
 class Exam(models.Model):
     assigneduser = models.ForeignKey(AssignedQuestionUser, on_delete=models.CASCADE, null=True, blank=True)

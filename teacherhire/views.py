@@ -1550,6 +1550,27 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         exams = Exam.objects.filter(assigneduser__user=user)
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request, *args, **kwargs):
+        exam_id = request.data.get('id', None)
+
+        if exam_id:
+            try:
+                exam_instance = Exam.objects.get(id=exam_id)
+                serializer = ExamSerializer(exam_instance, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Exam.DoesNotExist:
+                return create_object(ExamSerializer, request.data, Exam)
+        else:
+            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 
