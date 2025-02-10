@@ -92,10 +92,6 @@ class TeachersAddressViewSet(viewsets.ModelViewSet):
     serializer_class = TeachersAddressSerializer
     queryset = TeachersAddress.objects.all().select_related('user')
 
-    # def create(self, request, *args, **kwargs):
-    #     print(f"User: {request.user}")
-    #     return create_auth_data(self, TeachersAddressSerializer, request.data, TeachersAddress)
-
     @action(detail=False, methods=['get'])
     def count(self, request):
         print(f"User: {request.user}")
@@ -196,12 +192,6 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
             "permanent_address": permanent_address_data
         }
         return Response(data, status=status.HTTP_200_OK)
-
-    # def get_object(self):
-    #  try:
-    #     return TeachersAddress.objects.get(user=self.request.user)
-    #  except TeachersAddress.DoesNotExist:
-    #     return Response({"detail": "This address not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class EducationalQulificationViewSet(viewsets.ModelViewSet):   
     permission_classes = [IsAuthenticated]    
