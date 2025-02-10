@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from teacherhire.views import *
+from teacherhire.auth_view import *
+from teacherhire.seeder_view import *
 from rest_framework import routers
 from .views import ProfilecompletedView,CheckoutView
 
@@ -69,13 +71,12 @@ urlpatterns = [
     path('register/', TeacherRegisterUser.as_view(), name='teacher-register'),
     path('login/', LoginUser.as_view()),
     path('logout/', LogoutUser.as_view()),
-    path('insert/data/', insert_data, name='insert_data'),
     path('generate-passkey/', GeneratePasskeyView.as_view(), name='generate_passkey'),
     path('approve-passkey/', ApprovePasscodeView.as_view(), name='approve_passkey'),
     path('verify-passcode/', VerifyPasscodeView.as_view(), name='verify_passcode'),
-    path('insert/examcenter/data/', insert_data_examcenter, name='insert_data_examcenter'),
     path('insert/data/teacher/', insert_data_teachers, name='insert_data_teachers'),
     path('translate/', TranslatorView.as_view(), name='translate'),
+    path('admin/insert/data/', insert_all_data, name='insert_all_data'),
 
     #path('levels/<int:pk>/<int:subject_id>/questions/', SubjectQuestionsView.as_view(), name='subject-questions'),
 ]
