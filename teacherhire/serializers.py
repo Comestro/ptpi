@@ -95,6 +95,41 @@ class CenterUserSerializer(serializers.ModelSerializer):
             raise ValidationError({'error': str(e)})
         return user
     
+class QuestionUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+    Fname = serializers.CharField(required=True)
+    Lname = serializers.CharField(required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
+    
+    def create(self, validated_data):
+        email = validated_data['email']
+        base_username = email.split('@')[0]
+        username = base_username
+        Fname = validated_data['Fname']
+        Lname = validated_data['Lname']
+        is_questionuser = True
+        is_verified = True
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError({'email': 'Email is already in use.'})
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}{random.randint(1000, 9999)}"
+        try:
+            user = CustomUser.objects.create_user(
+                username=username,
+                email=email,
+                password=validated_data['password'],
+                Fname=Fname,
+                Lname=Lname,
+                is_questionuser=is_questionuser,
+                is_verified=is_verified 
+            )
+        except Exception as e:
+            raise ValidationError({'error': str(e)})
+        return user
+    
 class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, min_length=8)
 
@@ -457,24 +492,21 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
 
             if value_float < 0:
                 raise serializers.ValidationError("Negative grades are not allowed.")
-            if value_float > 100:
-                raise serializers.ValidationError("Grade or percentage cannot exceed 100.")
+        if value > 100:
+            raise serializers.ValidationError("Grade or percentage cannot exceed 100.")
+        return value
 
-            return value_float  # Convert numeric strings to float
-
-        # If input is neither a valid grade nor a number, raise an error
-        raise serializers.ValidationError("Grade or percentage must be a valid letter grade (A, B+, etc.) or a number (0-100).")
-    
     def validate(self, data):
         user = data.get('user')
         if user:
-            previous_qualification = TeacherQualification.objects.filter(user=user).order_by('year_of_passing').first()
+            previous_qualification = TeacherQualification.objects.filter(user=user).order_by('-year_of_passing').first()
             if previous_qualification:
                 if data.get('year_of_passing')>= previous_qualification.year_of_passing:
                     raise serializers.ValidationError(
                         "Year of passing should be greater than the previous qualification's year."
                     )
         return data
+    
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role

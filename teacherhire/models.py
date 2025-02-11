@@ -28,6 +28,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_recruiter = models.BooleanField(default=False)
     is_teacher = models.BooleanField(default=False)
     is_centeruser = models.BooleanField(default=False)
+    is_questionuser = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     otp = models.CharField(max_length=8, null=True, blank=True)
     otp_created_at = models.DateTimeField(null=True, blank=True) 

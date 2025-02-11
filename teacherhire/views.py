@@ -2358,7 +2358,7 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # Validate user data first
-        user_serializer = CenterUserSerializer(data=request.data.get("user"))
+        user_serializer = QuestionUserSerializer(data=request.data.get("user"))
         if not user_serializer.is_valid():
             return Response({
                 "error": user_serializer.errors,
