@@ -497,22 +497,6 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Grade or percentage must be between 0 and 100.")
         return value_float  
 
-    # def validate_grade_or_percentage(self, value):
-    #     value_str = str(value).strip()  # Convert to string and remove spaces
-
-    #     # Check if the input is a letter grade (A, B+, C-, etc.)
-    #     if re.fullmatch(r"^[A-D][+-]?$", value_str, re.IGNORECASE):  
-    #         return value_str.upper()  # Standardize to uppercase (e.g., "a" → "A")
-
-    #     if re.fullmatch(r"^\d+(\.\d+)?$", value_str):  
-    #         value_float = float(value_str)
-
-    #         if value_float < 0:
-    #             raise serializers.ValidationError("Negative grades are not allowed.")
-    #     if value > 100:
-    #         raise serializers.ValidationError("Grade or percentage cannot exceed 100.")
-    #     return value
-
     def validate(self, data):
         user = data.get('user')
         if user:
