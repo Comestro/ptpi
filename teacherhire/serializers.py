@@ -443,10 +443,34 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Year of passing must be a valid four-digit year and cannot be in the future.")
         return value
     
+    # def validate_grade_or_percentage(self, value):
+    #     if not isinstance(value, (int, float)):
+    #         raise serializers.ValidationError("Grade or percentage must be a number.")
+        
+    #     if value < 0:
+    #         raise serializers.ValidationError("Grade or percentage cannot be negative.")
+        
+    #     if value > 100:  # Assuming 100 is the max limit
+    #         raise serializers.ValidationError("Grade or percentage cannot exceed 100.")
+        
+    #     return value
+    
     def validate_grade_or_percentage(self, value):
-        if isinstance(value, (int, float)) and value < 0:
-            raise serializers.ValidationError("Grade or percentage cannot be negative.")
+        try:
+            value = float(value) 
+        except ValueError:
+            raise serializers.ValidationError("Grade or percentage must be a valid number.")
+
+        if value < 0:
+            allowed_negative = False 
+            if not allowed_negative:
+                raise serializers.ValidationError("Negative grades are not allowed.")
+
+        if value > 100:
+            raise serializers.ValidationError("Grade or percentage cannot exceed 100.")
+
         return value
+    
 
     def validate(self, data):
         user = data.get('user')
