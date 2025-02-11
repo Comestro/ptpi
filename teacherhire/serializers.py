@@ -518,7 +518,7 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
         if user:
             previous_qualification = TeacherQualification.objects.filter(user=user).order_by('-year_of_passing').first()
             if previous_qualification:
-                if data.get('year_of_passing')>= previous_qualification.year_of_passing:
+                if data.get('year_of_passing')<= previous_qualification.year_of_passing:
                     raise serializers.ValidationError(
                         "Year of passing should be greater than the previous qualification's year."
                     )
