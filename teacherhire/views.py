@@ -1114,7 +1114,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def get_object(self):
         # Retrieve the preference object for the current user
         try:
-            return Preference.objects.get(user=self.request.user)
+            return Preference.objects.filter(user=self.request.user).first()
         except Preference.DoesNotExist:
             raise NotFound({"detail": "Preference not found."})
 
@@ -1123,21 +1123,21 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Prefrence deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    def update_auth_data(self, serializer_class, instance, request_data, user):
-        """Handle updating preference data."""
-        serializer = serializer_class(instance, data=request_data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # def update_auth_data(self, serializer_class, instance, request_data, user):
+    #     """Handle updating preference data."""
+    #     serializer = serializer_class(instance, data=request_data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def create_auth_data(self, serializer_class, request_data, user, model_class):
-        """Handle creating preference data."""
-        serializer = serializer_class(data=request_data)
-        if serializer.is_valid():
-            serializer.save(user=user)  # Assign the user to the new preference object
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # def create_auth_data(self, serializer_class, request_data, user, model_class):
+    #     """Handle creating preference data."""
+    #     serializer = serializer_class(data=request_data)
+    #     if serializer.is_valid():
+    #         serializer.save(user=user)  # Assign the user to the new preference object
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TeacherSubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1566,8 +1566,8 @@ class CheckoutView(APIView):
         user = request.user        
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.get(user=user)
-            user_preference = Preference.objects.get(user=user)
+            user_qualification = TeacherQualification.objects.filter(user=user)
+            user_preference = Preference.objects.filter(user=user).first()
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
@@ -1779,7 +1779,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
             user_qualification = TeacherQualification.objects.filter(user=user).exists()
-            user_preference = Preference.objects.get(user=user)
+            user_preference = Preference.objects.filter(user=user).first()
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
