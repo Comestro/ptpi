@@ -1843,13 +1843,17 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             user=user, exam__type='online', isqualified=True,
             exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2
         ).exists()
+        offline_qualified_level_2 = TeacherExamResult.objects.filter(
+            user=user, exam__type='offline', isqualified=True,
+            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level_id=2
+        ).exists()
         # Filter exams based on qualifications
         if not qualified_level_1:
             exams = exams.filter(level_id=1)  # If not qualified for Level 1, return only Level 1 exams
         elif qualified_level_1 and not online_qualified_level_2:
             exams = exams.filter(level_id__in=[1, 2], type='online')  # If qualified for Level 1, show Level 1 and Level 2 exams
-        elif online_qualified_level_2:
-            exams = exams.filter(level_id__in=[1, 2])  # If qualified for Level 2 online, show Level 2 offline exams
+        elif online_qualified_level_2 and not offline_qualified_level_2:
+            exams = exams.filter(level_id__in=[1, 2, 3])  # If qualified for Level 2 online, show Level 2 offline exams
         # Exclude exams the user has already qualified for
         unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
@@ -1860,7 +1864,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         level_1_exam = exam_set.filter(level_id=1).first()
         level_2_online_exam = exam_set.filter(level_id=2, type='online').first()
-        level_2_offline_exam = exam_set.filter(level_id=2, type='offline').first()
+        level_2_offline_exam = exam_set.filter(level_id=3, type='offline').first()
 
         final_exam_set = []
         if level_1_exam:
