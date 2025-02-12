@@ -18,6 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = CustomUser.objects.create(
+            username=validated_data['email'].split('@')[0],
             Fname=validated_data['Fname'],
             Lname=validated_data['Lname'],
             email=validated_data['email'],
@@ -632,12 +633,31 @@ class BasicProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("You must be at least 18 years old.")
         return value
 class CustomUserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = ['id', 'last_login', 'is_superuser', 'email', 'username',
+        fields = [
+            'id', 'last_login', 'is_superuser', 'email', 'username',
             'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter',
-            'is_teacher', 'groups', 'user_permissions']
-        read_only_fields = ['email', 'username'] 
+            'is_teacher', 'is_centeruser', 'is_questionuser', 'role'
+        ]
+        read_only_fields = ['email', 'username']
+
+    def get_role(self, obj):
+        if obj.is_staff:
+            return "admin"
+        elif obj.is_recruiter:
+            return "recruiter"
+        elif obj.is_teacher:
+            return "teacher"
+        elif obj.is_centeruser:
+            return "centeruser"
+        elif obj.is_questionuser:
+            return "questionuser"
+        else:
+            return "user"
+
 class TeacherJobTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherJobType

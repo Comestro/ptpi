@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('api-token-auth/', views.obtain_auth_token),
     path('api/', include('teacherhire.urls')),
-    path('admin/', admin.site.urls),  # Ensure this line is present only once
+    path('admin/', admin.site.urls),
 ]
 
 if settings.DEBUG:
