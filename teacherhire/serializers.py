@@ -311,88 +311,6 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
         if (not str(value).isdigit() or int(value) <= 0):
             raise serializers.ValidationError("Pincode must be positive integer.")
         return value
-
-# serializers.py
-    # aadhar_no = serializers.CharField(max_length=12, required=False, allow_null=True)
-    # fullname = serializers.CharField(max_length=20, required=False, allow_null=True)
-    # phone = serializers.CharField(max_length=10, required=False, allow_null=True)
-    # alternate_phone = serializers.CharField(max_length=10, required=False, allow_null=True)
-    # date_of_birth = serializers.DateField(required=False, allow_null=True)
-
-    # address = serializers.SerializerMethodField()
-    # teacher_experience = serializers.SerializerMethodField()
-    # teacherQualification = serializers.SerializerMethodField()
-    # teacherSkill = serializers.SerializerMethodField()
-
-    # class Meta:
-    #     model = Teacher
-    #     fields = [
-    #         'id', 'user', 'fullname', 'gender', 'religion', 'nationality',
-    #         'aadhar_no', 'phone', 'alternate_phone', 'verified',
-    #         'class_categories', 'rating', 'date_of_birth',
-    #         'availability_status', 'address', 'teacher_experience', 'teacherQualification', 'teacherSkill'
-    #     ]
-
-    # def validate_fullname(self, value):
-    #     if value is not None:
-    #         value = value.strip()
-    #         if len(value) < 3:
-    #             raise serializers.ValidationError("Full name must be at least 3 characters.")
-    #     return value
-
-    # def validate_phone(self, value):
-    #     return self.validate_phone_number(value)
-
-    # def validate_alternate_phone(self, value):
-    #     return self.validate_phone_number(value)
-
-    # def validate_phone_number(self, value):
-    #     if value:
-    #         cleaned_value = re.sub(r'[^0-9]', '', value)
-    #         if len(cleaned_value) != 10:
-    #             raise serializers.ValidationError("Phone number must be exactly 10 digits.")
-    #         # if Teacher.objects.filter(phone=value).exists():
-    #         #     raise serializers.ValidationError("This Phone no. is alreary exist.")
-    #         if not cleaned_value.startswith(('6', '7', '8', '9')):
-    #             raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
-    #         return cleaned_value
-    #     return value
-
-    # def validate_aadhar_no(self, value):
-    #     if value:
-    #         if not re.match(r'^\d{12}$', value):
-    #             raise serializers.ValidationError("Aadhar number must be exactly 12 digits.")
-    #         # if Teacher.objects.filter(aadhar_no=value).exists():
-    #         #     raise serializers.ValidationError("This Aadhar no. is alreary exist.")
-    #     return value
-    
-    # # def validate(self, data):
-    # #     user = data.get('user')
-    # #     if user and Teacher.objects.filter(user=user).exists():
-    # #         raise serializers.ValidationError({"user": "A teacher entry for this user already exists."})
-    # #     return data 
-
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     representation['user'] = UserSerializer(instance.user).data
-    #     return representation
-
-    # def get_address(self, obj):
-    #     addresses = TeachersAddress.objects.filter(user=obj.user)
-    #     return TeachersAddressSerializer(addresses, many=True).data
-
-    # def get_teacher_experience(self, obj):
-    #     teacher_experiences = TeacherExperiences.objects.filter(user=obj.user)
-    #     return TeacherExperiencesSerializer(teacher_experiences, many=True).data
-
-    # def get_teacherQualification(self, obj):
-    #     teacherQualifications = TeacherQualification.objects.filter(user=obj.user)
-    #     return TeacherQualificationSerializer(teacherQualifications, many=True).data
-
-    # def get_teacherSkill(self, obj):
-    #     teacherSkills = TeacherSkill.objects.filter(user=obj.user)
-    #     return TeacherSkillSerializer(teacherSkills, many=True).data
-
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
@@ -474,35 +392,36 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
         representation['qualification'] = EducationalQualificationSerializer(instance.qualification).data
         
         return representation
-
+    
     def validate_year_of_passing(self, value):
         current_year = datetime.now().year
-        if not (1000 <= value <= current_year):
+        if not (1000 <= value <= current_year):  
             raise serializers.ValidationError("Year of passing must be a valid four-digit year and cannot be in the future.")
         return value
 
     def validate_grade_or_percentage(self, value):
-        value_str = str(value).strip()  # Convert to string and remove spaces
+        value_str = str(value).strip()  # Convert to string for regex checking
 
-        # Check if the input is a letter grade (A, B+, C-, etc.)
+        # Check if input is a valid letter grade (A, B+, C-, etc.)
         if re.fullmatch(r"^[A-D][+-]?$", value_str, re.IGNORECASE):  
             return value_str.upper()  # Standardize to uppercase (e.g., "a" → "A")
 
-        if re.fullmatch(r"^\d+(\.\d+)?$", value_str):  
-            value_float = float(value_str)
+        try:
+            value_float = float(value_str)  # Convert to float
+        except ValueError:
+            raise serializers.ValidationError("Grade or percentage must be a valid letter grade (A, B+, etc.) or a number (0-100).")
 
-            if value_float < 0:
-                raise serializers.ValidationError("Negative grades are not allowed.")
-        if value > 100:
-            raise serializers.ValidationError("Grade or percentage cannot exceed 100.")
-        return value
+        # Ensure number is in range
+        if value_float < 0 or value_float > 100:
+            raise serializers.ValidationError("Grade or percentage must be between 0 and 100.")
+        return value_float  
 
     def validate(self, data):
         user = data.get('user')
         if user:
             previous_qualification = TeacherQualification.objects.filter(user=user).order_by('-year_of_passing').first()
             if previous_qualification:
-                if data.get('year_of_passing')>= previous_qualification.year_of_passing:
+                if data.get('year_of_passing')<= previous_qualification.year_of_passing:
                     raise serializers.ValidationError(
                         "Year of passing should be greater than the previous qualification's year."
                     )
