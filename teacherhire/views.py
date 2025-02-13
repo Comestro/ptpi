@@ -1609,21 +1609,31 @@ class CheckoutView(APIView):
         user = request.user
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.filter(user=user)
-            user_preference = Preference.objects.filter(user=user).first()
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except Preference.DoesNotExist:
+        user_qualification = TeacherQualification.objects.filter(user=user)
+        if not user_qualification:
+            return Response(
+                {"message": "Please complete at least one qualification detail."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user_preference = Preference.objects.filter(user=user)
+
+        if not user_preference.exists():
             return Response(
                 {"message": "Please complete your preference details first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except TeacherQualification.DoesNotExist:
+
+        # Get the first preference object
+        user_preference = user_preference.first()
+
+        if not user_preference.prefered_subject.exists() or not user_preference.class_category.exists():
             return Response(
-                {"message": "Please complete your qualification details first."},
+                {"message": "Please select at least one subject and class category in your preferences."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -1634,15 +1644,18 @@ class CheckoutView(APIView):
             for class_category in user_preference.class_category.all():
                 unlocked_levels = ["Level 1"]
 
-                has_level_1 = qualified_exams.filter(exam__level_id=1, exam__type="online",
-                                                     exam__subject=subject,
-                                                     exam__class_category=class_category).exists()
-                has_level_2_online = qualified_exams.filter(exam__level_id=2, exam__type="online",
-                                                            exam__subject=subject,
-                                                            exam__class_category=class_category).exists()
-                has_level_2_offline = qualified_exams.filter(exam__level_id=2, exam__type="offline",
-                                                             exam__subject=subject,
-                                                             exam__class_category=class_category).exists()
+                has_level_1 = qualified_exams.filter(
+                    exam__level_id=1, exam__type="online",
+                    exam__subject=subject, exam__class_category=class_category
+                ).exists()
+                has_level_2_online = qualified_exams.filter(
+                    exam__level_id=2, exam__type="online",
+                    exam__subject=subject, exam__class_category=class_category
+                ).exists()
+                has_level_2_offline = qualified_exams.filter(
+                    exam__level_id=2, exam__type="offline",
+                    exam__subject=subject, exam__class_category=class_category
+                ).exists()
 
                 if has_level_1:
                     unlocked_levels.append("Level 2 Online")
