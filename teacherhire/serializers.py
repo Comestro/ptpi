@@ -842,3 +842,8 @@ class AllTeacherSerializer(serializers.ModelSerializer):
             ]
 
         return representation
+
+class HireRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HireRequest
+        fields = "__all__"

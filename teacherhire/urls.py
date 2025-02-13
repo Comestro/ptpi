@@ -34,10 +34,11 @@ router.register(r"admin/allTeacher", AllTeacherViewSet, basename="allTeacher")
 router.register(r"admin/allRecruiter", AllRecruiterViewSet, basename="allRecruiter")
 router.register(r"admin/assigneduser", AssignedQuestionUserViewSet)
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
+router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request')
+
 
 # === Teacher Routes ===
 router.register(r"admin/teacher", TeacherViewSet, basename="admin-teacher")
-router.register(r"self/teacher", SelfViewSet, basename="self-teacher")
 router.register(r"self/customuser", CustomUserViewSet, basename="self-customuser")
 router.register(r"self/teacherexperience", SingleTeacherExperiencesViewSet, basename="self-teacherexperience")
 router.register(r"self/teacherexamresult", TeacherExamResultViewSet, basename="self-teacherexamresult")
@@ -57,6 +58,10 @@ router.register(r"self/interview", SelfInterviewViewSet, basename="self-intervie
 router.register(r"examcenters", SelfExamCenterViewSets, basename="self-examcenter")
 router.register(r"self/teacherReport", TeacherReportViewSet, basename="self-teacherReport")
 router.register(r"examsetter", ExamSetterViewSet, basename="examsetter")
+
+# recruiter
+router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')
+router.register(r"self/teacher", SelfViewSet, basename="self-teacher")
 
 # === Permission-Based Routes ===
 urlpatterns = [
