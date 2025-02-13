@@ -9,6 +9,9 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
 from datetime import date
+from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
+from django.utils.timezone import now
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,7 +38,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified', 'otp']
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -43,6 +46,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         username = base_username
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
+        otp = send_otp_via_email(email)
         is_recruiter = True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
@@ -55,8 +59,12 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 password=validated_data['password'],
                 Fname=Fname,
                 Lname=Lname,
-                is_recruiter=is_recruiter
+                is_recruiter=is_recruiter,
+                otp=otp
             )
+            user.otp = otp
+            user.otp_created_at = now()
+            user.save(update_fields=['otp', 'otp_created_at'])
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
@@ -146,7 +154,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified','otp']
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -154,6 +162,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         username = base_username
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
+        otp = send_otp_via_email(email)  
         is_teacher = True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
@@ -166,8 +175,12 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
                 password=validated_data['password'],
                 Fname=Fname,
                 Lname=Lname,
-                is_teacher=is_teacher
+                is_teacher=is_teacher,
+                otp=otp
             )
+            user.otp = otp
+            user.otp_created_at = now()
+            user.save(update_fields=['otp', 'otp_created_at'])
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user

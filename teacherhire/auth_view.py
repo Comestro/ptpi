@@ -9,7 +9,6 @@ from django.utils.timezone import now
 from django.conf import settings
 from datetime import timedelta
 import uuid
-
 from teacherhire.serializers import *
 from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
@@ -28,8 +27,7 @@ class RegisterUser(APIView):
                             status=status.HTTP_409_CONFLICT)
 
         serializer.save()
-        email = serializer.data['email']
-        send_otp_via_email(email)
+        # email = serializer.data['email']
         return Response({'payload': serializer.data, 'message': 'Check your email to verify your account.'},
                         status=status.HTTP_200_OK)
 
