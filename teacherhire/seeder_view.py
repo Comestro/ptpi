@@ -73,7 +73,8 @@ def insert_data_teachers(request):
         {"username": "mark", "email": "mark@gmail.com", "password": "12345", "Fname": "Mark", "Lname": "Smith"},
     ]
 
-    skills_data = ["Python", "Java", "Mathematics", "Physics", "History"]    
+    skills_data = ["Python", "Java", "Mathematics", "Physics", "History"]     
+    subjects_data = ["Maths", "Enslish", "Hindi", "Social Science", "Geography"]     
     addresses_data = [
         {"city": "New York", "state": "NY", "pincode": "10001", "area": "Downtown"},
         {"city": "Los Angeles", "state": "CA", "pincode": "90001", "area": "Uptown"},
@@ -110,7 +111,13 @@ def insert_data_teachers(request):
         for user in users:
             TeacherSkill.objects.create(user=user, skill=skill_obj)
             response_data["skills_added"] += 1
-    
+
+    for subject_name in subjects_data:
+        subject_obj, created = Subject.objects.get_or_create(subject_name=subject_name)
+        for user in users:
+            TeacherSubject.objects.create(user=user, subject=subject_obj)
+            response_data["subjects_added"] += 1
+            
     for qualification_name in qualifications_data:
         qualification_obj, created = EducationalQualification.objects.get_or_create(name=qualification_name)
         for user in users:
