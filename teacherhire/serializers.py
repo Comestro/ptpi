@@ -11,6 +11,7 @@ from datetime import datetime
 from datetime import date
 from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from django.utils.timezone import now
+from django.utils.crypto import get_random_string
 
 
 class UserSerializer(serializers.ModelSerializer):
