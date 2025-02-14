@@ -9,7 +9,6 @@ from django.utils.timezone import now
 from django.conf import settings
 from datetime import timedelta
 import uuid
-
 from teacherhire.serializers import *
 from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
@@ -28,8 +27,7 @@ class RegisterUser(APIView):
                             status=status.HTTP_409_CONFLICT)
 
         serializer.save()
-        email = serializer.data['email']
-        send_otp_via_email(email)
+        # email = serializer.data['email']
         return Response({'payload': serializer.data, 'message': 'Check your email to verify your account.'},
                         status=status.HTTP_200_OK)
 
@@ -134,18 +132,17 @@ class VerifyOTP(APIView):
 
         email, otp = serializer.data['email'], serializer.data['otp']
         user = CustomUser.objects.filter(email=email).first()
+        if user.is_verified:
+            return Response({'message': 'Your Account is already verified.'}, status=status.HTTP_200_OK)
         if not user or user.otp != otp:
             return Response({'error': 'Invalid OTP', 'message': 'Incorrect OTP provided'},
                             status=status.HTTP_400_BAD_REQUEST)
-
         if now() > user.otp_created_at + timedelta(minutes=10):
             return Response({'error': 'OTP expired', 'message': 'Request a new OTP'},
                             status=status.HTTP_400_BAD_REQUEST)
-
         user.is_verified = True
         user.save()
         verified_msg(email)
-
         return Response({'message': 'Account verified successfully'}, status=status.HTTP_200_OK)
 
 
@@ -159,8 +156,11 @@ class ResendOTP(APIView):
             return Response({'error': 'Already verified', 'message': 'Account already verified'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        send_otp_via_email(user.email)
-        return Response({'message': 'OTP resent successfully'}, status=status.HTTP_200_OK)
+        otp = send_otp_via_email(user.email)
+        user.otp=otp
+        user.otp_created_at = now()
+        user.save(update_fields=['otp', 'otp_created_at'])
+        return Response({'otp': user.otp,'message': 'OTP resent successfully'}, status=status.HTTP_200_OK)
 
 
 class UserVerify(APIView):

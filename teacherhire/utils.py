@@ -17,7 +17,7 @@ class Util:
 
 def send_otp_via_email(email):
     subject = "your account verification email"
-    otp = random.randint(10000, 99999)
+    otp = random.randint(100000, 999999)
     message = f"Your OTP is {otp}"
     html_message = f"""
         <div style="
@@ -56,10 +56,11 @@ def send_otp_via_email(email):
         """
     from_email=os.environ.get('EMAIL_FROM')
     send_mail(subject,message,from_email, [email],html_message=html_message)
-    user_obj = CustomUser.objects.get(email=email)
-    user_obj.otp = otp
-    user_obj.otp_created_at = now()
-    user_obj.save()
+    # user_obj = CustomUser.objects.get(email=email)
+    # user_obj.otp = otp
+    # user_obj.otp_created_at = now()
+    # user_obj.save()
+    return otp
 
 def verified_msg(email):
     try:

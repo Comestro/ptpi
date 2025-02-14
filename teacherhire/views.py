@@ -446,7 +446,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return_all = self.request.query_params.get('all', None)
-        queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False)
+        queryset = CustomUser.objects.filter(teacherexamresult__isqualified=True, teacherexamresult__exam__level_id=3,teacherexamresult__exam__type='offline', is_staff=False)
 
         # Handle 'all' query parameter
         if return_all and return_all.lower() == 'true':
@@ -2591,3 +2591,29 @@ class AllRecruiterViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(name_query)
 
         return queryset
+
+class HireRequestViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = HireRequestSerializer
+    queryset = HireRequest.objects.all()
+
+class RecHireRequestViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = HireRequestSerializer
+    queryset = HireRequest.objects.all()
+
+    def create(self, request):
+        recruiter_id = request.user.id
+        data = request.data.copy()
+        data['recruiter_id'] = recruiter_id
+        serializer = HireRequestSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_queryset(self):
+        recruiter_id=self.request.user
+        return HireRequest.objects.filter(recruiter_id=recruiter_id)
