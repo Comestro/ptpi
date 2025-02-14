@@ -17,7 +17,7 @@ class Util:
 
 def send_otp_via_email(email):
     subject = "your account verification email"
-    otp = random.randint(10000, 99999)
+    otp = random.randint(100000, 999999)
     message = f"Your OTP is {otp}"
     html_message = f"""
         <div style="
