@@ -139,6 +139,9 @@ class VerifyOTP(APIView):
         if now() > user.otp_created_at + timedelta(minutes=10):
             return Response({'error': 'OTP expired', 'message': 'Request a new OTP'},
                             status=status.HTTP_400_BAD_REQUEST)
+        if user.is_verified:
+            return Response({'message': 'Your Account is already verified.'}, status=status.HTTP_200_OK)
+
 
         user.is_verified = True
         user.save()
