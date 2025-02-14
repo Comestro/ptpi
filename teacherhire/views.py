@@ -446,7 +446,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return_all = self.request.query_params.get('all', None)
-        queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False)
+        queryset = CustomUser.objects.filter(teacherexamresult__isqualified=True, teacherexamresult__exam__level_id=3,teacherexamresult__exam__type='offline', is_staff=False)
 
         # Handle 'all' query parameter
         if return_all and return_all.lower() == 'true':
