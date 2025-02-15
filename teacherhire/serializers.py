@@ -353,6 +353,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         return representation
         
 class ExamSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=2000, required=False)
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
@@ -362,8 +363,7 @@ class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
         fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
-        depth = 1 
-        
+        depth = 1  
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['subject'] = SubjectSerializer(instance.subject).data
