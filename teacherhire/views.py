@@ -2197,7 +2197,6 @@ class VerifyPasscodeView(APIView):
             status=status.HTTP_200_OK,
         )
 
-
 class InterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2635,24 +2634,6 @@ class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
-# class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
-#     serializer_class = RecruiterEnquiryFormSerializer
-#     queryset = RecruiterEnquiryForm.objects.all()
-#     permission_classes = [permissions.AllowAny]
-
-#     def list(self, request, *args, **kwargs):
-#         return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()  # Save the form without requiring authentication
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
