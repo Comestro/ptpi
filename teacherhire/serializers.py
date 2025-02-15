@@ -872,6 +872,13 @@ class HireRequestSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+
     class Meta:
         model = RecruiterEnquiryForm
         fields = "__all__"
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+        return representation

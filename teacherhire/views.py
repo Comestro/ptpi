@@ -1443,7 +1443,8 @@ class AllBasicProfileViewSet(viewsets.ModelViewSet):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     def update(self, request, *args, **kwargs):
         return Response({"detail": "PUT method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
+    def get_queryset(self):
+        return BasicProfile.objects.filter(user__is_teacher=True)
 
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1618,7 +1619,6 @@ class CheckoutView(APIView):
         user = request.user
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.filter(user=user)
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},

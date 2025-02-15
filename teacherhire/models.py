@@ -441,7 +441,7 @@ class RecruiterEnquiryForm(models.Model):
     state = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     area = models.TextField(null=True, blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE )
+    subject = models.ManyToManyField(Subject)
     name = models.CharField(max_length=200, null=True, blank=True)
     email = models.EmailField(unique=True)
 
