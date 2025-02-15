@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -2619,10 +2619,37 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         return HireRequest.objects.filter(recruiter_id=recruiter_id)
     
 class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated, IsAdminUser]
-    # authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
+    permission_classes = [permissions.AllowAny]  
+
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+# class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
+#     serializer_class = RecruiterEnquiryFormSerializer
+#     queryset = RecruiterEnquiryForm.objects.all()
+#     permission_classes = [permissions.AllowAny]
+
+#     def list(self, request, *args, **kwargs):
+#         return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()  # Save the form without requiring authentication
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
+    serializer_class = RecruiterEnquiryFormSerializer
+    queryset = RecruiterEnquiryForm.objects.all()
+    permission_classes = [permissions.AllowAny]  # No authentication required
+
+    def list(self, request, *args, **kwargs):
+        return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
     def create(self, request, *args, **kwargs):
@@ -2632,13 +2659,4 @@ class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-# class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
-#     serializer_class = RecruiterEnquiryFormSerializer
-#     queryset = RecruiterEnquiryForm.objects.all()
 
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()  # Save the form without requiring authentication
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
