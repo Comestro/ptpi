@@ -35,6 +35,7 @@ router.register(r"admin/allRecruiter", AllRecruiterViewSet, basename="allRecruit
 router.register(r"admin/assigneduser", AssignedQuestionUserViewSet)
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
 router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request')
+router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet,basename='recruiter-enquiryform')
 
 
 # === Teacher Routes ===
@@ -58,6 +59,7 @@ router.register(r"self/interview", SelfInterviewViewSet, basename="self-intervie
 router.register(r"examcenters", SelfExamCenterViewSets, basename="self-examcenter")
 router.register(r"self/teacherReport", TeacherReportViewSet, basename="self-teacherReport")
 router.register(r"examsetter", ExamSetterViewSet, basename="examsetter")
+# router.register(r"self/recruiterenquiryform", RecruiterEnquiryFormViewSet, basename="recruiterenquiryform")
 
 # recruiter
 router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')

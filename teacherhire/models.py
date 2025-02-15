@@ -62,6 +62,7 @@ class TeachersAddress(models.Model):
     address_type = models.CharField(max_length=10, choices=ADDRESS_TYPE_CHOICES, null=True, blank=True)
     state = models.CharField(max_length=100, default='Bihar', null=True, blank=True)
     division = models.CharField(max_length=100, null=True, blank=True)
+    postoffice = models.CharField(max_length=100, null=True, blank=True)
     district = models.CharField(max_length=100, null=True, blank=True)
     block = models.CharField(max_length=100, null=True, blank=True)
     village = models.CharField(max_length=100, null=True, blank=True)
@@ -433,3 +434,14 @@ class HireRequest(models.Model):
     teacher_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=200,choices=[('requested','requested'),('fulfilled','fulfilled')], default='requested')
+
+class RecruiterEnquiryForm(models.Model):
+    teachertype = models.CharField(max_length=200, null=True, blank=True)
+    pincode = models.CharField(max_length=6, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    area = models.TextField(null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE )
+    name = models.CharField(max_length=200, null=True, blank=True)
+    email = models.EmailField(unique=True)
+

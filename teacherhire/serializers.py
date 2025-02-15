@@ -870,3 +870,8 @@ class HireRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = HireRequest
         fields = "__all__"
+
+class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecruiterEnquiryForm
+        fields = "__all__"

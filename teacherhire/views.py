@@ -2617,3 +2617,28 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         recruiter_id=self.request.user
         return HireRequest.objects.filter(recruiter_id=recruiter_id)
+    
+class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated, IsAdminUser]
+    # authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = RecruiterEnquiryFormSerializer
+    queryset = RecruiterEnquiryForm.objects.all()
+
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()  # Save the form without requiring authentication
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+# class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
+#     serializer_class = RecruiterEnquiryFormSerializer
+#     queryset = RecruiterEnquiryForm.objects.all()
+
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()  # Save the form without requiring authentication
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
