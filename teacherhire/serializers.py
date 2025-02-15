@@ -11,6 +11,7 @@ from datetime import datetime
 from datetime import date
 from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from django.utils.timezone import now
+from django.utils.crypto import get_random_string
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -255,22 +256,31 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ['id', 'subject_name']
+        fields = ['id', 'subject_name','class_category']
 
     def validate_subject_name(self, value):
         if Subject.objects.filter(subject_name=value).exists():
             raise serializers.ValidationError("A subject with this name already exists.")
         return value
+    
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     representation['class_category'] = ClassCategorySerializer(instance.class_category).data
+    #     return representation
 
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCategory
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'subjects']
 
     def validate_name(self, value):
         if ClassCategory.objects.filter(name=value).exists():
             raise serializers.ValidationError("A classcategory with this name already exists.")
         return value
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['subjects'] = SubjectSerializer(instance.subjects.all(), many=True).data
+        return representation
 
 class ReasonSerializer(serializers.ModelSerializer):
     class Meta:

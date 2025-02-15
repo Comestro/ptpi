@@ -72,6 +72,8 @@ urlpatterns = [
     path("checklevel/", CheckoutView.as_view(), name="checkout-level"),
 
     # Authentication Routes
+    path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
+    path('verify-account/<str:token>/', VerifyLinkView.as_view(), name='verify-account'),
     path("register/<str:role>/", RegisterUser.as_view(), name="register"),
     path("change_password/", ChangePasswordView.as_view(), name="change_password"),
     path("login/", LoginUser.as_view(), name="login"),

@@ -82,19 +82,20 @@ class TeachersAddress(models.Model):
         }
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
-
-class Subject(models.Model):
-    subject_name = models.CharField(max_length=100, null=True, blank=True)
-    subject_description = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return self.subject_name
-
+    
 class ClassCategory(models.Model):
     name = models.CharField(max_length=100,unique=True, null=True, blank=True)
 
     def __str__(self):
         return self.name
+    
+class Subject(models.Model):
+    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, related_name='subjects')
+    subject_name = models.CharField(max_length=100, null=True, blank=True)
+    subject_description = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.subject_name
     
 class Reason(models.Model):
     issue_type = models.CharField(max_length=200,unique=True, null=True, blank=True)

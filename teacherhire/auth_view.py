@@ -122,7 +122,45 @@ class ResetPasswordView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
 
+class VerifyEmailView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        user = CustomUser.objects.filter(email=email).first()
+        if not user:
+            return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if user.is_verified:
+            return Response({"message":"Your account is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        Token.objects.filter(user=user).delete()
+        auth_token, _ = Token.objects.get_or_create(user=user)
+        user.auth_token = auth_token
+        user.save()
+        verify_link = f"http://127.0.0.1:8000/api/verify-account/{auth_token.key}"
+        send_mail("Verify Your Account ",f"Click the link to verify your account: {verify_link}",settings.EMAIL_HOST_USER,[email])
+        print(verify_link)
+        return Response({"message": "Verification link sent to your email."},status=status.HTTP_200_OK)
 
+class VerifyLinkView(APIView):
+    def get(self, request, token):
+        try:
+            user = CustomUser.objects.get(auth_token=token)
+            if user.is_verified:
+                return Response({"message":"Your account is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_verified = True
+        # user.auth_token.delete()
+        user.save()
+        auth_token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            "message": "Your account has been verified successfully.",
+            "access_token": auth_token.key
+        },
+        status=status.HTTP_200_OK
+        )
+     
+    
 class VerifyOTP(APIView):
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)

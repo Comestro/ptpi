@@ -229,11 +229,6 @@ def insert_data(request):
             "field": "jobrole_name",
             "data": ["Teacher", "Professor", "Principal", "PtTeacher", "Sports Teacher"]
         },
-        "subjects": {
-            "model": Subject,
-            "field": "subject_name",
-            "data": ["Maths", "Physics", "php", "DBMS", "Hindi"]
-        },
         "Teacherjobtype": {
             "model": TeacherJobType,
             "field": "teacher_job_name",
@@ -254,70 +249,83 @@ def insert_data(request):
                 {"center_name": "Delta Exam Center", "pincode": "444444", "state": "State D", "city": "City D", "area": "Area D"},
                 {"center_name": "Epsilon Exam Center", "pincode": "555555", "state": "State E", "city": "City E", "area": "Area E"},
             ]
-        },   
+        },
+          "subjects": {
+        "model": Subject,
+        "field": "subject_name",
+        "data": [
+            {"subject_name": "Maths, class_category 1 to 5", "class_category": "1 to 5"},
+            {"subject_name": "Maths,  class_category 6 to 10", "class_category": "6 to 10"},
+            {"subject_name": "Physics,  class_category 1 to 5", "class_category": "1 to 5"},
+            {"subject_name": "Physics,  class_category 6 to 10", "class_category": "6 to 10"},
+            {"subject_name": "DBMS, class_category BCA", "class_category": "BCA"},
+            {"subject_name": "php,  class_category MCA", "class_category": "MCA"},
+            {"subject_name": "Hindi, class_category 1 to 5", "class_category": "1 to 5"}
+        ]
+        },     
         "Exams": {
             "model": Exam,
             "field": "name",
             "data": [
-                {"name": "Set A",  "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set A",  "class_category": "1 to 5", "level": "1st Level", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 100, "duration": 180, "type": "online"},
-                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 200, "duration": 240, "type": "online"},
-                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 100, "duration": 180, "type": "online"},
-                {"name": "Set B",  "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                {"name": "Set B",  "class_category": "1 to 5", "level": "1st Level", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C",  "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
+                {"name": "Set C",  "class_category": "1 to 5", "level": "1st Level", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set A",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths",
+                {"name": "Set A",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set B",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths",
+                {"name": "Set B",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths",
+                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 200, "duration": 240, "type": "online"},
-                {"name": "Set A",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Physics",
+                {"name": "Set A",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 100, "duration": 180, "type": "online"},
-                {"name": "Set B",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Physics",
+                {"name": "Set B",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Physics",
+                {"name": "Set C",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Offline Set A",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Physics",
+                {"name": "Offline Set A",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                {"name": "Offline Set B",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Physics",
+                {"name": "Offline Set B",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                {"name": "Offline Set C",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Physics",
+                {"name": "Offline Set C",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Physics,  class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set A",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths",
+                 {"name": "Offline Set A",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set B",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths",
+                 {"name": "Offline Set B",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set C",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths",
+                 {"name": "Offline Set C",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths, class_category 1 to 5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Set A",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set A",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set A",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths",
+                 {"name": "Set A",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths",
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths",
+                 {"name": "Set C",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set A",  "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 {"name": "Set A",  "class_category": "6 to 10", "level": "1st Level", "subject": "Physics,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B",  "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "1st Level", "subject": "Physics,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C",  "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
+                 {"name": "Set C",  "class_category": "6 to 10", "level": "1st Level", "subject": "Physics,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set A",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Physics",
+                 {"name": "Set A",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Physics,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Physics",
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Physics,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Physics",
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Physics,  class_category 6 to 10",
                  "total_marks": 50, "duration": 90, "type": "online"},
             ]
         },
@@ -332,7 +340,8 @@ def insert_data(request):
         added_count = 0
 
         for entry in entries:
-            if key == "exam_centers":  # Handle ExamCenter data
+            if key == "exam_centers":  
+                # Handle ExamCenter data
                 if not model.objects.filter(center_name=entry["center_name"]).exists():
                     model.objects.create(
                         center_name=entry["center_name"],
@@ -342,7 +351,24 @@ def insert_data(request):
                         area=entry["area"]
                     )
                     added_count += 1
-            elif key == "Exams":  # Handle Exam data
+
+            elif key == "class_categories":  
+                # Handle ClassCategory data
+                model.objects.get_or_create(name=entry)
+
+            elif key == "subjects":  
+                # Handle Subject data with correct ClassCategory association
+                class_category_name = entry["class_category"]
+                subject_name = entry["subject_name"]
+
+                class_category, _ = ClassCategory.objects.get_or_create(name=class_category_name)
+
+                if not model.objects.filter(subject_name=subject_name, class_category=class_category).exists():
+                    model.objects.create(subject_name=subject_name, class_category=class_category)
+                    added_count += 1
+
+            elif key == "Exams":  
+                # Handle Exam data
                 name = entry.get("name")
                 total_marks = entry.get("total_marks")
                 duration = entry.get("duration")
@@ -350,20 +376,21 @@ def insert_data(request):
                 class_category_name = entry.get("class_category")
                 level_name = entry.get("level")
                 subject_name = entry.get("subject")
-                assigneduser = entry.get("assigneduser")
+                assigneduser_id = entry.get("assigneduser")
 
                 # Fetch related objects
                 class_category, _ = ClassCategory.objects.get_or_create(name=class_category_name)
                 level, _ = Level.objects.get_or_create(name=level_name)
-                subject, _ = Subject.objects.get_or_create(subject_name=subject_name)
-                assigneduser, _ = AssignedQuestionUser.objects.get_or_create(id=assigneduser)
+                subject, _ = Subject.objects.get_or_create(subject_name=subject_name, class_category=class_category)
+                assigneduser, _ = AssignedQuestionUser.objects.get_or_create(id=assigneduser_id)
+
                 if not model.objects.filter(
-                        name=name,
-                        class_category=class_category,
-                        level=level,
-                        subject=subject,
-                        type=type,
-                        assigneduser=assigneduser
+                    name=name,
+                    class_category=class_category,
+                    level=level,
+                    subject=subject,
+                    type=type,
+                    assigneduser=assigneduser
                 ).exists():
                     model.objects.create(
                         name=name,
@@ -376,15 +403,19 @@ def insert_data(request):
                         assigneduser=assigneduser
                     )
                     added_count += 1
-            else:  # Handle other data
+
+            else:  
+                # Handle general data insertion
                 if not model.objects.filter(**{field: entry}).exists():
                     model.objects.create(**{field: entry})
                     added_count += 1
 
         response_data[key] = {
-            "message": f'{added_count} {key.replace("_", " ")} added successfully.' if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
+            "message": f'{added_count} {key.replace("_", " ")} added successfully.'
+            if added_count > 0 else f'All {key.replace("_", " ")} already exist.',
             "added_count": added_count
         }
+
 
     exams = Exam.objects.all()
     if exams.exists():
