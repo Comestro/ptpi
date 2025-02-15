@@ -111,11 +111,19 @@ def insert_data_teachers(request):
         for user in users:
             TeacherSkill.objects.create(user=user, skill=skill_obj)
             response_data["skills_added"] += 1
+     
+    
+
+    default_class_category, _ = ClassCategory.objects.get_or_create(name="General")
 
     for subject_name in subjects_data:
-        subject_obj, created = Subject.objects.get_or_create(subject_name=subject_name)
+        subject_obj, created = Subject.objects.get_or_create(
+            subject_name=subject_name,
+            defaults={"class_category": default_class_category} 
+        )
+
         for user in users:
-            TeacherSubject.objects.create(user=user, subject=subject_obj)
+            TeacherSubject.objects.create(user=user, subject=subject_obj)  
             response_data["subjects_added"] += 1
             
     for qualification_name in qualifications_data:
