@@ -115,6 +115,11 @@ class InterviewAdmin(admin.ModelAdmin):
 class ExamCenter(admin.ModelAdmin):
     list_display = ['user', 'center_name', 'pincode', 'state', 'city', 'status','area']
 
+@admin.register(RecruiterEnquiryForm)
+class RecruiterEnquiryForm(admin.ModelAdmin):
+    list_display = ['teachertype', 'pincode', 'state', 'area', 'subject','city', 'name', 'city']
+
+
 @admin.register(AssignedQuestionUser)
 class AssignedQuestionUserAdmin(admin.ModelAdmin):
     list_display = ['user', 'get_subject']
