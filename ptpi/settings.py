@@ -28,6 +28,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://ptpi.tech',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
 ]
 
 # SECURITY WARNING: don't run with debug turned on in production!
