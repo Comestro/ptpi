@@ -20,7 +20,7 @@ class TeacherExperiencesAdmin(admin.ModelAdmin):
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ['subject_name','subject_description']
+    list_display = ['subject_name','subject_description','class_category']
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
