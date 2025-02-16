@@ -117,7 +117,10 @@ class ExamCenter(admin.ModelAdmin):
 
 @admin.register(RecruiterEnquiryForm)
 class RecruiterEnquiryForm(admin.ModelAdmin):
-    list_display = ['teachertype', 'pincode', 'state', 'area', 'subject','city', 'name', 'city']
+    list_display = ['teachertype', 'pincode', 'state', 'subject', 'area',  'name', 'city', 'email']
+
+    def subject(self, obj):
+        return ", ".join([str(subject) for subject in obj.subject.all()])
 
 
 @admin.register(AssignedQuestionUser)
