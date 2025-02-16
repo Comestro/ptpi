@@ -316,7 +316,7 @@ class Question(models.Model):
             ('Hindi', 'Hindi'),
             ('English', 'English'),
         ],blank=True, null=True)
-    text = models.CharField(max_length=2000)
+    text = models.BinaryField(max_length=2000)
     options = models.JSONField()
     solution = models.TextField(null=True,blank=True)
     correct_option = models.PositiveIntegerField(default=1)
