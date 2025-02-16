@@ -26,7 +26,7 @@ from django.db.models import Q
 from datetime import date
 from django.db.models import Count
 from django.core.mail import send_mail
-
+import string
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterUser]
@@ -1443,7 +1443,8 @@ class AllBasicProfileViewSet(viewsets.ModelViewSet):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     def update(self, request, *args, **kwargs):
         return Response({"detail": "PUT method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
+    def get_queryset(self):
+        return BasicProfile.objects.filter(user__is_teacher=True)
 
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1618,18 +1619,11 @@ class CheckoutView(APIView):
         user = request.user
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.filter(user=user)
         except BasicProfile.DoesNotExist:
             return Response(
                 {"message": "Please complete your basic profile first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except TeacherQualification.DoesNotExist:
-            return Response(
-                {"message": "Please complete your qualification details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         user_preference = Preference.objects.filter(user=user).first()
         if user_preference is None:
             return Response(
@@ -1749,18 +1743,36 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         user = request.user
-        subject = request.data.get('subject')
+        subject_id = request.data.get('subject')  
+        level_id = request.data.get('level')
+        class_category_id = request.data.get('class_category')
 
+        try:
+            subject = Subject.objects.get(id=subject_id, class_category_id=class_category_id)
+            level = Level.objects.get(id=level_id)
+            class_category = ClassCategory.objects.get(id=class_category_id) if class_category_id else None
+        except Subject.DoesNotExist:
+            return Response({"error": "Invalid subject ID"}, status=status.HTTP_400_BAD_REQUEST)
+        except Level.DoesNotExist:
+            return Response({"error": "Invalid level ID"}, status=status.HTTP_400_BAD_REQUEST)
+        except ClassCategory.DoesNotExist:
+            return Response({"error": "Invalid class category ID"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if user is assigned
         try:
             assigned_user = AssignedQuestionUser.objects.get(user=user, subject=subject)
         except AssignedQuestionUser.DoesNotExist:
             return Response({"error": "You are not assigned to post exam set for this subject."},
                             status=status.HTTP_403_FORBIDDEN)
+        # auto genetrate exam name
+        exam_name = f"{subject.subject_name}, {level.name}"
+        existing_count = Exam.objects.filter(name__startswith=exam_name).count()
+        set_letter = string.ascii_uppercase[existing_count]  
+        auto_name = f"{exam_name} - Set {set_letter}"
 
-        # Proceed with exam creation
         serializer = ExamSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(assigneduser=assigned_user)
+            serializer.save(assigneduser=assigned_user, name=auto_name)  
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1924,7 +1936,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
         try:
             user_basic_profile = BasicProfile.objects.get(user=user)
-            user_qualification = TeacherQualification.objects.filter(user=user).exists()
             user_preference = Preference.objects.filter(user=user).first()
         except BasicProfile.DoesNotExist:
             return Response(
@@ -1936,12 +1947,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 {"message": "Please complete your preference details first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        except TeacherQualification.DoesNotExist:
-            return Response(
-                {"message": "Please complete your qualification details first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         exams = Exam.objects.all()
 
         # Ensure class category is selected
