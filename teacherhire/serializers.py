@@ -887,5 +887,5 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
     profiles =  BasicProfileSerializer(required=False)
     class Meta:
         model = CustomUser
-        fields = ['profiles']
+        fields = ['id','Fname','Lname','email','profiles']
     

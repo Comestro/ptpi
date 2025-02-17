@@ -36,7 +36,8 @@ router.register(r"admin/assigneduser", AssignedQuestionUserViewSet)
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
 router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request')
 router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet,basename='recruiter-enquiryform')
-router.register(r"all/user/basicProfile", AllBasicProfileViewSet, basename="users-basicProfile")
+router.register(r"all/teacher/basicProfile", AllTeacherBasicProfileViewSet, basename="teachers-basicProfile")
+router.register(r"all/recruiter/basicProfile", AllRecruiterBasicProfileViewSet, basename="recruiters-basicProfile")
 
 
 # === Teacher Routes ===
