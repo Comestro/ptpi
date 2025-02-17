@@ -1434,11 +1434,18 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class AllBasicProfileViewSet(viewsets.ModelViewSet):
+class AllTeacherBasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated,IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = AllBasicProfileSerializer
     queryset = CustomUser.objects.filter(is_teacher=True,is_verified=True)
+
+class AllRecruiterBasicProfileViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated,IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = AllBasicProfileSerializer
+    queryset = CustomUser.objects.filter(is_recruiter=True,is_verified=True)
+
 
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
