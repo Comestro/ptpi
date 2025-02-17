@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 import os
+import base64
+
 
 
 class CustomUserManager(BaseUserManager):
@@ -321,6 +323,12 @@ class Question(models.Model):
     solution = models.TextField(null=True,blank=True)
     correct_option = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+    def save(self, *args, **kwargs):
+        if isinstance(self.text, str):  # Convert Base64 string to binary before saving
+            self.text = base64.b64decode(self.text.split(';base64,')[-1])
+        super().save(*args, **kwargs)
 
     def clean(self):
         super().clean()

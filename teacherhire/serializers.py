@@ -341,11 +341,22 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
+    # def validate_text(self, value):
+    #     if value is not None and len(value)< 5:
+    #         raise serializers.ValidationError("Text must be at least 5 characters.")
+    #     # if Question.objects.filter(text=value).exists():
+    #     #     raise serializers.ValidationError("This question is already exists.")
+    #     return value
+    
     def validate_text(self, value):
-        if value is not None and len(value)< 5:
-            raise serializers.ValidationError("Text must be at least 5 characters.")
-        # if Question.objects.filter(text=value).exists():
-        #     raise serializers.ValidationError("This question is already exists.")
+        """Ensure the text is either plain text or a valid Base64 image string."""
+        try:
+            # Check if the text is a valid Base64 image
+            if value.startswith("/9j/") or value.startswith("iVBORw0KGgo="):  # JPEG or PNG Base64 headers
+                base64.b64decode(value)
+        except Exception:
+            raise serializers.ValidationError("Invalid Base64 format.")
+
         return value
     def to_representation(self, instance):
         representation = super().to_representation(instance)
