@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import *
-
+from django.utils.html import format_html
+from ptpi import settings
 # Register your models here.
 
 @admin.register(EducationalQualification)
@@ -88,9 +89,23 @@ class ReportAdmin(admin.ModelAdmin):
         return ", ".join([str(issue_type) for issue_type in obj.issue_type.all()])
 
 
-@admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ['exam', 'time','text', 'options', 'correct_option','language', 'created_at']
+    list_display = ['exam', 'time','display_text','display_image', 'options', 'correct_option','language', 'created_at']
+    def display_text(self, obj):
+        if isinstance(obj.text, dict):
+            return obj.text.get("text", "No Text")
+        return str(obj.text)
+    
+    def display_image(self, obj):
+        if isinstance(obj.text, dict) and "image" in obj.text and obj.text["image"]:
+            image_url = obj.text["image"]  # This can be a relative URL or external URL
+            return format_html('<a href="{}" target="_blank">View Image</a>', image_url)
+        return "No Image"
+
+    display_text.short_description = "Question Text"
+    display_image.short_description = "Image"
+
+admin.site.register(Question, QuestionAdmin)
 
 @admin.register(Level)
 class LevelAdmin(admin.ModelAdmin):
@@ -128,3 +143,7 @@ class AssignedQuestionUserAdmin(admin.ModelAdmin):
     list_display = ['user', 'get_subject']
     def get_subject(self, obj):
         return ", ".join([str(subject) for subject in obj.subject.all()])
+    
+@admin.register(HireRequest)
+class HireRequestAdmin(admin.ModelAdmin):
+    list_display = ['recruiter_id','teacher_id','date']
