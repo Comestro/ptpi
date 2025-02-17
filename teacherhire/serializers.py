@@ -882,3 +882,10 @@ class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         return representation
+    
+class AllBasicProfileSerializer(serializers.ModelSerializer):
+    profiles =  BasicProfileSerializer(required=False)
+    class Meta:
+        model = CustomUser
+        fields = ['profiles']
+    
