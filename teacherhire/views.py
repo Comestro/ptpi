@@ -369,16 +369,6 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Teacherqualification deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    # def list(self, request, *args, **kwargs):
-    #     return self.retrieve(request, *args, **kwargs)
-
-    # def get_object(self):
-    #     skill_id = self.kwargs.get('id')
-    #     try:
-    #         return TeacherSkill.objects.get(id=skill_id, user=self.request.user)
-    #     except TeacherSkill.DoesNotExist:
-    #         raise Response({"detail": "this user skill not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 class SubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
