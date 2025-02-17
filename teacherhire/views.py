@@ -1435,16 +1435,10 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AllBasicProfileViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated,IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset = BasicProfile.objects.all()
-    serializer_class = BasicProfileSerializer
-    def create(self, request, *args, **kwargs):
-        return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    def update(self, request, *args, **kwargs):
-        return Response({"detail": "PUT method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    def get_queryset(self):
-        return BasicProfile.objects.filter(user__is_teacher=True)
+    serializer_class = AllBasicProfileSerializer
+    queryset = CustomUser.objects.filter(is_teacher=True,is_verified=True)
 
 class BasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
