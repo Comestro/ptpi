@@ -2255,7 +2255,6 @@ class InterviewViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class SelfInterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2264,28 +2263,35 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def create(self, request, *args, **kwargs):
+        # Deserialize data
         serializer = self.get_serializer(data=request.data)
+        
         if serializer.is_valid():
             user = request.user
             time = serializer.validated_data.get('time')
             subject = serializer.validated_data.get('subject')
             class_category = serializer.validated_data.get('class_category')
-            if isinstance(subject, Subject):
-                subject = subject.id
-            if isinstance(class_category, ClassCategory):
-                class_category = class_category.id
+            check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject, exam__class_category_id=class_category, exam__level_id=2, exam__type='online').exists()
+
+            if not check_exam_qualified:
+                return Response({"error": "First qualify this classcategory subject exams for Interview "})
+
+            # Check if user already has a pending interview
             if Interview.objects.filter(user=user, status=False).exists():
                 return Response(
                     {"error": "You already have a pending interview. Please complete it before scheduling another."},
-                    status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check for duplicate interview
             if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
                 return Response({"error": "Interview with the same details already exists."},
-                                status=status.HTTP_400_BAD_REQUEST)
+                                 status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
