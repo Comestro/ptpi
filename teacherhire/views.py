@@ -1735,7 +1735,6 @@ class CheckoutView(APIView):
 
     #     return Response(levels, status=status.HTTP_200_OK)
 
-
 class ExamSetterViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1744,36 +1743,16 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         user = request.user
-        subject_id = request.data.get('subject')  
-        level_id = request.data.get('level')
-        class_category_id = request.data.get('class_category')
-
-        try:
-            subject = Subject.objects.get(id=subject_id, class_category_id=class_category_id)
-            level = Level.objects.get(id=level_id)
-            class_category = ClassCategory.objects.get(id=class_category_id) if class_category_id else None
-        except Subject.DoesNotExist:
-            return Response({"error": "Invalid subject ID"}, status=status.HTTP_400_BAD_REQUEST)
-        except Level.DoesNotExist:
-            return Response({"error": "Invalid level ID"}, status=status.HTTP_400_BAD_REQUEST)
-        except ClassCategory.DoesNotExist:
-            return Response({"error": "Invalid class category ID"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Check if user is assigned
+        subject = request.data.get('subject')  
         try:
             assigned_user = AssignedQuestionUser.objects.get(user=user, subject=subject)
         except AssignedQuestionUser.DoesNotExist:
             return Response({"error": "You are not assigned to post exam set for this subject."},
                             status=status.HTTP_403_FORBIDDEN)
-        # auto genetrate exam name
-        exam_name = f"{subject.subject_name}, {level.name}"
-        existing_count = Exam.objects.filter(name__startswith=exam_name).count()
-        set_letter = string.ascii_uppercase[existing_count]  
-        auto_name = f"{exam_name} - Set {set_letter}"
 
         serializer = ExamSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(assigneduser=assigned_user, name=auto_name)  
+            serializer.save(assigneduser=assigned_user)  
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

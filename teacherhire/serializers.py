@@ -12,7 +12,7 @@ from datetime import date
 from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
 from django.utils.timezone import now
 from django.utils.crypto import get_random_string
-
+import string
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -363,7 +363,26 @@ class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
         fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
-        depth = 1  
+        depth = 1 
+
+    def create(self, validated_data):
+        subject = validated_data.get('subject').id
+        level = validated_data.get('level')
+        class_category = validated_data.get('class_category').id
+        try:
+            subject = Subject.objects.get(id=subject, class_category_id=class_category)
+        except Subject.DoesNotExist:
+            serializers.ValidationError("Invalid subject")
+        # auto generate exam name
+        exam_name = f"{subject.subject_name}, {level.name}".strip()
+
+        existing_count = Exam.objects.filter(name__startswith=exam_name).count()
+        set = string.ascii_uppercase[existing_count]
+        auto_name = f"{exam_name} - Set {set}"
+
+        validated_data['name'] = auto_name
+
+        return super().create(validated_data) 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['subject'] = SubjectSerializer(instance.subject).data
