@@ -66,6 +66,149 @@ def insert_data_examcenter(request):
     })
 
 # teacher data seeder
+# def insert_data_teachers(request):
+#     users_data = [
+#         {"username": "john", "email": "john@gmail.com", "password": "12345", "Fname": "John", "Lname": "Doe"},
+#         {"username": "alice", "email": "alice@gmail.com", "password": "12345", "Fname": "Alice", "Lname": "Brown"},
+#         {"username": "mark", "email": "mark@gmail.com", "password": "12345", "Fname": "Mark", "Lname": "Smith"},
+#     ]
+
+#     skills_data = ["Python", "Java", "Mathematics", "Physics", "History"]     
+#     subjects_data = ["Maths", "Enslish", "Hindi", "Social Science", "Geography"]     
+#     addresses_data = [
+#         {"city": "New York", "state": "NY", "pincode": "10001", "area": "Downtown"},
+#         {"city": "Los Angeles", "state": "CA", "pincode": "90001", "area": "Uptown"},
+#     ]
+#     experiences_data = [
+#         {"institution": "XYZ School", "role": "Teacher", "start_date": "2015-06-01", "end_date": "2018-05-31", "description": "Taught various subjects", "achievements": "Awarded Best Teacher 2017"},
+#         {"institution": "ABC College", "role": "Lecturer", "start_date": "2019-08-01", "end_date": "Present", "description": "Lecturing Mathematics", "achievements": "Published research paper"}
+#     ]
+#     qualifications_data = ["B.Ed", "M.Ed", "PhD"]
+#     exam_results_data = [
+#         {"exam_name": "NET", "score": 85},
+#         {"exam_name": "TET", "score": 90},
+#     ]
+    
+#     response_data = {"users_added": 0, "skills_added": 0, "subjects_added": 0, "classes_added": 0, 
+#                      "addresses_added": 0, "results_added": 0, "job_types_added": 0, 
+#                      "experiences_added": 0, "qualifications_added": 0, "preferences_added": 0}
+    
+#     for user in users_data:
+#         if not CustomUser.objects.filter(username=user["username"]).exists():
+#             CustomUser.objects.create(
+#                 username=user["username"],
+#                 email=user["email"],
+#                 password=make_password(user["password"]), 
+#                 is_teacher=True,
+#                 Fname=user["Fname"],
+#                 Lname=user["Lname"]
+#             )
+#             response_data["users_added"] += 1
+#     users = list(CustomUser.objects.all())
+    
+#     for skill_name in skills_data:
+#         skill_obj, created = Skill.objects.get_or_create(name=skill_name)
+#         for user in users:
+#             TeacherSkill.objects.create(user=user, skill=skill_obj)
+#             response_data["skills_added"] += 1
+     
+    
+
+#     default_class_category, _ = ClassCategory.objects.get_or_create(name="General")
+
+#     for subject_name in subjects_data:
+#         subject_obj, created = Subject.objects.get_or_create(
+#             subject_name=subject_name,
+#             defaults={"class_category": default_class_category} 
+#         )
+
+#         for user in users:
+#             TeacherSubject.objects.create(user=user, subject=subject_obj)  
+#             response_data["subjects_added"] += 1
+            
+#     for qualification_name in qualifications_data:
+#         qualification_obj, created = EducationalQualification.objects.get_or_create(name=qualification_name)
+#         for user in users:
+#             institution = f"{qualification_name} Institution"
+#             year_of_passing = random.randint(2000, 2024)
+#             grade_or_percentage = f"{random.randint(60, 100)}%"
+#             TeacherQualification.objects.create(
+#                 user=user,
+#                 qualification=qualification_obj,
+#                 institution=institution,
+#                 year_of_passing=year_of_passing,
+#                 grade_or_percentage=grade_or_percentage
+#             )
+#             response_data["qualifications_added"] += 1
+    
+#     for address in addresses_data:
+#         assigned_user = random.choice(users) if users else None
+#         if not assigned_user:
+#             continue  
+#         city = address.get("city", "")
+#         state = address.get("state", "")
+#         pincode = address.get("pincode", "")
+#         area = address.get("area", "")
+#         TeachersAddress.objects.create(
+#             user=assigned_user,
+#             address_type="current",  
+#             state="Bihar",
+#             division="Some Division",
+#             district="Some District",
+#             block="Some Block",
+#             village="Some Village",
+#             area="Some Area",
+#             pincode="123456" 
+#         )
+#         response_data["addresses_added"] += 1
+        
+    
+#     for experience_data in experiences_data:
+#         for user in users:
+#             role_obj, created = Role.objects.get_or_create(jobrole_name=experience_data["role"])  # Create or get the role
+#             start_date = timezone.datetime.strptime(experience_data["start_date"], "%Y-%m-%d").date()
+#             end_date = timezone.datetime.strptime(experience_data["end_date"], "%Y-%m-%d").date() if experience_data["end_date"] != "Present" else None
+            
+#             TeacherExperiences.objects.create(
+#                 user=user,
+#                 institution=experience_data["institution"],
+#                 role=role_obj,
+#                 start_date=start_date,
+#                 end_date=end_date,
+#                 description=experience_data["description"],
+#                 achievements=experience_data["achievements"]
+#             )
+#             response_data["experiences_added"] += 1
+    
+#     for qualification_name in qualifications_data:
+#         assigned_user = random.choice(users) if users else None
+#         if assigned_user:
+#             qualification_obj, created = EducationalQualification.objects.get_or_create(name=qualification_name)
+#             TeacherQualification.objects.create(user=assigned_user, qualification=qualification_obj)
+#             response_data["qualifications_added"] += 1
+    
+#     # Seed Preferences
+#     for user in users:
+#         job_roles = Role.objects.all()  # Fetch all roles
+#         class_categories = ClassCategory.objects.all()  # Fetch all class categories
+#         subjects = Subject.objects.all()  # Fetch all subjects
+#         job_types = TeacherJobType.objects.all()  # Fetch all job types
+        
+#         preference = Preference.objects.create(user=user)
+        
+#         preference.job_role.set(random.sample(list(job_roles), min(3, len(job_roles))))
+#         preference.class_category.set(random.sample(list(class_categories), min(2, len(class_categories)))) 
+#         preference.prefered_subject.set(random.sample(list(subjects), min(2, len(subjects))))
+#         preference.teacher_job_type.set(random.sample(list(job_types), min(2, len(job_types))))
+        
+#         preference.save()
+#         response_data["preferences_added"] += 1
+    
+#     return JsonResponse({
+#         "message": "Seeding completed",
+#         **response_data
+#     })
+
 def insert_data_teachers(request):
     users_data = [
         {"username": "john", "email": "john@gmail.com", "password": "12345", "Fname": "John", "Lname": "Doe"},
@@ -74,7 +217,7 @@ def insert_data_teachers(request):
     ]
 
     skills_data = ["Python", "Java", "Mathematics", "Physics", "History"]     
-    subjects_data = ["Maths", "Enslish", "Hindi", "Social Science", "Geography"]     
+    subjects_data = ["Maths", "English", "Hindi", "Social Science", "Geography"]     
     addresses_data = [
         {"city": "New York", "state": "NY", "pincode": "10001", "area": "Downtown"},
         {"city": "Los Angeles", "state": "CA", "pincode": "90001", "area": "Uptown"},
@@ -84,128 +227,119 @@ def insert_data_teachers(request):
         {"institution": "ABC College", "role": "Lecturer", "start_date": "2019-08-01", "end_date": "Present", "description": "Lecturing Mathematics", "achievements": "Published research paper"}
     ]
     qualifications_data = ["B.Ed", "M.Ed", "PhD"]
-    exam_results_data = [
-        {"exam_name": "NET", "score": 85},
-        {"exam_name": "TET", "score": 90},
-    ]
     
-    response_data = {"users_added": 0, "skills_added": 0, "subjects_added": 0, "classes_added": 0, 
-                     "addresses_added": 0, "results_added": 0, "job_types_added": 0, 
-                     "experiences_added": 0, "qualifications_added": 0, "preferences_added": 0}
-    
-    for user in users_data:
-        if not CustomUser.objects.filter(username=user["username"]).exists():
-            CustomUser.objects.create(
-                username=user["username"],
-                email=user["email"],
-                password=make_password(user["password"]), 
-                is_teacher=True,
-                Fname=user["Fname"],
-                Lname=user["Lname"]
-            )
-            response_data["users_added"] += 1
-    users = list(CustomUser.objects.all())
-    
-    for skill_name in skills_data:
-        skill_obj, created = Skill.objects.get_or_create(name=skill_name)
-        for user in users:
-            TeacherSkill.objects.create(user=user, skill=skill_obj)
-            response_data["skills_added"] += 1
-     
-    
+    response_data = {
+        "users_added": 0, "skills_added": 0, "subjects_added": 0, "addresses_added": 0,
+        "experiences_added": 0, "qualifications_added": 0, "preferences_added": 0
+    }
 
+    # 1️⃣ Insert Users (if not exist)
+    for user in users_data:
+        user_obj, created = CustomUser.objects.get_or_create(
+            username=user["username"],
+            defaults={
+                "email": user["email"],
+                "password": make_password(user["password"]), 
+                "is_teacher": True,
+                "Fname": user["Fname"],
+                "Lname": user["Lname"]
+            }
+        )
+        if created:
+            response_data["users_added"] += 1
+
+    users = list(CustomUser.objects.all())
+
+    # 2️⃣ Insert Skills (if not exist) and Assign to Users
+    for skill_name in skills_data:
+        skill_obj, _ = Skill.objects.get_or_create(name=skill_name)
+        for user in users:
+            if not TeacherSkill.objects.filter(user=user, skill=skill_obj).exists():
+                TeacherSkill.objects.create(user=user, skill=skill_obj)
+                response_data["skills_added"] += 1
+
+    # 3️⃣ Insert Subjects (if not exist) and Assign to Users
     default_class_category, _ = ClassCategory.objects.get_or_create(name="General")
 
     for subject_name in subjects_data:
-        subject_obj, created = Subject.objects.get_or_create(
+        subject_obj, _ = Subject.objects.get_or_create(
             subject_name=subject_name,
             defaults={"class_category": default_class_category} 
         )
+        for user in users:
+            if not TeacherSubject.objects.filter(user=user, subject=subject_obj).exists():
+                TeacherSubject.objects.create(user=user, subject=subject_obj)
+                response_data["subjects_added"] += 1
 
-        for user in users:
-            TeacherSubject.objects.create(user=user, subject=subject_obj)  
-            response_data["subjects_added"] += 1
-            
+    # 4️⃣ Insert Qualifications (if not exist) and Assign to Users
     for qualification_name in qualifications_data:
-        qualification_obj, created = EducationalQualification.objects.get_or_create(name=qualification_name)
+        qualification_obj, _ = EducationalQualification.objects.get_or_create(name=qualification_name)
         for user in users:
-            institution = f"{qualification_name} Institution"
-            year_of_passing = random.randint(2000, 2024)
-            grade_or_percentage = f"{random.randint(60, 100)}%"
-            TeacherQualification.objects.create(
-                user=user,
-                qualification=qualification_obj,
-                institution=institution,
-                year_of_passing=year_of_passing,
-                grade_or_percentage=grade_or_percentage
-            )
-            response_data["qualifications_added"] += 1
-    
+            if not TeacherQualification.objects.filter(user=user, qualification=qualification_obj).exists():
+                TeacherQualification.objects.create(
+                    user=user,
+                    qualification=qualification_obj,
+                    institution=f"{qualification_name} Institution",
+                    year_of_passing=random.randint(2000, 2024),
+                    grade_or_percentage=f"{random.randint(60, 100)}%"
+                )
+                response_data["qualifications_added"] += 1
+
+    # 5️⃣ Insert Addresses (Check before creating)
     for address in addresses_data:
         assigned_user = random.choice(users) if users else None
-        if not assigned_user:
-            continue  
-        city = address.get("city", "")
-        state = address.get("state", "")
-        pincode = address.get("pincode", "")
-        area = address.get("area", "")
-        TeachersAddress.objects.create(
-            user=assigned_user,
-            address_type="current",  
-            state="Bihar",
-            division="Some Division",
-            district="Some District",
-            block="Some Block",
-            village="Some Village",
-            area="Some Area",
-            pincode="123456" 
-        )
-        response_data["addresses_added"] += 1
-        
-    
+        if assigned_user and not TeachersAddress.objects.filter(user=assigned_user).exists():
+            TeachersAddress.objects.create(
+                user=assigned_user,
+                address_type="current",
+                state=address["state"],
+                division="Some Division",
+                district="Some District",
+                block="Some Block",
+                village="Some Village",
+                area=address["area"],
+                pincode=address["pincode"]
+            )
+            response_data["addresses_added"] += 1
+
+    # 6️⃣ Insert Experience (Check before creating)
     for experience_data in experiences_data:
         for user in users:
-            role_obj, created = Role.objects.get_or_create(jobrole_name=experience_data["role"])  # Create or get the role
+            role_obj, _ = Role.objects.get_or_create(jobrole_name=experience_data["role"])
             start_date = timezone.datetime.strptime(experience_data["start_date"], "%Y-%m-%d").date()
             end_date = timezone.datetime.strptime(experience_data["end_date"], "%Y-%m-%d").date() if experience_data["end_date"] != "Present" else None
-            
-            TeacherExperiences.objects.create(
-                user=user,
-                institution=experience_data["institution"],
-                role=role_obj,
-                start_date=start_date,
-                end_date=end_date,
-                description=experience_data["description"],
-                achievements=experience_data["achievements"]
-            )
-            response_data["experiences_added"] += 1
-    
-    for qualification_name in qualifications_data:
-        assigned_user = random.choice(users) if users else None
-        if assigned_user:
-            qualification_obj, created = EducationalQualification.objects.get_or_create(name=qualification_name)
-            TeacherQualification.objects.create(user=assigned_user, qualification=qualification_obj)
-            response_data["qualifications_added"] += 1
-    
-    # Seed Preferences
+
+            if not TeacherExperiences.objects.filter(user=user, institution=experience_data["institution"]).exists():
+                TeacherExperiences.objects.create(
+                    user=user,
+                    institution=experience_data["institution"],
+                    role=role_obj,
+                    start_date=start_date,
+                    end_date=end_date,
+                    description=experience_data["description"],
+                    achievements=experience_data["achievements"]
+                )
+                response_data["experiences_added"] += 1
+
+    # 7️⃣ Assign Preferences (Avoid Duplicates)
     for user in users:
-        job_roles = Role.objects.all()  # Fetch all roles
-        class_categories = ClassCategory.objects.all()  # Fetch all class categories
-        subjects = Subject.objects.all()  # Fetch all subjects
-        job_types = TeacherJobType.objects.all()  # Fetch all job types
-        
-        preference = Preference.objects.create(user=user)
-        
-        preference.job_role.set(random.sample(list(job_roles), min(3, len(job_roles))))
-        preference.class_category.set(random.sample(list(class_categories), min(2, len(class_categories)))) 
-        preference.prefered_subject.set(random.sample(list(subjects), min(2, len(subjects))))
-        preference.teacher_job_type.set(random.sample(list(job_types), min(2, len(job_types))))
-        
-        preference.save()
-        response_data["preferences_added"] += 1
-    
+        if not Preference.objects.filter(user=user).exists():
+            job_roles = Role.objects.all()
+            class_categories = ClassCategory.objects.all()
+            subjects = Subject.objects.all()
+            job_types = TeacherJobType.objects.all()
+
+            preference = Preference.objects.create(user=user)
+            preference.job_role.set(random.sample(list(job_roles), min(3, len(job_roles))))
+            preference.class_category.set(random.sample(list(class_categories), min(2, len(class_categories))))
+            preference.prefered_subject.set(random.sample(list(subjects), min(2, len(subjects))))
+            preference.teacher_job_type.set(random.sample(list(job_types), min(2, len(job_types))))
+            preference.save()
+
+            response_data["preferences_added"] += 1
+
     return JsonResponse({
-        "message": "Seeding completed",
+        "message": "Seeding completed successfully",
         **response_data
     })
 
