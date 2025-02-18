@@ -431,17 +431,17 @@ class EducationalQualificationSerializer(serializers.ModelSerializer):
 
 class TeacherQualificationSerializer(serializers.ModelSerializer):
     # This will allow you to include the user and qualification in the serialized data
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     qualification = serializers.SlugRelatedField(queryset=EducationalQualification.objects.all(), slug_field="name", required=False)
     
     class Meta:
         model = TeacherQualification
-        fields = ['id', 'user', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage']
+        fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         
-        representation['user'] = UserSerializer(instance.user).data
+        # representation['user'] = UserSerializer(instance.user).data
         representation['qualification'] = EducationalQualificationSerializer(instance.qualification).data
         
         return representation
