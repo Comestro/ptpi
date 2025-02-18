@@ -829,7 +829,7 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
         if teacher_id:
             return TeacherExperiences.objects.filter(user_id=teacher_id)
         return TeacherExperiences.objects.filter(user=self.request.user)
-    
+
 
 class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -844,89 +844,24 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
         if not exam_id:
             return Response({"error": "Exam ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Ensure the user is assigned to an `AssignedQuestionUser` instance
         try:
-            assigned_user = AssignedQuestionUser.objects.get(user=request.user)
+            assigned_user = AssignedQuestionUser.objects.filter(user=request.user).first()
         except AssignedQuestionUser.DoesNotExist:
             return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Ensure the exam exists and is assigned to the correct `AssignedQuestionUser`
         try:
             exam = Exam.objects.get(pk=exam_id, assigneduser=assigned_user)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found or you do not have permission."},
                             status=status.HTTP_404_NOT_FOUND)
 
-        translator = Translator(to_lang="hi")
-
-        # Create English version
-        english_serializer = QuestionSerializer(data=data)
-        if english_serializer.is_valid():
-            english_question = english_serializer.save()
-        else:
-            return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # Create Hindi version if the question is in English
-        hindi_serializer = None
-        if data.get("language") == "English":
-            hindi_data = data.copy()
-
-            # Translate fields 
-            hindi_data["text"] = translator.translate(data.get("text", ""))
-            hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
-
-            # Translate options
-            hindi_options = {}
-            if isinstance(data["options"], dict):
-                for key, value in data["options"].items():
-                    hindi_options[key] = translator.translate(value)
-            elif isinstance(data["options"], list):
-                hindi_options = [translator.translate(option) for option in data["options"]]
-
-            hindi_data["options"] = hindi_options
-            hindi_data["language"] = "Hindi"
-            hindi_data["exam"] = exam_id
-
-            hindi_serializer = QuestionSerializer(data=hindi_data)
-            if hindi_serializer.is_valid():
-                hindi_question = hindi_serializer.save()
-            else:
-                return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response({
-            "message": "Question stored in English and Hindi",
-            "english_data": english_serializer.data,
-            "hindi_data": hindi_serializer.data if hindi_serializer else None
-        }, status=status.HTTP_201_CREATED)
-
-    def update(self, request, pk=None):
-        try:
-            question = self.get_object()  # Get the question object
-        except Question.DoesNotExist:
-            return Response({"error": "Question not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        user = request.user
-        data = request.data
-
-        # Ensure the user is an assigned question setter
-        try:
-            assigned_user = AssignedQuestionUser.objects.get(user=user)
-        except AssignedQuestionUser.DoesNotExist:
-            return Response({"error": "You are not an assigned question user."}, status=status.HTTP_403_FORBIDDEN)
-
-        # Ensure the question belongs to an exam assigned to this user
-        exam = question.exam
-
-        if exam.assigneduser != assigned_user:
-            return Response({"error": "You do not have permission to edit this question"},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        # Partial update using the serializer
-        serializer = QuestionSerializer(question, data=data, partial=True)
+        serializer = QuestionSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
+            question = serializer.save()
+            return Response({
+                "message": "Questions stored in Hindi and English successfully",
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
@@ -934,102 +869,6 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
-# class QuestionViewSet(viewsets.ModelViewSet):
-#     permission_classes = [IsAuthenticated]
-#     authentication_classes = [ExpiringTokenAuthentication]
-#     queryset = Question.objects.all()
-#     serializer_class = QuestionSerializer
-
-#     def create(self, request):
-#         data = request.data
-#         exam_id = data.get("exam")
-
-#         # Ensure the user is assigned to an `AssignedQuestionUser` instance
-#         try:
-#             assigned_user = AssignedQuestionUser.objects.get(user=request.user)
-#         except AssignedQuestionUser.DoesNotExist:
-#             return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
-
-#         # Ensure the exam exists and is assigned to the correct `AssignedQuestionUser`
-#         try:
-#             exam = Exam.objects.get(pk=exam_id)
-#         except Exam.DoesNotExist:
-#             return Response({"error": "Exam not found "}, status=status.HTTP_404_NOT_FOUND)
-
-#         translator = Translator(to_lang="hi")
-
-#         # Create English version
-#         english_serializer = QuestionSerializer(data=data)
-#         if english_serializer.is_valid():
-#             english_question = english_serializer.save()
-#         else:
-#             return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Create Hindi version if the question is in English
-#         hindi_serializer = None
-#         if data.get("language") == "English":
-#             hindi_data = data.copy()
-
-#             # Translate fields 
-#             hindi_data["text"] = translator.translate(data.get("text", ""))
-#             hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
-
-#             # Translate options
-#             hindi_options = {}
-#             if isinstance(data["options"], dict):
-#                 for key, value in data["options"].items():
-#                     hindi_options[key] = translator.translate(value)
-#             elif isinstance(data["options"], list):
-#                 hindi_options = [translator.translate(option) for option in data["options"]]
-
-#             hindi_data["options"] = hindi_options
-#             hindi_data["language"] = "Hindi"
-#             hindi_data["exam"] = exam_id
-
-#             hindi_serializer = QuestionSerializer(data=hindi_data)
-#             if hindi_serializer.is_valid():
-#                 hindi_question = hindi_serializer.save()
-#             else:
-#                 return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#         return Response({
-#             "message": "Question stored in English and Hindi",
-#             "english_data": english_serializer.data,
-#             "hindi_data": hindi_serializer.data if hindi_serializer else None
-#         }, status=status.HTTP_201_CREATED)
-
-#     @action(detail=False, methods=['get'])
-#     def count(self, request):
-#         count = get_count(Question)
-#         return Response({"Count": count})
-
-#     @action(detail=False, methods=['get'])
-#     def questions(self, request):
-#         user = request.user
-#         exam_id = request.query_params.get('exam_id')
-#         language = request.query_params.get('language')
-
-#         questions = Question.objects.all()
-
-#         if exam_id:
-#             try:
-#                 exam = Exam.objects.get(pk=exam_id)
-#             except Exam.DoesNotExist:
-#                 return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-
-#             questions = questions.filter(exam=exam)
-
-#         if language:
-#             questions = questions.filter(language=language)
-
-#         serialized_questions = QuestionSerializer(questions, many=True)
-#         return Response(serialized_questions.data, status=status.HTTP_200_OK)
-
-#     def destroy(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         instance.delete()
-#         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class QuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1049,33 +888,13 @@ class QuestionViewSet(viewsets.ModelViewSet):
         except AssignedQuestionUser.DoesNotExist:
             return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Ensure the exam exists
+        # Ensure the exam exists and is assigned to the correct `AssignedQuestionUser`
         try:
             exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found "}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if the 'text' field contains an uploaded file (image)
-        text_file = request.FILES.get('text')
-        if isinstance(text_file, InMemoryUploadedFile):
-            # Validate that the uploaded file is an image (JPEG/PNG)
-            mime_type = text_file.content_type
-            if mime_type not in ["image/jpeg", "image/png"]:
-                return Response({"error": "Invalid image type. Only JPEG and PNG are allowed."}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Use Pillow to verify that it's a valid image
-            try:
-                img = Image.open(text_file)
-                img.verify()  # Verifies the file is an actual image
-            except (IOError, SyntaxError):
-                return Response({"error": "Invalid image file."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # If 'text' is a base64 string, validate it
-        elif text_data.startswith("/9j/") or text_data.startswith("iVBORw0KGgo="):  # JPEG/PNG base64 headers
-            try:
-                base64.b64decode(text_data)  # Validate Base64 format
-            except Exception:
-                return Response({"error": "Invalid Base64 image format"}, status=status.HTTP_400_BAD_REQUEST)
+        translator = Translator(to_lang="hi")
 
         # Create English version
         english_serializer = QuestionSerializer(data=data)
@@ -1084,16 +903,13 @@ class QuestionViewSet(viewsets.ModelViewSet):
         else:
             return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create Hindi version if language is English
+        # Create Hindi version if the question is in English
         hindi_serializer = None
         if data.get("language") == "English":
-            translator = Translator(to_lang="hi")
             hindi_data = data.copy()
 
-            # Translate only if text is not an image
-            if not text_file and not text_data.startswith("/9j/") and not text_data.startswith("iVBORw0KGgo="):
-                hindi_data["text"] = translator.translate(data.get("text", ""))
-
+            # Translate fields 
+            hindi_data["text"] = translator.translate(data.get("text", ""))
             hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
 
             # Translate options
@@ -1876,7 +1692,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         user = request.user
         subject = request.data.get('subject')  
         try:
-            assigned_user = AssignedQuestionUser.objects.get(user=user, subject=subject)
+            assigned_user = AssignedQuestionUser.objects.filter(user=user, subject=subject).first()
         except AssignedQuestionUser.DoesNotExist:
             return Response({"error": "You are not assigned to post exam set for this subject."},
                             status=status.HTTP_403_FORBIDDEN)

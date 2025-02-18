@@ -13,6 +13,8 @@ from teacherhire.utils import calculate_profile_completed, send_otp_via_email, v
 from django.utils.timezone import now
 from django.utils.crypto import get_random_string
 import string
+from translate import Translator
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -334,35 +336,60 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
         if (not str(value).isdigit() or int(value) <= 0):
             raise serializers.ValidationError("Pincode must be positive integer.")
         return value
+    
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
-    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(),required=False, allow_null=True)
+    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False, allow_null=True)
+    solution = serializers.CharField(max_length=2000, allow_null=True, required=False)
+    language = serializers.CharField(max_length=50, required=True)
+
     class Meta:
         model = Question
-        fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
-    # def validate_text(self, value):
-    #     if value is not None and len(value)< 5:
-    #         raise serializers.ValidationError("Text must be at least 5 characters.")
-    #     # if Question.objects.filter(text=value).exists():
-    #     #     raise serializers.ValidationError("This question is already exists.")
-    #     return value
-    
-    def validate_text(self, value):
-        """Ensure the text is either plain text or a valid Base64 image string."""
-        try:
-            # Check if the text is a valid Base64 image
-            if value.startswith("/9j/") or value.startswith("iVBORw0KGgo="):  # JPEG or PNG Base64 headers
-                base64.b64decode(value)
-        except Exception:
-            raise serializers.ValidationError("Invalid Base64 format.")
+        fields = ['id', 'text', 'image', 'options', 'exam', 'solution', 'correct_option', 'language', 'time']
 
+    def validate_text(self, value):
+        if value is not None and len(value) < 5:
+            raise serializers.ValidationError("Text must be at least 5 characters.")
         return value
+
+    def create(self, validated_data):
+        translator_to_hindi = Translator(to_lang="hi")
+        
+        english_text = validated_data.get("text")
+        english_solution = validated_data.get("solution")
+        english_options = validated_data.get("options")
+
+        hindi_text = translator_to_hindi.translate(english_text) if english_text else None
+        hindi_solution = translator_to_hindi.translate(english_solution) if english_solution else None
+        hindi_options = {}
+
+        if isinstance(english_options, dict):
+            for key, value in english_options.items():
+                hindi_options[key] = translator_to_hindi.translate(value)
+        elif isinstance(english_options, list):
+            hindi_options = [translator_to_hindi.translate(option) for option in english_options]
+
+        english_data = validated_data.copy()  
+        english_data["language"] = "English"
+        english_question = Question.objects.create(**english_data)
+
+        # Save the Hindi version
+        hindi_data = {
+            "text": hindi_text,
+            "solution": hindi_solution,
+            "options": hindi_options,
+            "language": "Hindi",
+            "exam": validated_data.get("exam")
+        }
+        hindi_question = Question.objects.create(**hindi_data)
+
+        return english_question  
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # representation['exam'] = ExamSerializer(instance.exam).data
         return representation
-        
+
 class ExamSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=2000, required=False)
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
