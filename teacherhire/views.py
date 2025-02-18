@@ -301,7 +301,7 @@ class SkillViewSet(viewsets.ModelViewSet):
 
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSkillSerializer
 
@@ -623,6 +623,12 @@ class TeacherQualificationViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return create_object(TeacherQualificationSerializer, request.data, TeacherQualification)
+    
+    def get_queryset(self):
+        teacher_id = self.request.query_params.get('teacher_id')  # Get teacher_id from query params
+        if teacher_id:
+            return TeacherQualification.objects.filter(user_id=teacher_id)
+        return TeacherQualification.objects.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -735,14 +741,10 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
                                                                                                     flat=True).distinct()
         return Response({"suggestions": list(suggestions)}, status=status.HTTP_200_OK)
 
-    # def get_queryset(self):
-    #     return TeacherQualification.objects.filter(user=self.request.user)
-    
     def get_queryset(self):
-        teacher_id = self.request.query_params.get('teacher_id')  # Get teacher_id from query params
-        if teacher_id:
-            return TeacherQualification.objects.filter(user_id=teacher_id)
         return TeacherQualification.objects.filter(user=self.request.user)
+    
+    
 
 
 class TeacherExperiencesViewSet(viewsets.ModelViewSet):
