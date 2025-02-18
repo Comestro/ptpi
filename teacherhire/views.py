@@ -821,9 +821,15 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
                 model_class=TeacherExperiences
             )
 
+    # def get_queryset(self):
+    #     return TeacherExperiences.objects.filter(user=self.request.user)
+    
     def get_queryset(self):
+        teacher_id = self.request.query_params.get('teacher_id')  # Get teacher_id from query params
+        if teacher_id:
+            return TeacherExperiences.objects.filter(user_id=teacher_id)
         return TeacherExperiences.objects.filter(user=self.request.user)
-
+    
 
 class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
