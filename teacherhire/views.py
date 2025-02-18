@@ -301,7 +301,7 @@ class SkillViewSet(viewsets.ModelViewSet):
 
 class TeacherSkillViewSet(viewsets.ModelViewSet):
     queryset = TeacherSkill.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSkillSerializer
 
@@ -317,8 +317,14 @@ class TeacherSkillViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "TeacherSkill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
+    
+    def get_queryset(self):
+        teacher_id = self.request.query_params.get('teacher_id')  
+        if teacher_id:
+            return TeacherSkill.objects.filter(user_id=teacher_id)
+        else: 
+            return TeacherSkill.objects.all()
+        
 class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -361,13 +367,7 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
                 model_class=TeacherSkill
             )
 
-    # def get_queryset(self):
-    #     return TeacherSkill.objects.filter(user=self.request.user)
-    
     def get_queryset(self):
-        teacher_id = self.request.query_params.get('teacher_id')  # Get teacher_id from query params
-        if teacher_id:
-            return TeacherSkill.objects.filter(user_id=teacher_id)
         return TeacherSkill.objects.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
