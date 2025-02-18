@@ -869,7 +869,7 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "ExamSetter deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
