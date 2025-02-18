@@ -908,3 +908,9 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id','Fname','Lname','email','profiles']
     
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.profiles:
+            return representation['profiles']        
+        representation.pop('profiles', None)
+        return representation
