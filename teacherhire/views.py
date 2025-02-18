@@ -2587,12 +2587,12 @@ class TeacherReportViewSet(viewsets.ModelViewSet):
 
 
 class AllTeacherViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser]
-    authentication_classes = [ExpiringTokenAuthentication]
+    # permission_classes = [IsAuthenticated, IsAdminUser]
+    # authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = AllTeacherSerializer
 
     def get_queryset(self):
-        queryset = CustomUser.objects.filter(is_staff=False)
+        queryset = CustomUser.objects.filter(is_teacher=True,is_staff=False)
 
         return_all = self.request.query_params.get('all', None)
         if return_all and return_all.lower() == 'true':
