@@ -404,23 +404,23 @@ class ExamSerializer(serializers.ModelSerializer):
         return representation
     
 class TeacherSkillSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     skill = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), required=False)
     class Meta:
         model = TeacherSkill
-        fields = ['id', 'user', 'skill']
+        fields = ['id', 'skill']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
+        # representation['user'] = UserSerializer(instance.user).data
         representation['skill'] = SkillSerializer(instance.skill).data
         return representation
  
     def validate(self, attrs):
-        user = attrs.get('user')
+        # user = attrs.get('user')
         skill = attrs.get('skill')
         # This user have skill already exists
-        if TeacherSkill.objects.filter(user=user, skill=skill).exists():
+        if TeacherSkill.objects.filter( skill=skill).exists():
             raise serializers.ValidationError('This user already has this skill.')
         return attrs
 

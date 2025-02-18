@@ -361,7 +361,13 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
                 model_class=TeacherSkill
             )
 
+    # def get_queryset(self):
+    #     return TeacherSkill.objects.filter(user=self.request.user)
+    
     def get_queryset(self):
+        teacher_id = self.request.query_params.get('teacher_id')  # Get teacher_id from query params
+        if teacher_id:
+            return TeacherSkill.objects.filter(user_id=teacher_id)
         return TeacherSkill.objects.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
