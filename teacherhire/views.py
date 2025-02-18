@@ -2717,6 +2717,18 @@ class HireRequestViewSet(viewsets.ModelViewSet):
     serializer_class = HireRequestSerializer
     queryset = HireRequest.objects.all()
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        allowed_fields = ['status']
+        data = {field: request.data[field] for field in allowed_fields if field in request.data}
+
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
+
 class RecHireRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2727,6 +2739,7 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         recruiter_id = request.user.id
         data = request.data.copy()
         data['recruiter_id'] = recruiter_id
+        data['status'] = "requested"
         serializer = HireRequestSerializer(data=data)
         if serializer.is_valid():
             serializer.save()

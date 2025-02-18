@@ -439,9 +439,12 @@ class Interview(models.Model):
     
 class HireRequest(models.Model):
     recruiter_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='recruiter')
-    teacher_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    teacher_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=200,choices=[('requested','requested'),('fulfilled','fulfilled')], default='requested')
+    subject = models.ManyToManyField(Subject)
+    teacher_job_type = models.ManyToManyField(TeacherJobType)
+    status = models.CharField(max_length=200,choices=[('requested','requested'),('fulfilled','fulfilled'),('rejected','rejected')], default='requested')
+    reject_reason = models.CharField(max_length=500, null=True, blank=True)
 
 class RecruiterEnquiryForm(models.Model):
     teachertype = models.CharField(max_length=200, null=True, blank=True)
