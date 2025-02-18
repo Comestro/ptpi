@@ -318,8 +318,8 @@ class Question(models.Model):
             ('Hindi', 'Hindi'),
             ('English', 'English'),
         ],blank=True, null=True)
-    text = models.TextField()
-    image = models.ImageField(upload_to="question_image/", null=True, blank=True)
+    text = models.BinaryField()
+    # image = models.ImageField(upload_to="question_image/", null=True, blank=True)
     options = models.JSONField()
     solution = models.TextField(null=True,blank=True)
     correct_option = models.PositiveIntegerField(default=1)
