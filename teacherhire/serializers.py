@@ -923,7 +923,7 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
     profiles =  BasicProfileSerializer(required=False)
     class Meta:
         model = CustomUser
-        fields = ['id','Fname','Lname','email','profiles']
+        fields = ['id','Fname','Lname','email','is_verified','profiles']
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
