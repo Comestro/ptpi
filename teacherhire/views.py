@@ -735,7 +735,13 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
                                                                                                     flat=True).distinct()
         return Response({"suggestions": list(suggestions)}, status=status.HTTP_200_OK)
 
+    # def get_queryset(self):
+    #     return TeacherQualification.objects.filter(user=self.request.user)
+    
     def get_queryset(self):
+        teacher_id = self.request.query_params.get('teacher_id')  # Get teacher_id from query params
+        if teacher_id:
+            return TeacherQualification.objects.filter(user_id=teacher_id)
         return TeacherQualification.objects.filter(user=self.request.user)
 
 
