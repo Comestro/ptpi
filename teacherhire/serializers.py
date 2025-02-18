@@ -916,7 +916,19 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        if instance.profiles:
-            return representation['profiles']        
-        representation.pop('profiles', None)
+        if 'profiles' in representation and representation['profiles'] is not None:
+            profile_data = representation['profiles']
+            profile_filtered = {
+                'bio': profile_data.get('bio', ''),
+                'phone_number': profile_data.get('phone_number', None),
+                'religion': profile_data.get('religion', None),
+                'profile_picture': profile_data.get('profile_picture', None),
+                'date_of_birth': profile_data.get('date_of_birth', None),
+                'marital_status': profile_data.get('marital_status', None),
+                'gender': profile_data.get('gender', None),
+            }
+            if any(value is not None for value in profile_filtered.values()):
+                representation['profiles'] = profile_filtered
+            else:
+                del representation['profiles']
         return representation
