@@ -213,7 +213,7 @@ class LoginSerializer(serializers.Serializer):
         return data
 
 class TeacherExperiencesSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     institution = serializers.CharField(max_length=255, required=False, allow_null=True)
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), required=False, allow_null=True)
     start_date = serializers.DateField(required=False, allow_null=True)
@@ -222,7 +222,7 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExperiences
-        fields = ['id', 'user', 'institution', 'role', 'start_date', 'end_date', 'achievements']
+        fields = ['id', 'institution', 'role', 'start_date', 'end_date', 'achievements']
 
     def validate_institution(self, value):
         if value and len(value) < 3:
@@ -248,7 +248,7 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.user:
-            representation['user'] = UserSerializer(instance.user).data
+            # representation['user'] = UserSerializer(instance.user).data
             representation['role'] = RoleSerializer(instance.role).data
         return representation
 
