@@ -1265,6 +1265,17 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
         except TeacherClassCategory.DoesNotExist:
             return Response({"detail": "TeacherClassCategory not found."}, status=status.HTTP_404_NOT_FOUND)
 
+class AllTeacherExamResultViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = TeacherExamResult.objects.all()
+    serializer_class = TeacherExamResultSerializer
+
+    def get_queryset(self):
+        teacher_id = self.request.query_params.get('teacher_id')
+        if teacher_id:
+            return TeacherExamResult.objects.filter(user=teacher_id)
+        return TeacherExamResult.objects.all()
 
 class TeacherExamResultViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

@@ -574,8 +574,8 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
-        representation['exam'] = ExamSerializer(instance.exam).data
+        representation['user'] = {"id":instance.user.id, "name":instance.user.username}
+        representation['exam'] = {"id":instance.exam.id, "name":instance.exam.name}
         return representation
 
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):

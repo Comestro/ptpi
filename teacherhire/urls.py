@@ -38,7 +38,7 @@ router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request
 router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet,basename='recruiter-enquiryform')
 router.register(r"all/teacher/basicProfile", AllTeacherBasicProfileViewSet, basename="teachers-basicProfile")
 router.register(r"all/recruiter/basicProfile", AllRecruiterBasicProfileViewSet, basename="recruiters-basicProfile")
-
+router.register(r"admin/teacherexamresult", AllTeacherExamResultViewSet, basename="admin-teacherexamresult")
 
 # === Teacher Routes ===
 router.register(r"admin/teacher", TeacherViewSet, basename="admin-teacher")
