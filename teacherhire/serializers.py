@@ -935,3 +935,20 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
             else:
                 del representation['profiles']
         return representation
+    
+class ApplySerializer(serializers.ModelSerializer):
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False, many=True)
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True, required=False)
+
+    class Meta:
+        model = Apply
+        fields = "__all__"
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data if instance.class_category else None
+        representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+        representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
+        return representation

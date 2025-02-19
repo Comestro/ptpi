@@ -450,3 +450,18 @@ class RecruiterEnquiryForm(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True)
     email = models.EmailField(unique=True)
 
+class Apply(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    class_category = models.ManyToManyField(ClassCategory)
+    teacher_job_type = models.ManyToManyField(TeacherJobType)
+    subject = models.ManyToManyField(Subject)
+    pincode = models.CharField(max_length=6)
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    post_office = models.CharField(max_length=255)
+    area = models.CharField(max_length=255)
+    status = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.username

@@ -147,3 +147,14 @@ class AssignedQuestionUserAdmin(admin.ModelAdmin):
 @admin.register(HireRequest)
 class HireRequestAdmin(admin.ModelAdmin):
     list_display = ['recruiter_id','teacher_id','date']
+
+@admin.register(Apply)
+class ApplyAdmin(admin.ModelAdmin):
+    list_display = ['user','get_subject','get_class_category','pincode','area','post_office','city','state','status','date','get_teacher_job_type']
+
+    def get_subject(self, obj):
+        return ", ".join([str(subject) for subject in obj.subject.all()])
+    def get_class_category(self, obj):
+        return ", ".join([str(class_category) for class_category in obj.class_category.all()])
+    def get_teacher_job_type(self, obj):
+        return ", ".join([str(job_type) for job_type in obj.teacher_job_type.all()])   

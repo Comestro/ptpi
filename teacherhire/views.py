@@ -831,9 +831,6 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
-    
-    
-
 
 class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -2616,4 +2613,65 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+class ApplyViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = ApplySerializer
+    queryset = Apply.objects.all()
 
+    def create(self, request):
+        data = request.data.copy()  
+        user = request.user  
+        
+        subject_ids = data.get('subject', [])  
+        class_category_ids = data.get('class_category', [])
+
+        if not subject_ids or not class_category_ids:
+            return Response(
+                {"error": "Subject and Class Category are required."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        applied = Apply.objects.filter(user=user, subject__id__in=subject_ids,
+            subject__class_category__id__in=class_category_ids,
+            status=True)
+        if applied:
+            return Response(
+                {"error": "You are already applied for this subject"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        qualified_subjects = TeacherExamResult.objects.filter(
+            user=user, 
+            exam__subject__id__in=subject_ids,
+            exam__subject__class_category__id__in=class_category_ids,
+            isqualified=True
+        ).count()
+
+        if qualified_subjects != len(subject_ids):
+            return Response(
+                {"error": "You are not qualified for one or more selected subjects."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        data["user"] = user.id  
+
+        serializer = ApplySerializer(data=data, context={"request": request})
+        if serializer.is_valid():
+            apply_instance = serializer.save(user=user)  
+
+            return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_queryset(self):
+        return Apply.objects.filter(user=self.request.user)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "Applied Data deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+class AllApplyViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = ApplySerializer
+    queryset = Apply.objects.all()
