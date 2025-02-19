@@ -1597,18 +1597,18 @@ class CheckoutView(APIView):
 
         levels = []
         for subject in user_preference.prefered_subject.all():
-            for class_category in user_preference.class_category.all():
+            # for class_category in user_preference.class_category.all():
                 unlocked_levels = ["Level 1"]
 
                 has_level_1 = qualified_exams.filter(exam__level_id=1, exam__type="online",
                                                     exam__subject=subject,
-                                                    exam__class_category=class_category).exists()
+                                                    exam__class_category=subject.class_category).exists()
                 has_level_2_online = qualified_exams.filter(exam__level_id=2, exam__type="online",
                                                             exam__subject=subject,
-                                                            exam__class_category=class_category).exists()
+                                                            exam__class_category=subject.class_category).exists()
                 has_level_2_offline = qualified_exams.filter(exam__level_id=2, exam__type="offline",
                                                             exam__subject=subject,
-                                                            exam__class_category=class_category).exists()
+                                                            exam__class_category=subject.class_category).exists()
 
                 if has_level_1:
                     unlocked_levels.append("Level 2 Online")
@@ -1620,8 +1620,8 @@ class CheckoutView(APIView):
                 levels.append({
                     "subject_id": subject.id,
                     "subject_name": subject.subject_name,
-                    "classcategory_id": class_category.id,
-                    "classcategory_name": class_category.name,
+                    "classcategory_id": subject.class_category.id,
+                    "classcategory_name": subject.class_category.name,
                     "levels": unlocked_levels
                 })
 
