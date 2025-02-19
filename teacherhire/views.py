@@ -878,11 +878,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
 
-    
     def create(self, request):
         data = request.data
         exam_id = data.get("exam")
-        text_data = data.get("text", "")
 
         # Ensure the user is assigned to an `AssignedQuestionUser` instance
         try:
@@ -895,12 +893,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
             exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found "}, status=status.HTTP_404_NOT_FOUND)
-        
-        # Handle Image Upload (Convert Base64 to Binary)
-        image_data = data.get("image", "")
-        if image_data.startswith("data:image"):  # Check if image is in Base64
-            format, imgstr = image_data.split(";base64,")  # Extract Base64 content
-            data["text"] = base64.b64decode(imgstr)  # Store as binary in text field
 
         translator = Translator(to_lang="hi")
 
@@ -975,7 +967,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
 
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

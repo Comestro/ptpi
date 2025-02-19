@@ -318,18 +318,11 @@ class Question(models.Model):
             ('Hindi', 'Hindi'),
             ('English', 'English'),
         ],blank=True, null=True)
-    text = models.BinaryField()
-    # image = models.ImageField(upload_to="question_image/", null=True, blank=True)
+    text = models.CharField(max_length=2000)
     options = models.JSONField()
     solution = models.TextField(null=True,blank=True)
     correct_option = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-    def save(self, *args, **kwargs):
-        if isinstance(self.text, str):  # Convert Base64 string to binary before saving
-            self.text = base64.b64decode(self.text.split(';base64,')[-1])
-        super().save(*args, **kwargs)
 
     def clean(self):
         super().clean()

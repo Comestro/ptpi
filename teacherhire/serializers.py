@@ -340,54 +340,19 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
-    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False, allow_null=True)
-    solution = serializers.CharField(max_length=2000, allow_null=True, required=False)
-    language = serializers.CharField(max_length=50, required=True)
-
+    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(),required=False, allow_null=True)
     class Meta:
         model = Question
-        fields = ['id', 'text', 'image', 'options', 'exam', 'solution', 'correct_option', 'language', 'time']
-
+        fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
     def validate_text(self, value):
-        if value is not None and len(value) < 5:
+        if value is not None and len(value)< 5:
             raise serializers.ValidationError("Text must be at least 5 characters.")
+        # if Question.objects.filter(text=value).exists():
+        #     raise serializers.ValidationError("This question is already exists.")
         return value
-
-    def create(self, validated_data):
-        translator_to_hindi = Translator(to_lang="hi")
-        
-        english_text = validated_data.get("text")
-        english_solution = validated_data.get("solution")
-        english_options = validated_data.get("options")
-
-        hindi_text = translator_to_hindi.translate(english_text) if english_text else None
-        hindi_solution = translator_to_hindi.translate(english_solution) if english_solution else None
-        hindi_options = {}
-
-        if isinstance(english_options, dict):
-            for key, value in english_options.items():
-                hindi_options[key] = translator_to_hindi.translate(value)
-        elif isinstance(english_options, list):
-            hindi_options = [translator_to_hindi.translate(option) for option in english_options]
-
-        english_data = validated_data.copy()  
-        english_data["language"] = "English"
-        english_question = Question.objects.create(**english_data)
-
-        # Save the Hindi version
-        hindi_data = {
-            "text": hindi_text,
-            "solution": hindi_solution,
-            "options": hindi_options,
-            "language": "Hindi",
-            "exam": validated_data.get("exam")
-        }
-        hindi_question = Question.objects.create(**hindi_data)
-
-        return english_question  
-
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        # representation['exam'] = ExamSerializer(instance.exam).data
         return representation
 
 class ExamSerializer(serializers.ModelSerializer):
