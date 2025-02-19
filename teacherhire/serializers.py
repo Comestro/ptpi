@@ -412,7 +412,7 @@ class ExamSerializer(serializers.ModelSerializer):
         except Subject.DoesNotExist:
             serializers.ValidationError("Invalid subject")
         # auto generate exam name
-        exam_name = f"{subject.subject_name},{class_category.name}, {level.name}".strip()
+        exam_name = f"{class_category.name}, {subject.subject_name}, {level.name}".strip()
 
         existing_count = Exam.objects.filter(name__startswith=exam_name).count()
         set = string.ascii_uppercase[existing_count]
