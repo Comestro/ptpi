@@ -404,15 +404,15 @@ class ExamSerializer(serializers.ModelSerializer):
         depth = 1 
 
     def create(self, validated_data):
-        subject = validated_data.get('subject').id
+        subject = validated_data.get('subject')
         level = validated_data.get('level')
-        class_category = validated_data.get('class_category').id
+        class_category = validated_data.get('class_category')
         try:
-            subject = Subject.objects.get(id=subject, class_category_id=class_category)
+            subject = Subject.objects.get(id=subject.id, class_category_id=class_category.id)
         except Subject.DoesNotExist:
             serializers.ValidationError("Invalid subject")
         # auto generate exam name
-        exam_name = f"{subject.subject_name}, {level.name}".strip()
+        exam_name = f"{subject.subject_name},{class_category.name}, {level.name}".strip()
 
         existing_count = Exam.objects.filter(name__startswith=exam_name).count()
         set = string.ascii_uppercase[existing_count]
