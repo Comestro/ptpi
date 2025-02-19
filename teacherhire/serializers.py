@@ -273,16 +273,16 @@ class SubjectSerializer(serializers.ModelSerializer):
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCategory
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'subjects']
 
     def validate_name(self, value):
         if ClassCategory.objects.filter(name=value).exists():
             raise serializers.ValidationError("A classcategory with this name already exists.")
         return value
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     representation['subjects'] = SubjectSerializer(instance.subjects.all(), many=True).data
-    #     return representation
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['subjects'] = SubjectSerializer(instance.subjects.all(), many=True).data
+        return representation
 
 class ReasonSerializer(serializers.ModelSerializer):
     class Meta:
@@ -532,22 +532,16 @@ class TeacherClassCategorySerializer(serializers.ModelSerializer):
 class TeacherExamResultSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    total_question = serializers.SerializerMethodField()
+
     class Meta:
         model = TeacherExamResult
-        fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer', 'total_question']
+        fields = '__all__'
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {"id":instance.user.id, "name":instance.user.username}
-        representation['exam'] = {"id":instance.exam.id, "name":instance.exam.name}
+        representation['user'] = UserSerializer(instance.user).data
+        representation['exam'] = ExamSerializer(instance.exam).data
         return representation
-    
-    def get_total_question(self, obj):
-        correct = obj.correct_answer if obj.correct_answer is not None else 0
-        unanswered = obj.is_unanswered if obj.is_unanswered is not None else 0
-        incorrect = obj.incorrect_answer if obj.incorrect_answer is not None else 0
-        return correct + unanswered + incorrect
 
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
     preference = serializers.PrimaryKeyRelatedField(queryset=Preference.objects.all(), required=False)
