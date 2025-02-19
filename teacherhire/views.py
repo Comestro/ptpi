@@ -1294,6 +1294,9 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def get_queryset(self):
+        return TeacherExamResult.objects.filter(user=self.request.user)
+
     @action(detail=False, methods=['get'])
     def count(self, request):
         user = request.user
