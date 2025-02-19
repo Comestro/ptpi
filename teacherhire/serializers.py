@@ -396,11 +396,11 @@ class ExamSerializer(serializers.ModelSerializer):
         return representation
     
 class TeacherSkillSerializer(serializers.ModelSerializer):
-    # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     skill = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), required=False)
     class Meta:
         model = TeacherSkill
-        fields = ['id', 'skill']
+        fields = ['id', 'user' ,'skill']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
