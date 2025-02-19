@@ -273,16 +273,16 @@ class SubjectSerializer(serializers.ModelSerializer):
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCategory
-        fields = ['id', 'name', 'subjects']
+        fields = ['id', 'name']
 
     def validate_name(self, value):
         if ClassCategory.objects.filter(name=value).exists():
             raise serializers.ValidationError("A classcategory with this name already exists.")
         return value
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['subjects'] = SubjectSerializer(instance.subjects.all(), many=True).data
-        return representation
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     representation['subjects'] = SubjectSerializer(instance.subjects.all(), many=True).data
+    #     return representation
 
 class ReasonSerializer(serializers.ModelSerializer):
     class Meta:
