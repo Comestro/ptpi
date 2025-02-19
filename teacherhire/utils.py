@@ -151,17 +151,7 @@ def calculate_profile_completed(user):
         feedback.append("Add Job Preferences")
 
 
-    # Check TeacherQualification
-    teacher_qualification = TeacherQualification.objects.filter(user=user).first()
-    if teacher_qualification:
-        is_complete, missing_fields = teacher_qualification.is_complete()
-        if is_complete:
-            complete_profile += 24
-        # else:
-        #     feedback.append(f"Teacher Qualification is incomplete. Missing fields: {', '.join(missing_fields)}")
-    else:
-        feedback.append("Add Qualification")
-
+ 
     # Ensure the total does not exceed 100%
     return min(complete_profile, 100), feedback
 
