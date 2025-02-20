@@ -327,7 +327,7 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = TeachersAddress
-        fields = ['id', 'user', 'address_type', 'state', 'division', 'district', 'block', 'village', 'area', 'pincode']
+        fields = ['id', 'user', 'address_type', 'state', 'division', 'district','postoffice', 'block', 'village', 'area', 'pincode']
     
     def validate_pincode(self, value):
         # Only validate if the pincode is not empty or null
