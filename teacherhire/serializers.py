@@ -532,16 +532,23 @@ class TeacherClassCategorySerializer(serializers.ModelSerializer):
 class TeacherExamResultSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    total_question = serializers.SerializerMethodField()
 
     class Meta:
         model = TeacherExamResult
-        fields = '__all__'
+        fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer', 'total_question','calculate_percentage']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = {"id":instance.user.id, "name":instance.user.username}
         representation['exam'] = {"id":instance.exam.id, "name":instance.exam.name, "level_id": instance.exam.level.id, "level_name": instance.exam.level.name, "subject_id": instance.exam.subject.id, "subjet_name": instance.exam.subject.subject_name, "class_category_id": instance.exam.class_category.id, "class_category_name": instance.exam.class_category.name}
         return representation
+    
+    def get_total_question(self, obj):
+        correct = obj.correct_answer if obj.correct_answer is not None else 0
+        unanswered = obj.is_unanswered if obj.is_unanswered is not None else 0
+        incorrect = obj.incorrect_answer if obj.incorrect_answer is not None else 0
+        return correct + unanswered + incorrect
 
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
     teacher_apply = serializers.PrimaryKeyRelatedField(queryset=Apply.objects.all(), required=False)
