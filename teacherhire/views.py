@@ -1356,7 +1356,7 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         if not teacher_apply:
             return Response({"error": "No application found for the user."}, status=status.HTTP_400_BAD_REQUEST)
 
-        data["teacher_apply"] = teacher_apply.id
+        # data["teacher_apply"] = teacher_apply.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -1387,7 +1387,7 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        data['teacher_apply'] = teacher_apply.id
+        # data['teacher_apply'] = teacher_apply.id
 
         serializer = self.get_serializer(instance=job_preference_location, data=data, partial=True) 
         serializer.is_valid(raise_exception=True)
