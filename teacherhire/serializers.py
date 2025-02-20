@@ -544,23 +544,23 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
         return representation
 
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
-    preference = serializers.PrimaryKeyRelatedField(queryset=Preference.objects.all(), required=False)
+    teacher_apply = serializers.PrimaryKeyRelatedField(queryset=Apply.objects.all(), required=False)
     class Meta:
         model = JobPreferenceLocation
         fields = '__all__'
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['preference'] = PreferenceSerializer(instance.preference).data
+        representation['teacher_apply'] = ApplySerializer(instance.teacher_apply).data
         return representation
     
     def validate_area(self, value):
-        if JobPreferenceLocation.objects.filter(area=value, preference=self.initial_data.get('preference')).exists():
+        if JobPreferenceLocation.objects.filter(area=value, teacher_apply=self.initial_data.get('teacher_apply')).exists():
             raise serializers.ValidationError(" this area name already exists")
         
-        preference_id = self.initial_data.get('preference')
-        if preference_id:
-            area_count = JobPreferenceLocation.objects.filter(preference=preference_id).count()
+        teacher_apply_id = self.initial_data.get('teacher_apply')
+        if teacher_apply_id:
+            area_count = JobPreferenceLocation.objects.filter(teacher_apply=teacher_apply_id).count()
             if area_count >= 5:
                 raise serializers.ValidationError("You can only add up to 5 areas for a single preference.")
         return value

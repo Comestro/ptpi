@@ -1351,43 +1351,45 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         user = request.user
 
-        preference = user.preference_set.first()
+        teacher_apply = Apply.objects.filter(user=user).first()
 
-        if not preference:
-            return Response({"error": "No preference found for the user."}, status=status.HTTP_400_BAD_REQUEST)
+        if not teacher_apply:
+            return Response({"error": "No application found for the user."}, status=status.HTTP_400_BAD_REQUEST)
 
-        data["preference"] = preference.id
+        data["teacher_apply"] = teacher_apply.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
-        return JobPreferenceLocation.objects.filter(preference__user=self.request.user)
+        return JobPreferenceLocation.objects.filter(teacher_apply__user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Job preference location deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    def put(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):  
         data = request.data.copy()
         user = request.user
 
-        user_preference = user.preference_set.first()
+        teacher_apply = Apply.objects.filter(user=user).first()
 
-        if not user_preference:
-            return Response({"error": "Create a preference first."}, status=status.HTTP_400_BAD_REQUEST)
+        if not teacher_apply:
+            return Response({"error": "You must apply for a job first."}, status=status.HTTP_400_BAD_REQUEST)
 
-        jobPreferenceLocation = self.get_object()
+        job_preference_location = self.get_object()
 
-        if jobPreferenceLocation.preference.id != user_preference.id:
-            return Response({"error": "You can only update locations linked to your preference."},
-                            status=status.HTTP_403_FORBIDDEN)
+        if job_preference_location.teacher_apply.id != teacher_apply.id:
+            return Response(
+                {"error": "You can only update locations linked to your applied data."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
-        data['preference'] = user_preference.id
+        data['teacher_apply'] = teacher_apply.id
 
-        serializer = self.get_serializer(instance=jobPreferenceLocation, data=data)
+        serializer = self.get_serializer(instance=job_preference_location, data=data, partial=True) 
         serializer.is_valid(raise_exception=True)
         serializer.save()
 

@@ -45,7 +45,7 @@ class TeacherExamResultAdmin(admin.ModelAdmin):
 
 @admin.register(JobPreferenceLocation)
 class JobPreferenceLocationAdmin(admin.ModelAdmin):
-    list_display = ['preference', 'state', 'city', 'sub_division', 'block', 'area', 'pincode']
+    list_display = ['teacher_apply', 'state', 'city', 'sub_division', 'block', 'area', 'pincode']
 
 @admin.register(BasicProfile)
 class BasicProfileAdmin(admin.ModelAdmin):
@@ -150,7 +150,7 @@ class HireRequestAdmin(admin.ModelAdmin):
 
 @admin.register(Apply)
 class ApplyAdmin(admin.ModelAdmin):
-    list_display = ['user','get_subject','get_class_category','pincode','area','post_office','city','state','status','date','get_teacher_job_type']
+    list_display = ['user','get_subject','get_class_category','get_teacher_job_type','status','date']
 
     def get_subject(self, obj):
         return ", ".join([str(subject) for subject in obj.subject.all()])

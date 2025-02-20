@@ -367,34 +367,6 @@ class TeacherExamResult(models.Model):
             ).order_by('-created_at').first()
         super().save(*args, **kwargs)
 
-class JobPreferenceLocation(models.Model):
-    preference = models.ForeignKey(Preference, on_delete=models.CASCADE)
-    state = models.CharField(max_length=200,null=True, blank=True)
-    city = models.CharField(max_length=200,null=True, blank=True)
-    sub_division = models.CharField(max_length=200,null=True, blank=True)
-    block = models.CharField(max_length=200,null=True, blank=True)
-    post_office = models.CharField(max_length=200, null=True, blank=True)
-    area = models.TextField(null=True, blank=True)
-    pincode = models.CharField(max_length=6, null=True, blank=True)
-
-    def __str__(self):
-        return self.preference.user.username
-    
-    def is_complete(self):
-        required_fields = {
-            "preference": self.preference,
-            "state": self.state,
-            "city": self.city,
-            "sub_division": self.sub_division,
-            "block": self.block,
-            "post_office": self.post_office,
-            "area": self.area,
-            "pincode": self.pincode
-        }
-        missing_fields = [field for field, value in required_fields.items() if not value]
-        return not missing_fields, missing_fields
-
-
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -455,13 +427,35 @@ class Apply(models.Model):
     class_category = models.ManyToManyField(ClassCategory)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
     subject = models.ManyToManyField(Subject)
-    pincode = models.CharField(max_length=6)
-    city = models.CharField(max_length=255)
-    state = models.CharField(max_length=255)
-    post_office = models.CharField(max_length=255)
-    area = models.CharField(max_length=255)
     status = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.user.username
+    
+class JobPreferenceLocation(models.Model):
+    teacher_apply = models.ForeignKey(Apply, on_delete=models.CASCADE)
+    state = models.CharField(max_length=200,null=True, blank=True)
+    city = models.CharField(max_length=200,null=True, blank=True)
+    sub_division = models.CharField(max_length=200,null=True, blank=True)
+    block = models.CharField(max_length=200,null=True, blank=True)
+    post_office = models.CharField(max_length=200, null=True, blank=True)
+    area = models.TextField(null=True, blank=True)
+    pincode = models.CharField(max_length=6, null=True, blank=True)
+
+    def __str__(self):
+        return self.teacher_apply.user.username
+    
+    def is_complete(self):
+        required_fields = {
+            "teacher_apply": self.teacher_apply,
+            "state": self.state,
+            "city": self.city,
+            "sub_division": self.sub_division,
+            "block": self.block,
+            "post_office": self.post_office,
+            "area": self.area,
+            "pincode": self.pincode
+        }
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        return not missing_fields, missing_fields
