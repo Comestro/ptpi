@@ -1044,20 +1044,31 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         data = request.data.copy()
         user = request.user.id
         data['user'] = user
-        # Check if the user has an existing preference
-        profile = Preference.objects.filter(user=request.user).first()
-        check_attempt = TeacherExamResult.objects.filter(user=user, has_exam_attempt=True).exists()
-        if check_attempt:
-            return Response({"message": "You do not remove the attempted subject or classcategory only can add."}, status=status.HTTP_400_BAD_REQUEST)
 
-        change_in_str = ['teacher_job_type', 'prefered_subject', 'job_role', 'class_category']
-        for key in change_in_str:
-            if key in data and isinstance(data[key], str):
-                data[key] = [data[key]]
+        profile = Preference.objects.filter(user=request.user).first()
+
+        current_subjects = list(profile.prefered_subject.values_list('id', flat=True)) if profile else []
+        current_class_categories = list(profile.class_category.values_list('id', flat=True)) if profile else []
+
+        new_subjects = list(map(int, data.get("prefered_subject", [])))  
+        new_class_categories = list(map(int, data.get("class_category", [])))  
+
+        removed_subjects = set(current_subjects) - set(new_subjects) 
+        removed_class_categories = set(current_class_categories) - set(new_class_categories) 
+
+
+        # Check if any removed subject OR class category has attempted exams
+        if TeacherExamResult.objects.filter(
+            user=user,
+            has_exam_attempt=True
+        ).filter(Q(exam__subject_id__in=removed_subjects) | Q(exam__class_category_id__in=removed_class_categories)).exists():
+            return Response({
+                "message": "You cannot remove an attempted subject or class category, only add new ones."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         if profile:
             return self.update_auth_data(
@@ -1073,6 +1084,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 model_class=Preference
             )
+
 
     def get_queryset(self):
         return Preference.objects.filter(user=self.request.user)
