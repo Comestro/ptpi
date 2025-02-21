@@ -881,13 +881,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
         data = request.data
         exam_id = data.get("exam")
 
-        # Ensure the user is assigned to an `AssignedQuestionUser` instance
-        try:
-            assigned_user = AssignedQuestionUser.objects.get(user=request.user)
-        except AssignedQuestionUser.DoesNotExist:
-            return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
-
-        # Ensure the exam exists and is assigned to the correct `AssignedQuestionUser`
         try:
             exam = Exam.objects.get(pk=exam_id)
         except Exam.DoesNotExist:
@@ -1284,7 +1277,7 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         # Add the authenticated user to the request data
         data = request.data.copy()
-        data['user'] = request.user.id  # Set user to the currently authenticated user
+        data['user'] = request.user.id 
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
