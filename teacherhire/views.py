@@ -1044,7 +1044,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         data = request.data.copy()
         user = request.user.id
         data['user'] = user
