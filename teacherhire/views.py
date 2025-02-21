@@ -1277,7 +1277,10 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         # Add the authenticated user to the request data
         data = request.data.copy()
-        data['user'] = request.user.id
+        user = request.user.id
+        data['user'] = user
+        data['has_exam_attempt'] = True
+
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
