@@ -904,13 +904,13 @@ class QuestionViewSet(viewsets.ModelViewSet):
             hindi_data["text"] = translator.translate(data.get("text", ""))
             hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
 
-            # Translate options
-            hindi_options = {}
-            if isinstance(data["options"], dict):
-                for key, value in data["options"].items():
-                    hindi_options[key] = translator.translate(value)
-            elif isinstance(data["options"], list):
-                hindi_options = [translator.translate(option) for option in data["options"]]
+            hindi_options = []
+            options_data = data.get("options", [])
+
+            if isinstance(options_data, dict): 
+                hindi_options = {key: translator.translate(value) for key, value in options_data.items()}
+            elif isinstance(options_data, list):  
+                hindi_options = [translator.translate(option) for option in options_data]
 
             hindi_data["options"] = hindi_options
             hindi_data["language"] = "Hindi"
@@ -1277,8 +1277,7 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         # Add the authenticated user to the request data
         data = request.data.copy()
-        data['user'] = request.user.id 
-
+        data['user'] = request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
