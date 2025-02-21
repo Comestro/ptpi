@@ -253,8 +253,8 @@ def insert_data(request):
         "model": Subject,
         "field": "subject_name",
         "data": [
-            {"subject_name": "Maths", "class_category": "1 to 5"},
-            {"subject_name": "Maths", "class_category": "6 to 10"},
+            {"subject_name": "Maths, class_category 1-5", "class_category": "1 to 5"},
+            {"subject_name": "Maths, class_category 6-10", "class_category": "6 to 10"},
             {"subject_name": "Physics", "class_category": "1 to 5"},
             {"subject_name": "Physics", "class_category": "6 to 10"},
             {"subject_name": "DBMS", "class_category": "BCA"},
@@ -266,11 +266,11 @@ def insert_data(request):
             "model": Exam,
             "field": "name",
             "data": [
-                {"name": "Set A",  "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set A",  "class_category": "1 to 5", "level": "1st Level", "subject": "Maths, class_category 1-5",
                  "total_marks": 100, "duration": 180, "type": "online"},
-                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set B", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths, class_category 1-5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths",
+                {"name": "Set C", "class_category": "1 to 5", "level": "1st Level", "subject": "Maths, class_category 1-5",
                  "total_marks": 200, "duration": 240, "type": "online"},
                 {"name": "Set A", "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
                  "total_marks": 100, "duration": 180, "type": "online"},
@@ -278,11 +278,11 @@ def insert_data(request):
                  "total_marks": 50, "duration": 90, "type": "online"},
                 {"name": "Set C",  "class_category": "1 to 5", "level": "1st Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set A",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths",
+                {"name": "Set A",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths, class_category 1-5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set B",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths",
+                {"name": "Set B",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths, class_category 1-5",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths",
+                {"name": "Set C", "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Maths, class_category 1-5",
                  "total_marks": 200, "duration": 240, "type": "online"},
                 {"name": "Set A",  "class_category": "1 to 5", "level": "2nd Level Online", "subject": "Physics",
                  "total_marks": 100, "duration": 180, "type": "online"},
@@ -296,23 +296,23 @@ def insert_data(request):
                  "total_marks": 50, "duration": 90, "type": "offline"},
                 {"name": "Offline Set C",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set A",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths",
+                 {"name": "Offline Set A",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths, class_category 1-5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set B",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths",
+                 {"name": "Offline Set B",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths, class_category 1-5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Offline Set C",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths",
+                 {"name": "Offline Set C",  "class_category": "1 to 5", "level": "2nd Level Offline", "subject": "Maths, class_category 1-5",
                  "total_marks": 50, "duration": 90, "type": "offline"},
-                 {"name": "Set A",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set A",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths, class_category 6-10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths, class_category 6-10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths",
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths, class_category 6-10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set A",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths",
+                 {"name": "Set A",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths, class_category 6-10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set B",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths",
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths, class_category 6-10",
                  "total_marks": 50, "duration": 90, "type": "online"},
-                 {"name": "Set C",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths",
+                 {"name": "Set C",  "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Maths, class_category 6-10",
                  "total_marks": 50, "duration": 90, "type": "online"},
                  {"name": "Set A",  "class_category": "6 to 10", "level": "1st Level", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
@@ -326,6 +326,14 @@ def insert_data(request):
                  "total_marks": 50, "duration": 90, "type": "online"},
                  {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level Online", "subject": "Physics",
                  "total_marks": 50, "duration": 90, "type": "online"},
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "1st Level", "subject": "Maths, class_category 6-10",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "1st Level", "subject": "Maths, class_category 6-10",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Set B",  "class_category": "6 to 10", "level": "2nd Level Offline", "subject": "Maths, class_category 6-10",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
+                 {"name": "Set C", "class_category": "6 to 10", "level": "2nd Level Offline", "subject": "Maths, class_category 6-10",
+                 "total_marks": 50, "duration": 90, "type": "offline"},
             ]
         },
     }
@@ -3221,13 +3229,229 @@ def insert_data(request):
     },
     {
         
-                "exam": exams[29],
+        "exam": exams[29],
         "time": 1.5,
         "language": "Hindi",
         "text": "पानी का तरल से गैस में बदलने की प्रक्रिया को क्या कहते हैं?",
         "options": ["जमना", "वाष्पीकरण", "संघनन", "पिघलना"],
         "solution": "पानी का तरल से गैस में बदलने की प्रक्रिया वाष्पीकरण कहलाती है।",
         "correct_option": 2
+    },
+    {
+        "exam": exams[30],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is 8 + 5?",
+        "options": ["10", "11", "12", "13"],
+        "solution": "The solution for (8 + 5) is 13.",
+        "correct_option": 4
+    },
+    {
+        "exam": exams[30],
+        "time": 1.5,
+        "language": "English",
+        "text": "Find the value of x: 3x - 2 = 10",
+        "options": ["3", "4", "5", "6"],
+        "solution": "The solution for (3x - 2 = 10) is x = 4.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[30],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the square of 6?",
+        "options": ["30", "32", "36", "40"],
+        "solution": "The square of 6 is 36.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[30],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "12 और 8 का योगफल क्या है?",
+        "options": ["18", "19", "20", "21"],
+        "solution": "12 + 8 का उत्तर 20 है।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[30],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "यदि x + 5 = 12 हो, तो x का मान क्या होगा?",
+        "options": ["5", "6", "7", "8"],
+        "solution": "x = 12 - 5 = 7 होगा।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[30],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "9 का वर्गमूल क्या है?",
+        "options": ["1", "2", "3", "4"],
+        "solution": "9 का वर्गमूल 3 है।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[31],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is 15 - 7?",
+        "options": ["6", "7", "8", "9"],
+        "solution": "The solution for (15 - 7) is 8.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[31],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the value of 5 × 4?",
+        "options": ["10", "15", "20", "25"],
+        "solution": "The value of (5 × 4) is 20.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[31],
+        "time": 1.5,
+        "language": "English",
+        "text": "If a triangle has angles 60° and 60°, what is the third angle?",
+        "options": ["30°", "40°", "50°", "60°"],
+        "solution": "The sum of angles in a triangle is 180°. The third angle is 180° - (60° + 60°) = 60°.",
+        "correct_option": 4
+    },
+     {
+        "exam": exams[31],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "18 का आधा कितना होगा?",
+        "options": ["6", "7", "8", "9"],
+        "solution": "18 का आधा 9 होता है।",
+        "correct_option": 4
+    },
+    {
+        "exam": exams[31],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "6 और 9 का गुणनफल क्या होगा?",
+        "options": ["42", "45", "48", "50"],
+        "solution": "6 × 9 = 54 होता है।",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[31],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "किसी समकोण त्रिभुज में यदि एक कोण 90° हो और दूसरा 45° हो, तो तीसरा कोण क्या होगा?",
+        "options": ["30°", "35°", "45°", "50°"],
+        "solution": "तीसरा कोण 180° - (90° + 45°) = 45° होगा।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[32],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the sum of 9 and 6?",
+        "options": ["12", "14", "15", "16"],
+        "solution": "The sum of 9 and 6 is 15.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[32],
+        "time": 1.5,
+        "language": "English",
+        "text": "If 3x = 12, what is the value of x?",
+        "options": ["2", "3", "4", "5"],
+        "solution": "Dividing both sides by 3, we get x = 4.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[32],
+        "time": 1.5,
+        "language": "English",
+        "text": "A rectangle has a length of 8 cm and a width of 4 cm. What is its area?",
+        "options": ["28 cm²", "30 cm²", "32 cm²", "34 cm²"],
+        "solution": "The area of a rectangle is length × width. So, 8 × 4 = 32 cm².",
+        "correct_option": 3
+    },
+     {
+        "exam": exams[32],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "5 और 7 का योगफल क्या होगा?",
+        "options": ["10", "11", "12", "13"],
+        "solution": "5 और 7 का योगफल 12 है।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[32],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "यदि 4x = 16, तो x का मान क्या होगा?",
+        "options": ["2", "3", "4", "5"],
+        "solution": "दोनों पक्षों को 4 से विभाजित करने पर, x = 4।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[32],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "एक वर्ग की भुजा 6 सेमी है, तो उसका क्षेत्रफल क्या होगा?",
+        "options": ["24 सेमी²", "30 सेमी²", "36 सेमी²", "42 सेमी²"],
+        "solution": "वर्ग का क्षेत्रफल = भुजा × भुजा, तो 6 × 6 = 36 सेमी²।",
+        "correct_option": 3
+    },
+     {
+        "exam": exams[33],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is the product of 7 and 8?",
+        "options": ["48", "54", "56", "64"],
+        "solution": "The product of 7 and 8 is 56.",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[33],
+        "time": 1.5,
+        "language": "English",
+        "text": "If a triangle has angles of 40° and 50°, what is the measure of the third angle?",
+        "options": ["80°", "90°", "70°", "60°"],
+        "solution": "The sum of all angles in a triangle is 180°. So, 180° - (40° + 50°) = 90°.",
+        "correct_option": 2
+    },
+    {
+        "exam": exams[33],
+        "time": 1.5,
+        "language": "English",
+        "text": "What is 25% of 200?",
+        "options": ["25", "40", "50", "60"],
+        "solution": "25% of 200 = (25/100) × 200 = 50.",
+        "correct_option": 3
+    },
+        {
+        "exam": exams[33],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "10 और 15 का गुणनफल क्या होगा?",
+        "options": ["100", "120", "150", "160"],
+        "solution": "10 और 15 का गुणनफल 150 है।",
+        "correct_option": 3
+    },
+    {
+        "exam": exams[33],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "यदि किसी समकोण त्रिभुज के दो कोण 30° और 60° हैं, तो तीसरा कोण क्या होगा?",
+        "options": ["30°", "45°", "60°", "90°"],
+        "solution": "समकोण त्रिभुज का कुल कोण योग 180° होता है। तो, 180° - (30° + 60°) = 90°।",
+        "correct_option": 4
+    },
+    {
+        "exam": exams[33],
+        "time": 1.5,
+        "language": "Hindi",
+        "text": "एक घन के सभी भुजाओं की लंबाई 5 सेमी है, तो उसका आयतन क्या होगा?",
+        "options": ["125 सेमी³", "100 सेमी³", "150 सेमी³", "175 सेमी³"],
+        "solution": "घन का आयतन = भुजा³ = 5³ = 125 सेमी³।",
+        "correct_option": 1
     }
     ]
 

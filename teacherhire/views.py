@@ -1046,9 +1046,13 @@ class PreferenceViewSet(viewsets.ModelViewSet):
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        data['user'] = request.user.id
+        user = request.user.id
+        data['user'] = user
         # Check if the user has an existing preference
         profile = Preference.objects.filter(user=request.user).first()
+        check_attempt = TeacherExamResult.objects.filter(user=user, has_exam_attempt=True).exists()
+        if check_attempt:
+            return Response({"message": "You do not remove the attempted subject or classcategory only can add."}, status=status.HTTP_400_BAD_REQUEST)
 
         change_in_str = ['teacher_job_type', 'prefered_subject', 'job_role', 'class_category']
         for key in change_in_str:
@@ -1297,40 +1301,31 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Authentication credentials were not provided."}, status=401)
 
         preferred_subjects = Subject.objects.filter(preference__user=user).distinct()
-        preferred_class_categories = ClassCategory.objects.filter(preference__user=user).distinct()
 
         response_data = {}
-        for class_category in preferred_class_categories:
-            response_data[class_category.name] = {}
-            for subject in preferred_subjects:
-                level1_count = TeacherExamResult.objects.filter(
-                    user=user,
-                    exam__subject=subject,
-                    exam__class_category=class_category,
-                    exam__level_id=1
-                ).count()
 
-                level2_count = TeacherExamResult.objects.filter(
-                    user=user,
-                    exam__subject=subject,
-                    exam__class_category=class_category,
-                    exam__level_id=2
-
-                ).count()
-
-                response_data[class_category.name][subject.subject_name] = {
-                    "level1": level1_count,
-                    "level2": level2_count
-                }
-        for class_category in preferred_class_categories:
-            if class_category.name not in response_data:
-                response_data[class_category.name] = {}
         for subject in preferred_subjects:
-            if subject.subject_name not in response_data[class_category.name]:
-                response_data[class_category.name][subject.subject_name] = {
-                    "level1": 0,
-                    "level2": 0
-                }
+            class_category_name = subject.class_category.name
+
+            if class_category_name not in response_data:
+                response_data[class_category_name] = {}
+
+            level1_count = TeacherExamResult.objects.filter(
+                user=user,
+                exam__subject=subject,
+                exam__level_id=1
+            ).count()
+
+            level2_count = TeacherExamResult.objects.filter(
+                user=user,
+                exam__subject=subject,
+                exam__level_id=2
+            ).count()
+
+            response_data[class_category_name][subject.subject_name] = {
+                "level1": level1_count,
+                "level2": level2_count
+            }
 
         return Response(response_data)
 
@@ -1931,8 +1926,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         elif qualified_level_1 and not online_qualified_level_2:
             exams = exams.filter(level_id__in=[1, 2], type='online')  # If qualified for Level 1, show Level 1 and Level 2 exams
         elif online_qualified_level_2 and not offline_qualified_level_2:
-            exams = exams.filter(level_id__in=[1, 2, 3])  # If qualified for Level 2 online, show Level 2 offline exams
-        # Exclude exams the user has already qualified for
+            exams = exams.filter(level_id__in=[1, 2, 3]) 
         unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id',
                                                                                                           flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
