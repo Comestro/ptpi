@@ -40,7 +40,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net",
     "ptpi.tech",
-    "https://api.ptpinstitute.com/"
+    "https://api.ptpinstitute.com/",
     "api.ptpinstitute.com"
 ]
 
