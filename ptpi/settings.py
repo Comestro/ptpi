@@ -25,10 +25,10 @@ SECRET_KEY = 'django-insecure-rpw44z)9)m*q3x#ehomw)cogsm_2*hlz1s8g81f78^2)ykhr#w
 
 # Add your deployed domain to the CSRF_TRUSTED_ORIGINS list
 CSRF_TRUSTED_ORIGINS = [
-    'https://ptpi.tech',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
+    'https://api.ptpinstitute.com'
 ]
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -39,7 +39,9 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net",
-    "ptpi.tech"
+    "ptpi.tech",
+    "https://api.ptpinstitute.com/"
+    "api.ptpinstitute.com"
 ]
 
 # Application definition
@@ -143,6 +145,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Localhost frontend (e.g., React/Vue/Vite)
     'http://192.168.29.2:8000',
     'https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net',
+    'https://www.ptpinstitute.com/',
+    'https://ptpinstitute.com/'
 ]
 CORS_ALLOW_CREDENTIALS = True
 
