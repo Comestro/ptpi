@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from django.utils.crypto import get_random_string
 import string
 from translate import Translator
-
+from rest_framework.validators import UniqueValidator
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -575,7 +575,7 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
 class BasicProfileSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     bio = models.CharField(max_length=100, blank=True, null=True)    
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True, validators=[UniqueValidator(queryset=BasicProfile.objects.all())])
     religion = models.CharField(max_length=15, blank=True, null=True)
     class Meta:
         model = BasicProfile
@@ -586,7 +586,7 @@ class BasicProfileSerializer(serializers.ModelSerializer):
         representation['user'] = UserSerializer(instance.user).data
         return representation
 
-    def validate_mobile(self, value):
+    def validate_phone_number(self, value):
         if value:
             cleaned_value = re.sub(r'[^0-9]', '', value)
             if len(cleaned_value) != 10:
