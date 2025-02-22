@@ -144,9 +144,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',  # Localhost Django server
     'http://localhost:5173',  # Localhost frontend (e.g., React/Vue/Vite)
     'http://192.168.29.2:8000',
-    'https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net',
-    'https://www.ptpinstitute.com/',
-    'https://ptpinstitute.com/'
+    'https://ptpinstitute.com',
+    'https://www.ptpinstitute.com',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
