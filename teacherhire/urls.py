@@ -5,6 +5,7 @@ from teacherhire.auth_view import *
 from teacherhire.seeder_view import *
 from teacherhire.views_permissions import *
 from .views import ProfilecompletedView, CheckoutView
+from teacherhire.backup_restore_views import BackupDBView, RestoreDBView
 
 # Initialize router
 router = routers.DefaultRouter()
@@ -35,7 +36,7 @@ router.register(r"admin/allRecruiter", AllRecruiterViewSet, basename="allRecruit
 router.register(r"admin/assigneduser", AssignedQuestionUserViewSet)
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
 router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request')
-router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet,basename='recruiter-enquiryform')
+router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet, basename='recruiter-enquiryform')
 router.register(r"all/teacher/basicProfile", AllTeacherBasicProfileViewSet, basename="teachers-basicProfile")
 router.register(r"all/recruiter/basicProfile", AllRecruiterBasicProfileViewSet, basename="recruiters-basicProfile")
 router.register(r"admin/teacherexamresult", AllTeacherExamResultViewSet, basename="admin-teacherexamresult")
@@ -113,4 +114,8 @@ urlpatterns = [
     path("admin-or-teacher/", AdminOrTeacherView.as_view(), name="admin-or-teacher"),
     path("read-only-authenticated/", ReadOnlyForAuthenticatedUsers.as_view(), name="read-only-authenticated"),
     path("public/", PublicView.as_view(), name="public"),
+
+    #     # Backup & Restore DB
+    path('backup-db/', BackupDBView.as_view(), name='backup_db'),
+    path('restore-db/', RestoreDBView.as_view(), name='restore_db'),
 ]

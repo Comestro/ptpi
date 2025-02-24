@@ -31,6 +31,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:5174',
 ]
 
+# Configure django-dbbackup settings
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {'location': BASE_DIR / 'backups'}
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -38,8 +42,14 @@ ALLOWED_HOSTS = [
     "192.168.29.2",
     "127.0.0.1",
     "localhost",
+<<<<<<< HEAD
     "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net",
     "ptpi.tech"
+=======
+    "https://api.ptpinstitute.com/",
+    "http://api.ptpinstitute.com/",
+    "api.ptpinstitute.com"
+>>>>>>> a823e2f (depoloy requirement)
 ]
 
 # Application definition
@@ -55,6 +65,7 @@ INSTALLED_APPS = [
     'teacherhire',
     'rest_framework',
     'rest_framework.authtoken',
+    'dbbackup',
 ]
 
 MIDDLEWARE = [
@@ -141,8 +152,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',  # Localhost Django server
     'http://localhost:5173',  # Localhost frontend (e.g., React/Vue/Vite)
+    'http://localhost:5174',
     'http://192.168.29.2:8000',
+<<<<<<< HEAD
     'https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net',
+=======
+    'https://ptpinstitute.com',
+    'http://ptpinstitute.com',
+    'http://www.ptpinstitute.com',
+    'https://www.ptpinstitute.com',
+>>>>>>> a823e2f (depoloy requirement)
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -155,6 +174,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+<<<<<<< HEAD
 # Offline credentials for email trigger
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+=======
+EMAIL_HOST_USER = 'avengerprinceraj@gmail.com'
+EMAIL_HOST_PASSWORD = 'aftb cpib oltp ijvy'
+>>>>>>> a823e2f (depoloy requirement)
