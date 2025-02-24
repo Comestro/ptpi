@@ -2642,26 +2642,20 @@ class ApplyViewSet(viewsets.ModelViewSet):
         
         subject_ids = data.get('subject', [])  
         class_category_ids = data.get('class_category', [])
-
+        
         if not subject_ids or not class_category_ids:
             return Response(
                 {"error": "Subject and Class Category are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         applied = Apply.objects.filter(user=user, subject__id__in=subject_ids,
-            subject__class_category__id__in=class_category_ids,
-            status=True)
+            class_category__id__in=class_category_ids,
+            status=True).exists()
         if applied:
             return Response(
                 {"error": "You are already applied for this subject"}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        qualified_subjects = TeacherExamResult.objects.filter(
-            user=user, 
-            exam__subject__id__in=subject_ids,
-            exam__subject__class_category__id__in=class_category_ids,
-            isqualified=True
-        ).count()
 
         data["user"] = user.id  
 
