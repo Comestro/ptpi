@@ -2663,7 +2663,6 @@ class ApplyViewSet(viewsets.ModelViewSet):
             isqualified=True
         ).count()
 
-
         data["user"] = user.id  
 
         serializer = ApplySerializer(data=data, context={"request": request})
