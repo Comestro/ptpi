@@ -589,6 +589,23 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+class PublicClassCategoryViewSet(viewsets.ModelViewSet):
+    queryset = ClassCategory.objects.all()
+    serializer_class = ClassCategorySerializer
+
+    def create(self, request):
+        return create_object(ClassCategorySerializer, request.data, ClassCategory)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = get_count(ClassCategory)
+        return Response({"Count": count})
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class ReasonViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]

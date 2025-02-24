@@ -69,6 +69,9 @@ router.register(r"self/apply", ApplyViewSet, basename="self-apply")
 router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')
 router.register(r"self/teacher", SelfViewSet, basename="self-teacher")
 
+# public
+router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="public-classcategory")
+
 # === Permission-Based Routes ===
 urlpatterns = [
     path("", include(router.urls)),
