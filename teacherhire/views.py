@@ -2663,11 +2663,6 @@ class ApplyViewSet(viewsets.ModelViewSet):
             isqualified=True
         ).count()
 
-        if qualified_subjects != len(subject_ids):
-            return Response(
-                {"error": "You are not qualified for one or more selected subjects."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
         data["user"] = user.id  
 
