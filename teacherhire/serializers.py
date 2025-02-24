@@ -41,7 +41,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified', 'otp']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -49,7 +49,6 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         username = base_username
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
-        otp = send_otp_via_email(email)
         is_recruiter = True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
@@ -62,12 +61,8 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 password=validated_data['password'],
                 Fname=Fname,
                 Lname=Lname,
-                is_recruiter=is_recruiter,
-                otp=otp
-            )
-            user.otp = otp
-            user.otp_created_at = now()
-            user.save(update_fields=['otp', 'otp_created_at'])
+                is_recruiter=is_recruiter,             
+            )            
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
@@ -157,7 +152,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified','otp']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -165,7 +160,6 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         username = base_username
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
-        otp = send_otp_via_email(email)  
         is_teacher = True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
@@ -179,11 +173,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_teacher=is_teacher,
-                otp=otp
-            )
-            user.otp = otp
-            user.otp_created_at = now()
-            user.save(update_fields=['otp', 'otp_created_at'])
+            )            
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
