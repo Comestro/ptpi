@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "ptpi-a0azcyc8byeac9aw.centralindia-01.azurewebsites.net",
 <<<<<<< HEAD
     "ptpi.tech",
@@ -46,6 +47,11 @@ ALLOWED_HOSTS = [
     "http://api.ptpinstitute.com/",
     "api.ptpinstitute.com"
 >>>>>>> a823e2f (depoloy requirement)
+>>>>>>> refs/remotes/origin/master
+=======
+    "https://api.ptpinstitute.com/",
+    "http://api.ptpinstitute.com/",
+    "api.ptpinstitute.com"
 >>>>>>> refs/remotes/origin/master
 ]
 
@@ -152,17 +158,23 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5174',
     'http://192.168.29.2:8000',
 <<<<<<< HEAD
+<<<<<<< HEAD
     'https://ptpinstitute.com',
     'https://www.ptpinstitute.com',
 =======
 <<<<<<< HEAD
     'https://ptpiui-gbdvdbbpe0hwh7gv.centralindia-01.azurewebsites.net',
 =======
+=======
+>>>>>>> refs/remotes/origin/master
     'https://ptpinstitute.com',
     'http://ptpinstitute.com',
     'http://www.ptpinstitute.com',
     'https://www.ptpinstitute.com',
+<<<<<<< HEAD
 >>>>>>> a823e2f (depoloy requirement)
+>>>>>>> refs/remotes/origin/master
+=======
 >>>>>>> refs/remotes/origin/master
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -177,6 +189,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 <<<<<<< HEAD
+<<<<<<< HEAD
 EMAIL_HOST_USER = 'avengerprinceraj@gmail.com'
 EMAIL_HOST_PASSWORD = 'aftb cpib oltp ijvy'
 =======
@@ -188,4 +201,9 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 EMAIL_HOST_USER = 'avengerprinceraj@gmail.com'
 EMAIL_HOST_PASSWORD = 'aftb cpib oltp ijvy'
 >>>>>>> a823e2f (depoloy requirement)
+>>>>>>> refs/remotes/origin/master
+=======
+# Offline credentials for email trigger
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 >>>>>>> refs/remotes/origin/master
