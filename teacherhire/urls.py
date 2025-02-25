@@ -5,7 +5,7 @@ from teacherhire.auth_view import *
 from teacherhire.seeder_view import *
 from teacherhire.views_permissions import *
 from .views import ProfilecompletedView, CheckoutView
-from teacherhire.backup_restore_views import BackupDBView, RestoreDBView
+from teacherhire.backup_restore_views import *
 
 # Initialize router
 router = routers.DefaultRouter()
@@ -116,6 +116,6 @@ urlpatterns = [
     path("public/", PublicView.as_view(), name="public"),
 
     #     # Backup & Restore DB
-    path('backup-db/', BackupDBView.as_view(), name='backup_db'),
+    path('backup-db/', BackupDatabaseView.as_view(), name='backup_db'),
     path('restore-db/', RestoreDBView.as_view(), name='restore_db'),
 ]

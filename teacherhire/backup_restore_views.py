@@ -1,58 +1,65 @@
-# backup_restore_views.py
 import os
+import shutil
 import stat
-from django.http import JsonResponse
+
+from django.conf import settings
 from django.core.management import call_command
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAdminUser
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+
+def get_backup_directory():
+    return os.getenv('BACKUP_DIR', os.path.join(settings.BASE_DIR, 'backups'))
 
 
 def ensure_permissions(directory):
-    """Ensure the directory has the necessary permissions."""
     if not os.path.exists(directory):
         os.makedirs(directory, exist_ok=True)
-
-    # Set directory permissions to allow read, write, and execute for the owner
-    os.chmod(directory, stat.S_IRWXU)  # S_IRWXU = 0o700 (read, write, execute for owner)
+    os.chmod(directory, stat.S_IRWXU)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class BackupDBView(APIView):
+class BackupDatabaseView(APIView):
     permission_classes = [IsAdminUser]
 
-    def post(self, request, *args, **kwargs):
-        backup_path = request.data.get('backup_path')
-        if not backup_path:
-            return JsonResponse({'status': 'error', 'message': 'Backup path is required.'}, status=400)
+    def post(self, request):
+        db_path = settings.DATABASES['default'].get('NAME')
+        if not db_path:
+            return Response(
+                {'error': 'Database path is not configured properly'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        backup_dir = get_backup_directory()
+        backup_path = os.path.join(backup_dir, 'db_backup.sqlite3')
+
+        if not os.path.exists(db_path):
+            return Response(
+                {'error': 'Database file does not exist'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         try:
-            # Ensure the directory exists and is writable
-            backup_dir = os.path.dirname(backup_path)
-            print(f"Backup directory: {backup_dir}")  # Debugging
-            os.makedirs(backup_dir, exist_ok=True)
-
-            # Check if the directory is writable
-            if not os.access(backup_dir, os.W_OK):
-                return JsonResponse({'status': 'error', 'message': f'Directory is not writable: {backup_dir}'},
-                                    status=403)
-
-            # Remove the existing file if it exists
-            if os.path.exists(backup_path):
-                print(f"Removing existing file: {backup_path}")  # Debugging
-                os.remove(backup_path)
-
-            # Perform the backup
-            print(f"Creating backup at: {backup_path}")  # Debugging
-            call_command('dbbackup', output_path=backup_dir, output_filename=os.path.basename(backup_path))
-            return JsonResponse({'status': 'success', 'message': 'Database backup created successfully.'})
+            ensure_permissions(backup_dir)
+            shutil.copy2(db_path, backup_path)
+            return Response(
+                {'message': f'Database backup created at {backup_path}'},
+                status=status.HTTP_201_CREATED
+            )
         except PermissionError as e:
-            print(f"Permission error: {e}")  # Debugging
-            return JsonResponse({'status': 'error', 'message': f'Permission error: {str(e)}'}, status=403)
+            return Response(
+                {'error': f'Permission error: {str(e)}'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         except Exception as e:
-            print(f"An error occurred: {e}")  # Debugging
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return Response(
+                {'error': f'An error occurred: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -60,16 +67,23 @@ class RestoreDBView(APIView):
     permission_classes = [IsAdminUser]
 
     def post(self, request, *args, **kwargs):
-        backup_path = request.data.get('backup_path')
-        if not backup_path:
-            return JsonResponse({'status': 'error', 'message': 'Backup path is required.'}, status=400)
+        backup_dir = get_backup_directory()
+        backup_filename = 'db_backup.sqlite3'
+        backup_path = os.path.join(backup_dir, backup_filename)
 
         if not os.path.exists(backup_path):
-            return JsonResponse({'status': 'error', 'message': 'Backup file does not exist.'}, status=400)
+            return Response(
+                {'status': 'error', 'message': 'Backup file does not exist.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            # Perform the restore
             call_command('dbrestore', input=backup_path)
-            return JsonResponse({'status': 'success', 'message': 'Database restored successfully.'})
+            return Response(
+                {'status': 'success', 'message': 'Database restored successfully.'}
+            )
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return Response(
+                {'status': 'error', 'message': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
