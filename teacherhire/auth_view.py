@@ -34,9 +34,15 @@ class RegisterUser(APIView):
         user = serializer.save()
         token, created = Token.objects.get_or_create(user=user) 
 
+        role = "admin" if user.is_staff else \
+            "recruiter" if user.is_recruiter else \
+                "teacher" if user.is_teacher else \
+                    "centeruser" if user.is_centeruser else \
+                        "questionuser" if user.is_questionuser else "user"
         return Response({
             'payload': serializer.data,
-            'access_token': token.key,  
+            'role': role,
+            'access_token': token.key,
             'message': 'Check your email to verify your account.'
         }, status=status.HTTP_200_OK)
 
