@@ -444,7 +444,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return_all = self.request.query_params.get('all', None)
-        queryset = CustomUser.objects.filter(teacherexamresult__isqualified=True, teacherexamresult__exam__level_id=3,teacherexamresult__exam__type='offline', is_staff=False)
+        queryset = CustomUser.objects.filter(is_staff=False)
 
         # Handle 'all' query parameter
         if return_all and return_all.lower() == 'true':
@@ -2666,6 +2666,31 @@ class ApplyViewSet(viewsets.ModelViewSet):
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['patch'])
+    def toggle_status(self, request, pk=None):
+        try:
+            exam_result = TeacherExamResult.objects.get(pk=pk, user=request.user)
+            
+            apply_data = Apply.objects.filter(
+                user=request.user, 
+                class_category=exam_result.exam.class_category, 
+                subject=exam_result.exam.subject
+            ).first()
+
+            if not apply_data:
+                return Response({"error": "No matching application found"}, status=status.HTTP_404_NOT_FOUND)
+
+            apply_data.status = not apply_data.status
+            apply_data.save()
+
+            return Response(
+                {"message": "Status updated successfully", "status": apply_data.status}, 
+                status=status.HTTP_200_OK
+            )
+
+        except TeacherExamResult.DoesNotExist:
+            return Response({"error": "Exam result not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def get_queryset(self):
         return Apply.objects.filter(user=self.request.user)
