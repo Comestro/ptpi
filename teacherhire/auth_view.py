@@ -14,6 +14,11 @@ from teacherhire.utils import calculate_profile_completed, send_otp_via_email, v
 from .authentication import ExpiringTokenAuthentication
 
 
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+
 class RegisterUser(APIView):
     def post(self, request, role=None):
         serializer_class = {
@@ -26,10 +31,14 @@ class RegisterUser(APIView):
             return Response({'error': serializer.errors, 'message': 'Something went wrong'},
                             status=status.HTTP_409_CONFLICT)
 
-        serializer.save()
-        # email = serializer.data['email']
-        return Response({'payload': serializer.data, 'message': 'Check your email to verify your account.'},
-                        status=status.HTTP_200_OK)
+        user = serializer.save()
+        token, created = Token.objects.get_or_create(user=user) 
+
+        return Response({
+            'payload': serializer.data,
+            'access_token': token.key,  
+            'message': 'Check your email to verify your account.'
+        }, status=status.HTTP_200_OK)
 
 
 class ChangePasswordView(APIView):
