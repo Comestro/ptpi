@@ -1102,7 +1102,6 @@ class PreferenceViewSet(viewsets.ModelViewSet):
                 model_class=Preference
             )
 
-
     def get_queryset(self):
         return Preference.objects.filter(user=self.request.user)
 
@@ -1110,7 +1109,6 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, *args, **kwargs)
 
     def get_object(self):
-        # Retrieve the preference object for the current user
         try:
             return Preference.objects.filter(user=self.request.user).first()
         except Preference.DoesNotExist:
