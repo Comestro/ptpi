@@ -589,6 +589,23 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+class PublicClassCategoryViewSet(viewsets.ModelViewSet):
+    queryset = ClassCategory.objects.all()
+    serializer_class = ClassCategorySerializer
+
+    def create(self, request):
+        return create_object(ClassCategorySerializer, request.data, ClassCategory)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = get_count(ClassCategory)
+        return Response({"Count": count})
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class ReasonViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
@@ -2625,30 +2642,18 @@ class ApplyViewSet(viewsets.ModelViewSet):
         
         subject_ids = data.get('subject', [])  
         class_category_ids = data.get('class_category', [])
-
+        
         if not subject_ids or not class_category_ids:
             return Response(
                 {"error": "Subject and Class Category are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         applied = Apply.objects.filter(user=user, subject__id__in=subject_ids,
-            subject__class_category__id__in=class_category_ids,
-            status=True)
+            class_category__id__in=class_category_ids,
+            status=True).exists()
         if applied:
             return Response(
                 {"error": "You are already applied for this subject"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        qualified_subjects = TeacherExamResult.objects.filter(
-            user=user, 
-            exam__subject__id__in=subject_ids,
-            exam__subject__class_category__id__in=class_category_ids,
-            isqualified=True
-        ).count()
-
-        if qualified_subjects != len(subject_ids):
-            return Response(
-                {"error": "You are not qualified for one or more selected subjects."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 
