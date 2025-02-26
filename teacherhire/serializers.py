@@ -269,6 +269,7 @@ class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCategory
         fields = ['id', 'name', 'subjects']
+        depth = 1 
 
     def validate_name(self, value):
         if ClassCategory.objects.filter(name=value).exists():

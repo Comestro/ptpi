@@ -10,7 +10,7 @@ from django.conf import settings
 from datetime import timedelta
 import uuid
 from teacherhire.serializers import *
-from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
+from teacherhire.utils import send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
 
 
