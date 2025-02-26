@@ -702,6 +702,7 @@ class PasskeySerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = {"id":instance.user.id, "email":instance.user.email}
         representation['exam'] = {"id":instance.exam.id, "name":instance.exam.name}
+        representation['center'] = {"id":instance.center.id, "name":instance.center.center_name}
         return representation
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:                    
