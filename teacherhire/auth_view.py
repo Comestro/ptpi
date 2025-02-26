@@ -30,16 +30,25 @@ class RegisterUser(APIView):
                 'error': serializer.errors, 
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
-
         user = serializer.save()
-        otp = send_otp_via_email(user.email)
-        user.otp = otp
-        user.otp_created_at = now()
-        user.save(update_fields=['otp', 'otp_created_at'])
+        token, created = Token.objects.get_or_create(user=user) 
+        role = "admin" if user.is_staff else \
+            "recruiter" if user.is_recruiter else \
+                "teacher" if user.is_teacher else \
+                    "centeruser" if user.is_centeruser else \
+                        "questionuser" if user.is_questionuser else "user"
+
+        # user = serializer.save()
+        # otp = send_otp_via_email(user.email)
+        # user.otp = otp
+        # user.otp_created_at = now()
+        # user.save(update_fields=['otp', 'otp_created_at'])
         
         return Response({
-            'payload': serializer.data,        
-            'message': 'Registration successful. Please check your email for OTP verification.'
+            'payload': serializer.data,
+            'role': role,
+            'access_token': token.key,
+            'message': 'Check your email to verify your account.'
         }, status=status.HTTP_200_OK)
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
