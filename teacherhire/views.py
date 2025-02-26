@@ -2679,3 +2679,6 @@ class AllApplyViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
     queryset = Apply.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
