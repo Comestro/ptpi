@@ -893,12 +893,17 @@ class AllTeacherSerializer(serializers.ModelSerializer):
         return representation
 
 class HireRequestSerializer(serializers.ModelSerializer):
+    teacher_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    recruiter_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+
     class Meta:
         model = HireRequest
         fields = "__all__"
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation['teacher_id'] = UserSerializer(instance.teacher_id).data
+        representation['recruiter_id'] = UserSerializer(instance.recruiter_id).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
