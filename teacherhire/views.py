@@ -2646,13 +2646,13 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 {"error": "Subject and Class Category are required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        applied = Apply.objects.filter(user=user, subject__id__in=subject_ids,
+        apply_instance = Apply.objects.filter(user=user, subject__id__in=subject_ids,
             class_category__id__in=class_category_ids,
         ).first()
-        if applied:
-            applied.status = not applied.status
-            applied.save()
-            return Response({"message": "Status updated successfully", "status": applied    .status}, 
+        if apply_instance:
+            apply_instance.status = not apply_instance.status
+            apply_instance.save()
+            return Response({"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data}, 
                 status=status.HTTP_200_OK
             )
         data["user"] = user.id  
