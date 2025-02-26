@@ -13,12 +13,6 @@ from teacherhire.serializers import *
 from teacherhire.utils import send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
 
-
-from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
-
 class RegisterUser(APIView):
     def post(self, request, role=None):
         serializer_class = {

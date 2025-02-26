@@ -428,7 +428,7 @@ class Apply(models.Model):
     class_category = models.ManyToManyField(ClassCategory)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
     subject = models.ManyToManyField(Subject)
-    status = models.BooleanField(default=False)
+    status = models.BooleanField(default=True)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
