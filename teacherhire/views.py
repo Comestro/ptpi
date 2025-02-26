@@ -2043,6 +2043,18 @@ class PasskeyViewSet(viewsets.ModelViewSet):
     queryset = Passkey.objects.all()
     serializer_class = PasskeySerializer
 
+    @action(detail=True, methods=['put'])
+    def update_status(self, request, pk=None):
+        passkey = self.get_object()
+        serializer = self.get_serializer(passkey, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "status updated successfully.",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class GeneratePasskeyView(APIView):
     def post(self, request):
@@ -2099,25 +2111,6 @@ class GeneratePasskeyView(APIView):
                          "exam": exam_serializer.data
                          },
                         status=status.HTTP_200_OK)
-
-
-class ApprovePasscodeView(APIView):
-    # permission_classes = [IsAdminUser]  # Only accessible by admin users
-
-    def post(self, request):
-        user_id = request.data.get('user_id')
-        exam_id = request.data.get('exam_id')
-
-        try:
-            passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id)
-        except Passkey.DoesNotExist:
-            return Response({"error": "Passkey not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        # Approve the passkey
-        passkey_obj.status = True
-        passkey_obj.save()
-
-        return Response({"message": "Passcode approved successfully."}, status=status.HTTP_200_OK)
 
 
 class VerifyPasscodeView(APIView):
