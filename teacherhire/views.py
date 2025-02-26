@@ -2648,13 +2648,13 @@ class ApplyViewSet(viewsets.ModelViewSet):
             )
         applied = Apply.objects.filter(user=user, subject__id__in=subject_ids,
             class_category__id__in=class_category_ids,
-            status=True).exists()
+        ).first()
         if applied:
-            return Response(
-                {"error": "You are already applied for this subject"}, 
-                status=status.HTTP_400_BAD_REQUEST
+            applied.status = not applied.status
+            applied.save()
+            return Response({"message": "Status updated successfully", "status": applied    .status}, 
+                status=status.HTTP_200_OK
             )
-
         data["user"] = user.id  
 
         serializer = ApplySerializer(data=data, context={"request": request})
@@ -2665,30 +2665,6 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=True, methods=['patch'])
-    def toggle_status(self, request, pk=None):
-        try:
-            exam_result = TeacherExamResult.objects.get(pk=pk, user=request.user)
-            
-            apply_data = Apply.objects.filter(
-                user=request.user, 
-                class_category=exam_result.exam.class_category, 
-                subject=exam_result.exam.subject
-            ).first()
-
-            if not apply_data:
-                return Response({"error": "No matching application found"}, status=status.HTTP_404_NOT_FOUND)
-
-            apply_data.status = not apply_data.status
-            apply_data.save()
-
-            return Response(
-                {"message": "Status updated successfully", "status": apply_data.status}, 
-                status=status.HTTP_200_OK
-            )
-
-        except TeacherExamResult.DoesNotExist:
-            return Response({"error": "Exam result not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def get_queryset(self):
         return Apply.objects.filter(user=self.request.user)
@@ -2703,3 +2679,6 @@ class AllApplyViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
     queryset = Apply.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
