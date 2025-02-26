@@ -2652,7 +2652,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
         if applied:
             applied.status = not applied.status
             applied.save()
-            return Response({"message": "Status updated successfully", "status": applied.status}, 
+            return Response({"message": "Status updated successfully", "status": applied    .status}, 
                 status=status.HTTP_200_OK
             )
         data["user"] = user.id  
