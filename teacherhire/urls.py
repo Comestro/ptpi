@@ -1,5 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers
+
+from ptpi.settings import STATIC_URL
 from teacherhire.views import *
 from teacherhire.auth_view import *
 from teacherhire.seeder_view import *
