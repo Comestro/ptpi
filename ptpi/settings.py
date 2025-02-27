@@ -20,6 +20,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
+    'https://api.ptpinstitute.com'
+
 ]
 
 # Configure django-dbbackup settings
@@ -159,5 +161,8 @@ EMAIL_USE_TLS = True
 # Offline credentials for email trigger
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+<<<<<<< HEAD
 
 #env
+=======
+>>>>>>> 8c61e3d5336552b1567d4a9a088e0b2d3cbbcb37
