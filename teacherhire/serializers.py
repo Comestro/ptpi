@@ -9,12 +9,10 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
 from datetime import date
-from teacherhire.utils import calculate_profile_completed, send_otp_via_email, verified_msg
-from django.utils.timezone import now
-from django.utils.crypto import get_random_string
 import string
 from translate import Translator
 from rest_framework.validators import UniqueValidator
+from django.contrib.auth.password_validation import validate_password
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,6 +40,11 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
+
+    def validate_password(self, value):
+        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
+            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
+        return value
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -78,6 +81,11 @@ class CenterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
+
+    def validate_password(self, value):
+        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
+            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
+        return value
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -113,6 +121,11 @@ class QuestionUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
+
+    def validate_password(self, value):
+        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
+            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
+        return value
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -156,6 +169,11 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
+
+    def validate_password(self, value):
+        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
+            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
+        return value
 
     def create(self, validated_data):
         email = validated_data['email']
