@@ -96,7 +96,6 @@ urlpatterns = [
 
     # Passkey Routes
     path("generate-passkey/", GeneratePasskeyView.as_view(), name="generate_passkey"),
-    path("approve-passkey/", ApprovePasscodeView.as_view(), name="approve_passkey"),
     path("verify-passcode/", VerifyPasscodeView.as_view(), name="verify_passcode"),
 
     # Seeder Data Routes
