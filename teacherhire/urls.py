@@ -8,6 +8,7 @@ from teacherhire.seeder_view import *
 from teacherhire.views_permissions import *
 from .views import ProfilecompletedView, CheckoutView
 from teacherhire.backup_restore_views import *
+from django.conf.urls.static import static
 
 # Initialize router
 router = routers.DefaultRouter()
@@ -119,4 +120,4 @@ urlpatterns = [
     #     # Backup & Restore DB
     path('backup-db/', BackupDatabaseView.as_view(), name='backup_db'),
     path('restore-db/', RestoreDBView.as_view(), name='restore_db'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
