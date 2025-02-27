@@ -5,7 +5,7 @@ class Command(BaseCommand):
     help = 'Makes a GET request to the exam center URL to insert data'
 
     def handle(self, *args, **kwargs):
-        url = 'https://ptpi.tech/api/insert/examcenter/data'
+        url = 'https://api.ptpinstitute.com/api/insert/examcenter/data'
         response = requests.get(url)
 
         if response.status_code == 200:
