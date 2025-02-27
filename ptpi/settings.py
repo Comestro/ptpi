@@ -27,6 +27,7 @@ DBBACKUP_STORAGE_OPTIONS = {'location': BASE_DIR / 'backups'}
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
+# Allowed hosts
 ALLOWED_HOSTS = [
     "192.168.29.2",
     "127.0.0.1",
@@ -84,6 +85,7 @@ WSGI_APPLICATION = 'ptpi.wsgi.application'
 # Token expiration time in seconds (24 hours)
 TOKEN_EXPIRATION_TIME = 86400
 
+# REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'teacherhire.authentication.ExpiringTokenAuthentication',
@@ -92,6 +94,7 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Database configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -99,6 +102,7 @@ DATABASES = {
     }
 }
 
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -114,6 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -148,6 +153,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
+# Password reset timeout
 PASSWORD_RESET_TIME_OUT = 900
 
 # Custom user model
@@ -163,7 +169,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 # Security settings for production
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust X-Forwarded-Proto header
+    SECURE_SSL_REDIRECT = True  # Redirect all non-HTTPS requests to HTTPS
+    SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
+    CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
