@@ -12,3 +12,5 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Data inserted successfully'))
         else:
             self.stdout.write(self.style.ERROR('Failed to insert data'))
+
+#exam center seeders
