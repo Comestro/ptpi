@@ -50,7 +50,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_recruiter = True
-        is_verified = True
+        
         
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
@@ -64,7 +64,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_recruiter=is_recruiter,   
-                is_verified=is_verified          
+                      
             )            
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -86,7 +86,6 @@ class CenterUserSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_centeruser = True
-        is_verified = True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
         while CustomUser.objects.filter(username=username).exists():
@@ -99,7 +98,6 @@ class CenterUserSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_centeruser=is_centeruser,
-                is_verified=is_verified,
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -164,7 +162,6 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_teacher = True
-        is_verified=True
         if CustomUser.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email is already in use.'})
         while CustomUser.objects.filter(username=username).exists():
@@ -177,7 +174,6 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_teacher=is_teacher,
-                is_verified=is_verified
             )            
         except Exception as e:
             raise ValidationError({'error': str(e)})
