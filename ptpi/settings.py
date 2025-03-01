@@ -144,10 +144,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Localhost frontend (e.g., React/Vue/Vite)
     'http://localhost:5174',
     'http://192.168.29.2:8000',
+    'http://127.0.0.1:5173',
     'https://ptpinstitute.com',
     'http://ptpinstitute.com',
     'http://www.ptpinstitute.com',
     'https://www.ptpinstitute.com',
+    'http://127.0.0.1:8000'
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -165,10 +167,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
-#Security settings for production
+# Security settings for production
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust X-Forwarded-Proto header
     SECURE_SSL_REDIRECT = False  # Redirect all non-HTTPS requests to HTTPS
     SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
     CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
-    
