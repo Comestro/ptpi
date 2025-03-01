@@ -273,10 +273,10 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = ['id', 'subject_name','class_category']
 
-    def validate_subject_name(self, value):
-        if Subject.objects.filter(subject_name=value).exists():
-            raise serializers.ValidationError("A subject with this name already exists.")
-        return value
+    # def validate_subject_name(self, value):
+    #     if Subject.objects.filter(subject_name=value).exists():
+    #         raise serializers.ValidationError("A subject with this name already exists.")
+    #     return value
     
     # def to_representation(self, instance):
     #     representation = super().to_representation(instance)

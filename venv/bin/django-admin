@@ -1,4 +1,4 @@
-#!/var/www/ptpi/venv/bin/python3
+#!/home/nidhi/ptpi/venv/bin/python3.11
 # -*- coding: utf-8 -*-
 import re
 import sys
