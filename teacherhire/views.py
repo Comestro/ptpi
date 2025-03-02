@@ -2241,7 +2241,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
@@ -2483,6 +2483,8 @@ class AllTeacherViewSet(viewsets.ModelViewSet):
 
 
 class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = AssignedQuestionUserSerializer
     queryset = AssignedQuestionUser.objects.all()
 
