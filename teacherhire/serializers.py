@@ -273,10 +273,10 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = ['id', 'subject_name','class_category']
 
-    def validate_subject_name(self, value):
-        if Subject.objects.filter(subject_name=value).exists():
-            raise serializers.ValidationError("A subject with this name already exists.")
-        return value
+    # def validate_subject_name(self, value):
+    #     if Subject.objects.filter(subject_name=value).exists():
+    #         raise serializers.ValidationError("A subject with this name already exists.")
+    #     return value
     
     # def to_representation(self, instance):
     #     representation = super().to_representation(instance)
@@ -928,10 +928,21 @@ class HireRequestSerializer(serializers.ModelSerializer):
 
 class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+    contact = serializers.CharField(max_length=15, required=False, allow_blank=True, validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all())])
 
     class Meta:
         model = RecruiterEnquiryForm
         fields = "__all__"
+    
+    def validate_contact(self, value):
+        if value:
+            cleaned_value = re.sub(r'[^0-9]', '', value)
+            if len(cleaned_value) != 10:
+                raise serializers.ValidationError("Phone number must be exactly 10 digits.")
+            if not cleaned_value.startswith(('6', '7', '8', '9')):
+                raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
+            return cleaned_value
+        return value
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

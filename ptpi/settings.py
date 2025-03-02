@@ -124,14 +124,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Directory for collected static files
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles' / 'static'
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Your project's static files directory
+    BASE_DIR / "static",
 ]
 
-# Media files (uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -146,10 +144,12 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Localhost frontend (e.g., React/Vue/Vite)
     'http://localhost:5174',
     'http://192.168.29.2:8000',
+    'http://127.0.0.1:5173',
     'https://ptpinstitute.com',
     'http://ptpinstitute.com',
     'http://www.ptpinstitute.com',
     'https://www.ptpinstitute.com',
+    'http://127.0.0.1:8000'
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -170,6 +170,6 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 # Security settings for production
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust X-Forwarded-Proto header
-    SECURE_SSL_REDIRECT = True  # Redirect all non-HTTPS requests to HTTPS
+    SECURE_SSL_REDIRECT = False  # Redirect all non-HTTPS requests to HTTPS
     SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
     CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS

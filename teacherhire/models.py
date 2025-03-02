@@ -422,7 +422,8 @@ class RecruiterEnquiryForm(models.Model):
     area = models.TextField(null=True, blank=True)
     subject = models.ManyToManyField(Subject)
     name = models.CharField(max_length=200, null=True, blank=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
+    contact = models.PositiveIntegerField(null=True, blank=True)
 
 class Apply(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
