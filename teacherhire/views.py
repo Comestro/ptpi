@@ -2248,20 +2248,21 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
 
     # Override the default create method for ExamCenter creation
     def create(self, request, *args, **kwargs):
-        # Handle user creation first
-        user_serializer = CenterUserSerializer(data=request.data.get("user"))
+    # Extract user data
+        user_data = request.data.get("user")
+
+        # Validate user serializer
+        user_serializer = CenterUserSerializer(data=user_data)
         if not user_serializer.is_valid():
             return Response({
                 "error": user_serializer.errors,
                 "message": "User creation failed"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save the user
-        user_serializer.save()
-        user_email = user_serializer.data["email"]
-        user = CustomUser.objects.get(email=user_email)
+        # Save the user and get the instance
+        user = user_serializer.save()
 
-        # Handle ExamCenter creation
+        # Extract exam center data
         exam_center_data = request.data.get("exam_center")
         if not exam_center_data:
             return Response({
@@ -2269,10 +2270,11 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
                 "message": "Please include exam center details"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Assign the user to the exam center data
-        exam_center_data["user"] = user.id
-        exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
+        # Assign only the user ID to the exam center data
+        exam_center_data["user"] = user.id  # Ensure this is an integer, not a dict
 
+        # Validate exam center serializer
+        exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
         if not exam_center_serializer.is_valid():
             return Response({
                 "error": exam_center_serializer.errors,
@@ -2523,8 +2525,7 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         # Serialize and return response
         assign_user_subject_serializer = AssignedQuestionUserSerializer(assigned_user_subject)
         return Response({
-            "user": user_serializer.data,
-            "subjects": assign_user_subject_serializer.data,
+            "data": assign_user_subject_serializer.data,
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
 
