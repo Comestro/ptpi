@@ -374,8 +374,7 @@ class ExamSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
-    assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False)
-
+    assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Exam
@@ -386,6 +385,7 @@ class ExamSerializer(serializers.ModelSerializer):
         subject = validated_data.get('subject')
         level = validated_data.get('level')
         class_category = validated_data.get('class_category')
+        assigneduser = validated_data.get('assigneduser', None)
         try:
             subject = Subject.objects.get(id=subject.id, class_category_id=class_category.id)
         except Subject.DoesNotExist:
@@ -396,7 +396,13 @@ class ExamSerializer(serializers.ModelSerializer):
         existing_count = Exam.objects.filter(name__startswith=exam_name).count()
         set = string.ascii_uppercase[existing_count]
         auto_name = f"{exam_name} - Set {set}"
-
+        print(assigneduser)
+        if not assigneduser:
+            admin_user = CustomUser.objects.filter(is_staff=True).first()
+            print(admin_user)
+            if admin_user:
+                assigneduser, created = AssignedQuestionUser.objects.get_or_create(user=admin_user)
+            validated_data['assigneduser'] = assigneduser
         validated_data['name'] = auto_name
 
         return super().create(validated_data) 
@@ -406,7 +412,7 @@ class ExamSerializer(serializers.ModelSerializer):
         representation['level'] = LevelSerializer(instance.level).data
         representation['class_category'] = ClassCategorySerializer(instance.class_category).data
         representation['questions'] = QuestionSerializer(instance.questions.all(), many=True).data
-        representation['assigneduser'] = AssignedQuestionUserSerializer(instance.assigneduser).data
+        representation['assigneduser'] = AssignedQuestionUserSerializer(instance.assigneduser).data if instance.assigneduser else None
         return representation
     
 class TeacherSkillSerializer(serializers.ModelSerializer):
