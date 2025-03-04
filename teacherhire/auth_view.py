@@ -26,10 +26,16 @@ class RegisterUser(APIView):
 
         serializer = serializer_class(data=request.data)
         if not serializer.is_valid():
+<<<<<<< HEAD
             return Response({
                 'error': serializer.errors, 
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
+=======
+            return Response({'message': serializer.errors},
+                            status=status.HTTP_409_CONFLICT)
+
+>>>>>>> 1127ba0335a2e10dc9d362d93ea64cbe8c4fa528
         user = serializer.save()
         token, created = Token.objects.get_or_create(user=user) 
         role = "admin" if user.is_staff else \

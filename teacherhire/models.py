@@ -161,7 +161,7 @@ class Skill(models.Model):
         return self.name
     
 class Level(models.Model):
-    name = models.CharField(max_length=100, null=True, blank=True)
+    name = models.CharField(max_length=100, null=True, blank=True, choices=[('1st Level','1st Level'),('2nd Level Online','2nd Level Online'),('2nd Level Offline','2nd Level Offline')])
     description = models.CharField(max_length=2000, null=True, blank=True)
 
     def __str__(self):
