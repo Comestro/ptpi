@@ -26,16 +26,14 @@ class RegisterUser(APIView):
 
         serializer = serializer_class(data=request.data)
         if not serializer.is_valid():
-<<<<<<< HEAD
             return Response({
                 'error': serializer.errors, 
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
-=======
             return Response({'message': serializer.errors},
                             status=status.HTTP_409_CONFLICT)
 
->>>>>>> 1127ba0335a2e10dc9d362d93ea64cbe8c4fa528
+
         user = serializer.save()
         token, created = Token.objects.get_or_create(user=user) 
         role = "admin" if user.is_staff else \
@@ -49,7 +47,6 @@ class RegisterUser(APIView):
         # user.otp = otp
         # user.otp_created_at = now()
         # user.save(update_fields=['otp', 'otp_created_at'])
-        
         return Response({
             'payload': serializer.data,
             'role': role,
@@ -152,10 +149,8 @@ class VerifyEmailView(APIView):
         user = CustomUser.objects.filter(email=email).first()
         if not user:
             return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)
-        
         if user.is_verified:
             return Response({"message":"Your account is already verified."}, status=status.HTTP_400_BAD_REQUEST)
-        
         Token.objects.filter(user=user).delete()
         auth_token, _ = Token.objects.get_or_create(user=user)
         user.auth_token = auth_token
@@ -183,8 +178,6 @@ class VerifyLinkView(APIView):
         },
         status=status.HTTP_200_OK
         )
-     
-    
 class VerifyOTP(APIView):
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
