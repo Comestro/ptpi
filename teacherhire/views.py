@@ -30,6 +30,7 @@ import string
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
 
+
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterUser]
 
@@ -317,14 +318,15 @@ class TeacherSkillViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "TeacherSkill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-    
+
     def get_queryset(self):
-        teacher_id = self.request.query_params.get('teacher_id')  
+        teacher_id = self.request.query_params.get('teacher_id')
         if teacher_id:
             return TeacherSkill.objects.filter(user_id=teacher_id)
-        else: 
+        else:
             return TeacherSkill.objects.all()
-        
+
+
 class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -589,6 +591,7 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+
 class PublicClassCategoryViewSet(viewsets.ModelViewSet):
     queryset = ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
@@ -640,7 +643,7 @@ class TeacherQualificationViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return create_object(TeacherQualificationSerializer, request.data, TeacherQualification)
-    
+
     def get_queryset(self):
         teacher_id = self.request.query_params.get('teacher_id')
         if teacher_id:
@@ -760,8 +763,6 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return TeacherQualification.objects.filter(user=self.request.user)
-    
-    
 
 
 class TeacherExperiencesViewSet(viewsets.ModelViewSet):
@@ -777,7 +778,7 @@ class TeacherExperiencesViewSet(viewsets.ModelViewSet):
     def count(self, request):
         count = get_count(TeacherExperiences)
         return Response({"Count": count})
-    
+
     def get_queryset(self):
         teacher_id = self.request.query_params.get('teacher_id')
         if teacher_id:
@@ -849,6 +850,7 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
 
+
 class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -899,29 +901,41 @@ class QuestionViewSet(viewsets.ModelViewSet):
         exam_id = data.get("exam")
 
         try:
-            exam = Exam.objects.get(pk=exam_id)
+            exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
-            return Response({"error": "Exam not found "}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
 
         options_data = data.get("options", [])
         if isinstance(options_data, dict):
-            option_values = list(options_data.values()) 
+            option_values = [tuple(sorted(d.items())) for d in options_data.values()]
         elif isinstance(options_data, list):
-            option_values = options_data  
+            option_values = [tuple(sorted(d.items())) for d in options_data]
         else:
-            return Response({"error": "Invalid options format. Must be a list or dictionary."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid options format."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if len(option_values) != len(set(option_values)):  
-            return Response({"error": "Duplicate options are not allowed in a question."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(option_values) != len(set(option_values)):
+            return Response({"error": "Duplicate options found."}, status=status.HTTP_400_BAD_REQUEST)
 
         translator = Translator(to_lang="hi")
 
         # Create English version
         english_serializer = QuestionSerializer(data=data)
         if english_serializer.is_valid():
-            english_question = english_serializer.save()
+            english_serializer.save()
         else:
             return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create Hindi version if the question is in English
+        if data.get("language") == "English":
+            hindi_data = data.copy()
+            hindi_data["text"] = translator.translate(data["text"])
+            hindi_serializer = QuestionSerializer(data=hindi_data)
+            if hindi_serializer.is_valid():
+                hindi_serializer.save()
+            else:
+                return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(english_serializer.data, status=status.HTTP_201_CREATED)
 
         # Create Hindi version if the question is in English
         hindi_serializer = None
@@ -985,6 +999,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class SelfQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1080,18 +1095,18 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         current_subjects = list(profile.prefered_subject.values_list('id', flat=True)) if profile else []
         current_class_categories = list(profile.class_category.values_list('id', flat=True)) if profile else []
 
-        new_subjects = list(map(int, data.get("prefered_subject", [])))  
-        new_class_categories = list(map(int, data.get("class_category", [])))  
+        new_subjects = list(map(int, data.get("prefered_subject", [])))
+        new_class_categories = list(map(int, data.get("class_category", [])))
 
-        removed_subjects = set(current_subjects) - set(new_subjects) 
-        removed_class_categories = set(current_class_categories) - set(new_class_categories) 
-
+        removed_subjects = set(current_subjects) - set(new_subjects)
+        removed_class_categories = set(current_class_categories) - set(new_class_categories)
 
         # Check if any removed subject OR class category has attempted exams
         if TeacherExamResult.objects.filter(
-            user=user,
-            has_exam_attempt=True
-        ).filter(Q(exam__subject_id__in=removed_subjects) | Q(exam__class_category_id__in=removed_class_categories)).exists():
+                user=user,
+                has_exam_attempt=True
+        ).filter(Q(exam__subject_id__in=removed_subjects) | Q(
+            exam__class_category_id__in=removed_class_categories)).exists():
             return Response({
                 "message": "You cannot remove an attempted subject or class category, only add new ones."
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -1143,6 +1158,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
             serializer.save(user=user)  # Assign the user to the new preference object
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class TeacherSubjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1296,6 +1312,7 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
         except TeacherClassCategory.DoesNotExist:
             return Response({"detail": "TeacherClassCategory not found."}, status=status.HTTP_404_NOT_FOUND)
 
+
 class AllTeacherExamResultViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1307,6 +1324,7 @@ class AllTeacherExamResultViewSet(viewsets.ModelViewSet):
         if teacher_id:
             return TeacherExamResult.objects.filter(user=teacher_id)
         return TeacherExamResult.objects.all()
+
 
 class TeacherExamResultViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1395,7 +1413,7 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Job preference location deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    def update(self, request, *args, **kwargs):  
+    def update(self, request, *args, **kwargs):
         data = request.data.copy()
         user = request.user
 
@@ -1412,23 +1430,25 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = self.get_serializer(instance=job_preference_location, data=data, partial=True) 
+        serializer = self.get_serializer(instance=job_preference_location, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class AllTeacherBasicProfileViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated,IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = AllBasicProfileSerializer
-    queryset = CustomUser.objects.filter(is_teacher=True,is_verified=True)
+    queryset = CustomUser.objects.filter(is_teacher=True, is_verified=True)
+
 
 class AllRecruiterBasicProfileViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated,IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = AllBasicProfileSerializer
-    queryset = CustomUser.objects.filter(is_recruiter=True,is_verified=True)
+    queryset = CustomUser.objects.filter(is_recruiter=True, is_verified=True)
 
 
 class BasicProfileViewSet(viewsets.ModelViewSet):
@@ -1568,7 +1588,6 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Customuser not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1600,6 +1619,7 @@ class ProfilecompletedView(APIView):
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
+
     def get(self, request, *args, **kwargs):
         user = request.user
         try:
@@ -1624,14 +1644,14 @@ class CheckoutView(APIView):
             unlocked_levels = ["Level 1"]
 
             has_level_1 = qualified_exams.filter(exam__level_id=1, exam__type="online",
-                                                exam__subject=subject,
-                                                exam__class_category=subject.class_category).exists()
+                                                 exam__subject=subject,
+                                                 exam__class_category=subject.class_category).exists()
             has_level_2_online = qualified_exams.filter(exam__level_id=2, exam__type="online",
                                                         exam__subject=subject,
                                                         exam__class_category=subject.class_category).exists()
             has_level_2_offline = qualified_exams.filter(exam__level_id=2, exam__type="offline",
-                                                        exam__subject=subject,
-                                                        exam__class_category=subject.class_category).exists()
+                                                         exam__subject=subject,
+                                                         exam__class_category=subject.class_category).exists()
 
             if has_level_1:
                 unlocked_levels.append("Level 2 Online")
@@ -1719,6 +1739,7 @@ class CheckoutView(APIView):
 
     #     return Response(levels, status=status.HTTP_200_OK)
 
+
 class ExamSetterViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1727,7 +1748,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         user = request.user
-        subject = request.data.get('subject')  
+        subject = request.data.get('subject')
         try:
             assigned_user = AssignedQuestionUser.objects.filter(user=user, subject=subject).first()
         except AssignedQuestionUser.DoesNotExist:
@@ -1736,7 +1757,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 
         serializer = ExamSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(assigneduser=assigned_user)  
+            serializer.save(assigneduser=assigned_user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1960,9 +1981,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         if not qualified_level_1:
             exams = exams.filter(level_id=1)  # If not qualified for Level 1, return only Level 1 exams
         elif qualified_level_1 and not online_qualified_level_2:
-            exams = exams.filter(level_id__in=[1, 2], type='online')  # If qualified for Level 1, show Level 1 and Level 2 exams
+            exams = exams.filter(level_id__in=[1, 2],
+                                 type='online')  # If qualified for Level 1, show Level 1 and Level 2 exams
         elif online_qualified_level_2 and not offline_qualified_level_2:
-            exams = exams.filter(level_id__in=[1, 2, 3]) 
+            exams = exams.filter(level_id__in=[1, 2, 3])
         unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id',
                                                                                                           flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
@@ -2158,6 +2180,7 @@ class VerifyPasscodeView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
 class InterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2211,6 +2234,7 @@ class InterviewViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class SelfInterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2221,13 +2245,15 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         # Deserialize data
         serializer = self.get_serializer(data=request.data)
-        
+
         if serializer.is_valid():
             user = request.user
             time = serializer.validated_data.get('time')
             subject = serializer.validated_data.get('subject')
             class_category = serializer.validated_data.get('class_category')
-            check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject, exam__class_category_id=class_category, exam__level_id=2, exam__type='online').exists()
+            check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject,
+                                                                    exam__class_category_id=class_category,
+                                                                    exam__level_id=2, exam__type='online').exists()
 
             if not check_exam_qualified:
                 return Response({"error": "First qualify this classcategory subject exams for Interview "})
@@ -2242,12 +2268,13 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             # Check for duplicate interview
             if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
                 return Response({"error": "Interview with the same details already exists."},
-                                 status=status.HTTP_400_BAD_REQUEST)
+                                status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+
         print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -2257,7 +2284,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
 
     # Override the default create method for ExamCenter creation
     def create(self, request, *args, **kwargs):
-    # Extract user data
+        # Extract user data
         user_data = request.data.get("user")
 
         # Validate user serializer
@@ -2439,7 +2466,7 @@ class AllTeacherViewSet(viewsets.ModelViewSet):
     serializer_class = AllTeacherSerializer
 
     def get_queryset(self):
-        queryset = CustomUser.objects.filter(is_teacher=True,is_staff=False)
+        queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False)
 
         return_all = self.request.query_params.get('all', None)
         if return_all and return_all.lower() == 'true':
@@ -2571,6 +2598,7 @@ class AllRecruiterViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+
 class HireRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2579,15 +2607,16 @@ class HireRequestViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        
+
         allowed_fields = ['status']
         data = {field: request.data[field] for field in allowed_fields if field in request.data}
 
         serializer = self.get_serializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        
+
         return Response(serializer.data)
+
 
 class RecHireRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
@@ -2605,18 +2634,21 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def get_queryset(self):
-        recruiter_id=self.request.user
+        recruiter_id = self.request.user
         return HireRequest.objects.filter(recruiter_id=recruiter_id)
-    
+
+
 class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
-    permission_classes = [permissions.AllowAny]  
+    permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
 class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
@@ -2625,14 +2657,14 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()  # Save the form without requiring authentication
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class ApplyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2640,44 +2672,44 @@ class ApplyViewSet(viewsets.ModelViewSet):
     queryset = Apply.objects.all()
 
     def create(self, request):
-        data = request.data.copy()  
-        user = request.user  
-        
-        subject_ids = data.get('subject', [])  
+        data = request.data.copy()
+        user = request.user
+
+        subject_ids = data.get('subject', [])
         class_category_ids = data.get('class_category', [])
-        
+
         if not subject_ids or not class_category_ids:
             return Response(
-                {"error": "Subject and Class Category are required."}, 
+                {"error": "Subject and Class Category are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         apply_instance = Apply.objects.filter(user=user, subject__id__in=subject_ids,
-            class_category__id__in=class_category_ids,
-        ).first()
+                                              class_category__id__in=class_category_ids,
+                                              ).first()
         if apply_instance:
             apply_instance.status = not apply_instance.status
             apply_instance.save()
-            return Response({"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data}, 
-                status=status.HTTP_200_OK
-            )
-        data["user"] = user.id  
+            return Response({"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data},
+                            status=status.HTTP_200_OK
+                            )
+        data["user"] = user.id
 
         serializer = ApplySerializer(data=data, context={"request": request})
         if serializer.is_valid():
-            apply_instance = serializer.save(user=user)  
+            apply_instance = serializer.save(user=user)
 
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
     def get_queryset(self):
         return Apply.objects.filter(user=self.request.user)
-    
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Applied Data deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class AllApplyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
