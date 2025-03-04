@@ -903,6 +903,17 @@ class QuestionViewSet(viewsets.ModelViewSet):
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found "}, status=status.HTTP_404_NOT_FOUND)
 
+        options_data = data.get("options", [])
+        if isinstance(options_data, dict):
+            option_values = list(options_data.values()) 
+        elif isinstance(options_data, list):
+            option_values = options_data  
+        else:
+            return Response({"error": "Invalid options format. Must be a list or dictionary."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(option_values) != len(set(option_values)):  
+            return Response({"error": "Duplicate options are not allowed in a question."}, status=status.HTTP_400_BAD_REQUEST)
+
         translator = Translator(to_lang="hi")
 
         # Create English version
@@ -917,16 +928,14 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if data.get("language") == "English":
             hindi_data = data.copy()
 
-            # Translate fields 
+            # Translate fields
             hindi_data["text"] = translator.translate(data.get("text", ""))
             hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
 
             hindi_options = []
-            options_data = data.get("options", [])
-
-            if isinstance(options_data, dict): 
+            if isinstance(options_data, dict):
                 hindi_options = {key: translator.translate(value) for key, value in options_data.items()}
-            elif isinstance(options_data, list):  
+            elif isinstance(options_data, list):
                 hindi_options = [translator.translate(option) for option in options_data]
 
             hindi_data["options"] = hindi_options

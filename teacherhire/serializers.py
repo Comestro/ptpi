@@ -266,22 +266,29 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
             # representation['user'] = UserSerializer(instance.user).data
             representation['role'] = RoleSerializer(instance.role).data
         return representation
-
-#subject serializer 
+    
 class SubjectSerializer(serializers.ModelSerializer):
+    class_category_name = serializers.SerializerMethodField()  # Add new field
+
     class Meta:
         model = Subject
-        fields = ['id', 'subject_name','class_category']
+        fields = ['id', 'subject_name', 'class_category', 'class_category_name']  
 
-    # def validate_subject_name(self, value):
-    #     if Subject.objects.filter(subject_name=value).exists():
-    #         raise serializers.ValidationError("A subject with this name already exists.")
-    #     return value
-    
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     representation['class_category'] = ClassCategorySerializer(instance.class_category).data
-    #     return representation
+    def get_class_category_name(self, obj):
+        """Returns the name of the class category"""
+        return obj.class_category.name if obj.class_category else None 
+
+    def validate(self, data):
+        subject_name = data.get('subject_name')
+        class_category = data.get('class_category')
+
+        # Check if subject with same name already exists in the same class_category
+        if Subject.objects.filter(subject_name=subject_name, class_category=class_category).exists():
+            raise serializers.ValidationError(
+                f"The subject '{subject_name}' already exists for class category '{class_category}'."
+            )
+
+        return data
 
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
