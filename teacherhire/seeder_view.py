@@ -384,12 +384,11 @@ def insert_data(request):
                 level_name = entry.get("level")
                 subject_name = entry.get("subject")
                 assigneduser_id = entry.get("assigneduser")
-
                 # Fetch related objects
                 class_category, _ = ClassCategory.objects.get_or_create(name=class_category_name)
                 level, _ = Level.objects.get_or_create(name=level_name)
                 subject, _ = Subject.objects.get_or_create(subject_name=subject_name, class_category=class_category)
-                assigneduser, _ = AssignedQuestionUser.objects.get_or_create(id=assigneduser_id)
+                assigneduser, _ = AssignedQuestionUser.objects.get_or_create(user=CustomUser.objects.filter(is_staff=True).first())
 
                 if not model.objects.filter(
                     name=name,

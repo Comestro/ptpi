@@ -22,7 +22,7 @@ class RegisterUser(APIView):
 
         serializer = serializer_class(data=request.data)
         if not serializer.is_valid():
-            return Response({'error': serializer.errors, 'message': 'Something went wrong'},
+            return Response({'message': serializer.errors},
                             status=status.HTTP_409_CONFLICT)
 
         user = serializer.save()
