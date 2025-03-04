@@ -2678,3 +2678,28 @@ class AllApplyViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+class CountDataViewSet(viewsets.ViewSet):
+    permissions_class = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    
+    def list(self, request):
+        count = {}
+        if 'recruiter' in request.query_params:
+            count['recruiter'] = CustomUser.objects.filter(is_recruiter=True).count()
+        if 'teacher' in request.query_params:
+            count['teacher'] = CustomUser.objects.filter(is_teacher=True).count()
+        if 'subject' in request.query_params:
+            count['subject'] = Subject.objects.count()
+        if 'class_category' in request.query_params:
+            count['class_category'] = ClassCategory.objects.count()
+        if 'examcenter' in request.query_params:
+            count['examcenter'] = ExamCenter.objects.count()
+        if 'assignedquestionuser' in request.query_params:
+            count['assignedquestionuser'] = AssignedQuestionUser.objects.count()
+        if 'passkey' in request.query_params:
+            count['passkey'] = Passkey.objects.count()
+        if 'skill' in request.query_params:
+            count['skill'] = Skill.objects.count()
+
+        return Response(count)
