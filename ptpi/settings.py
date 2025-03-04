@@ -25,7 +25,7 @@ DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': BASE_DIR / 'backups'}
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = True
 
 # Allowed hosts
 ALLOWED_HOSTS = [
