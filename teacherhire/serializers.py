@@ -361,8 +361,8 @@ class QuestionSerializer(serializers.ModelSerializer):
     def validate_text(self, value):
         if value is not None and len(value)< 5:
             raise serializers.ValidationError("Text must be at least 5 characters.")
-        # if Question.objects.filter(text=value).exists():
-        #     raise serializers.ValidationError("This question is already exists.")
+        if Question.objects.filter(text=value).exists():
+            raise serializers.ValidationError("This question is already exists.")
         return value
     def to_representation(self, instance):
         representation = super().to_representation(instance)
