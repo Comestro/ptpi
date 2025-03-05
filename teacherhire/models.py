@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 import os
 import base64
-
+from django.utils.timezone import now
 
 
 class CustomUserManager(BaseUserManager):
@@ -33,8 +33,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_questionuser = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     otp = models.CharField(max_length=8, null=True, blank=True)
-    otp_created_at = models.DateTimeField(null=True, blank=True) 
-
+    otp_created_at = models.DateTimeField(null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=now)
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'

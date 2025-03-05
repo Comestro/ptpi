@@ -172,5 +172,5 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust X-Forwarded-Proto header
     SECURE_SSL_REDIRECT = False  # Redirect all non-HTTPS requests to HTTPS
-    SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
-    CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
+    SESSION_COOKIE_SECURE = False  # Only send session cookies over HTTPS
+    CSRF_COOKIE_SECURE = False  # Only send CSRF cookies over HTTPS

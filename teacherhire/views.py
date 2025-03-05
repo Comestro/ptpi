@@ -29,6 +29,8 @@ from django.core.mail import send_mail
 import string
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
+from django.utils import timezone
+from datetime import timedelta
 
 
 class RecruiterView(APIView):
@@ -36,14 +38,6 @@ class RecruiterView(APIView):
 
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
-
-
-class TranslatorView(APIView):
-    def get(self, request):
-        translator = Translator(to_lang="hi")
-        translation = translator.translate("What are the functions of a DBMS?")
-        return Response(data={"translation": translation}, status=status.HTTP_200_OK)
-
 
 class AdminView(APIView):
     permission_classes = [IsAdminUser]
@@ -2719,3 +2713,33 @@ class AllApplyViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class CountDataViewSet(viewsets.ViewSet):
+    permissions_class = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    
+    def list(self, request):
+        count = {}
+        last_month = timezone.now() - timedelta(days=30)
+
+        if 'recruiter' in request.query_params:
+            count['recruiter'] = CustomUser.objects.filter(is_recruiter=True).count()
+        if 'teacher' in request.query_params:
+            count['teacher'] = CustomUser.objects.filter(is_teacher=True).count()
+        if 'subject' in request.query_params:
+            count['subject'] = Subject.objects.count()
+        if 'class_category' in request.query_params:
+            count['class_category'] = ClassCategory.objects.count()
+        if 'examcenter' in request.query_params:
+            count['examcenter'] = ExamCenter.objects.count()
+        if 'assignedquestionuser' in request.query_params:
+            count['assignedquestionuser'] = AssignedQuestionUser.objects.count()
+        if 'passkey' in request.query_params:
+            count['passkey'] = Passkey.objects.count()
+        if 'skill' in request.query_params:
+            count['skill'] = Skill.objects.count()
+        if 'last_month_users' in request.query_params:
+            count['last_month_users'] = CustomUser.objects.filter(date__gte=last_month).count()
+
+        return Response(count)
