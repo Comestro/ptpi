@@ -1054,6 +1054,12 @@ class RoleViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Role deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
+class TeachersPreferenceViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Preference.objects.all()
+    serializer_class = PreferenceSerializer
+
 
 class PreferenceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
