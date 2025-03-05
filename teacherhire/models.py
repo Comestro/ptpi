@@ -34,7 +34,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_verified = models.BooleanField(default=False)
     otp = models.CharField(max_length=8, null=True, blank=True)
     otp_created_at = models.DateTimeField(null=True, blank=True)
-    date = models.DateTimeField(auto_now_add=now)
+    date = models.DateTimeField(default=now)
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
