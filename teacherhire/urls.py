@@ -104,7 +104,6 @@ urlpatterns = [
 
     # Seeder Data Routes
     path("insert/data/teacher/", insert_data_teachers, name="insert_data_teachers"),
-    path("translate/", TranslatorView.as_view(), name="translate"),
     path("admin/insert/data/", insert_all_data, name="insert_all_data"),
 
     # === View Permissions API ===

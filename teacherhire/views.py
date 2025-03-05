@@ -29,20 +29,14 @@ from django.core.mail import send_mail
 import string
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
+from django.utils import timezone
+from datetime import timedelta
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterUser]
 
     def get(self, request):
         return Response({"message": "You are a recruiter!"}, status=status.HTTP_200_OK)
-
-
-class TranslatorView(APIView):
-    def get(self, request):
-        translator = Translator(to_lang="hi")
-        translation = translator.translate("What are the functions of a DBMS?")
-        return Response(data={"translation": translation}, status=status.HTTP_200_OK)
-
 
 class AdminView(APIView):
     permission_classes = [IsAdminUser]
@@ -2679,8 +2673,7 @@ class AllApplyViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-from django.utils import timezone
-from datetime import timedelta
+
 class CountDataViewSet(viewsets.ViewSet):
     permissions_class = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]

@@ -394,9 +394,8 @@ class ExamSerializer(serializers.ModelSerializer):
         exam_name = f"{class_category.name}, {subject.subject_name}, {level.name}".strip()
 
         existing_count = Exam.objects.filter(name__startswith=exam_name).count()
-        set = string.ascii_uppercase[existing_count]
-        auto_name = f"{exam_name} - Set {set}"
-        print(assigneduser)
+        auto_name = f"{exam_name} - Set {existing_count + 1}"
+
         if not assigneduser:
             admin_user = CustomUser.objects.filter(is_staff=True).first()
             print(admin_user)
@@ -404,8 +403,8 @@ class ExamSerializer(serializers.ModelSerializer):
                 assigneduser, created = AssignedQuestionUser.objects.get_or_create(user=admin_user)
             validated_data['assigneduser'] = assigneduser
         validated_data['name'] = auto_name
-
         return super().create(validated_data) 
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['subject'] = SubjectSerializer(instance.subject).data
