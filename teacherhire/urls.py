@@ -39,6 +39,7 @@ router.register(r"admin/allRecruiter", AllRecruiterViewSet, basename="allRecruit
 router.register(r"admin/assigneduser", AssignedQuestionUserViewSet)
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
 router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request')
+router.register(r"admin/preference", TeachersPreferenceViewSet, basename='admin-preference')
 router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet, basename='recruiter-enquiryform')
 router.register(r"all/teacher/basicProfile", AllTeacherBasicProfileViewSet, basename="teachers-basicProfile")
 router.register(r"all/recruiter/basicProfile", AllRecruiterBasicProfileViewSet, basename="recruiters-basicProfile")
@@ -104,7 +105,6 @@ urlpatterns = [
 
     # Seeder Data Routes
     path("insert/data/teacher/", insert_data_teachers, name="insert_data_teachers"),
-    path("translate/", TranslatorView.as_view(), name="translate"),
     path("admin/insert/data/", insert_all_data, name="insert_all_data"),
 
     # === View Permissions API ===
