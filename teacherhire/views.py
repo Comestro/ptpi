@@ -871,11 +871,23 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         serializer = QuestionSerializer(data=data)
         if serializer.is_valid():
-            question = serializer.save()
+            question_data = serializer.save()
             return Response({
                 "message": "Questions stored in Hindi and English successfully",
-                "data": serializer.data
+                "english_data": question_data['english_data'],
+                "hindi_data": question_data['hindi_data']
             }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)  
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Question updated successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
@@ -890,77 +902,24 @@ class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         data = request.data
         exam_id = data.get("exam")
 
         try:
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
-            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        options_data = data.get("options", [])
-        if isinstance(options_data, dict):
-            option_values = [tuple(sorted(d.items())) for d in options_data.values()]
-        elif isinstance(options_data, list):
-            option_values = [tuple(sorted(d.items())) for d in options_data]
-        else:
-            return Response({"error": "Invalid options format."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if len(option_values) != len(set(option_values)):
-            return Response({"error": "Duplicate options found."}, status=status.HTTP_400_BAD_REQUEST)
-
-        translator = Translator(to_lang="hi")
-
-        # Create English version
-        english_serializer = QuestionSerializer(data=data)
-        if english_serializer.is_valid():
-            english_serializer.save()
-        else:
-            return Response(english_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # Create Hindi version if the question is in English
-        if data.get("language") == "English":
-            hindi_data = data.copy()
-            hindi_data["text"] = translator.translate(data["text"])
-            hindi_serializer = QuestionSerializer(data=hindi_data)
-            if hindi_serializer.is_valid():
-                hindi_serializer.save()
-            else:
-                return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(english_serializer.data, status=status.HTTP_201_CREATED)
-
-        # Create Hindi version if the question is in English
-        hindi_serializer = None
-        if data.get("language") == "English":
-            hindi_data = data.copy()
-
-            # Translate fields
-            hindi_data["text"] = translator.translate(data.get("text", ""))
-            hindi_data["solution"] = translator.translate(data.get("solution", "")) if data.get("solution") else ""
-
-            hindi_options = []
-            if isinstance(options_data, dict):
-                hindi_options = {key: translator.translate(value) for key, value in options_data.items()}
-            elif isinstance(options_data, list):
-                hindi_options = [translator.translate(option) for option in options_data]
-
-            hindi_data["options"] = hindi_options
-            hindi_data["language"] = "Hindi"
-            hindi_data["exam"] = exam_id
-
-            hindi_serializer = QuestionSerializer(data=hindi_data)
-            if hindi_serializer.is_valid():
-                hindi_question = hindi_serializer.save()
-            else:
-                return Response(hindi_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response({
-            "message": "Question stored in English and Hindi",
-            "english_data": english_serializer.data,
-            "hindi_data": hindi_serializer.data if hindi_serializer else None
-        }, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            question_data = serializer.save()
+            return Response({
+                "message": "Question stored in English and Hindi",
+                "english_data": question_data.get("english_data"),
+                "hindi_data": question_data.get("hindi_data")
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
     def count(self, request):
@@ -1013,7 +972,6 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
         language = request.query_params.get('language')
 
         questions = Question.objects.all()
-
         if not exam_id:
             return Response(
                 {"error": "Exam ID is required."},
@@ -1761,17 +1719,14 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get_queryset(self):
+        user = self.request.user
+        return Exam.objects.filter(assigneduser__user=user)    
+
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = Exam.objects.count()
         return Response({"Count": count})
-
-    @action(detail=False, methods=['get'])
-    def exams(self, request):
-        user = request.user
-        exams = Exam.objects.filter(assigneduser__user=user)
-        serializer = ExamSerializer(exams, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
         exam_id = request.data.get('id', None)
@@ -1811,8 +1766,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    def put(self, request, *args, **kwargs):
-        exam_id = request.data.get('id', None)
+   
 
 
 class ExamViewSet(viewsets.ModelViewSet):
@@ -2517,7 +2471,6 @@ class AllTeacherViewSet(viewsets.ModelViewSet):
         # Ensure distinct results to avoid duplicates
         return queryset.distinct()
 
-
 class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2567,7 +2520,16 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
 
+class SelfAssignedQuestionUserViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = AssignedQuestionUserSerializer
+    queryset = AssignedQuestionUser.objects.all()
 
+    def get_queryset(self):
+        user = self.request.user
+        return AssignedQuestionUser.objects.filter(user=user)
+    
 class AllRecruiterViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]

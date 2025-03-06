@@ -70,7 +70,7 @@ router.register(r"self/teacherReport", TeacherReportViewSet, basename="self-teac
 router.register(r"examsetter", ExamSetterViewSet, basename="examsetter")
 router.register(r"self/recruiterenquiryform", SelfRecruiterEnquiryFormViewSet, basename="recruiterenquiryform")
 router.register(r"self/apply", ApplyViewSet, basename="self-apply")
-
+router.register(r"self/assigneduser", SelfAssignedQuestionUserViewSet, basename="self-assigneduser")
 # recruiter
 router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')
 router.register(r"self/teacher", SelfViewSet, basename="self-teacher")

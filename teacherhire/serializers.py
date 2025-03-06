@@ -366,15 +366,55 @@ class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(),required=False, allow_null=True)
+    solution = serializers.CharField(max_length=2000, allow_null=True, required=False)
+    language = serializers.ChoiceField(choices=[('Hindi', 'Hindi'), ('English', 'English')], required=True)
+
     class Meta:
         model = Question
         fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
+
     def validate_text(self, value):
         if value is not None and len(value)< 5:
             raise serializers.ValidationError("Text must be at least 5 characters.")
-        if Question.objects.filter(text=value).exists():
-            raise serializers.ValidationError("This question is already exists.")
+        question_id = self.instance.id if self.instance else None  
+        if Question.objects.filter(text=value).exclude(id=question_id).exists():
+            raise serializers.ValidationError("This question already exists.")
         return value
+    
+    def create(self, validated_data):
+        translate_hindi = Translator(to_lang='hi')
+        english_text = validated_data.get("text")
+        english_solution = validated_data.get("solution")
+        english_options = validated_data.get("options")
+        language = validated_data.get("language", "English")
+
+        hindi_text = translate_hindi.translate(english_text) if english_text else None
+        hindi_solution = translate_hindi.translate(english_solution) if english_solution else None
+        hindi_options = [translate_hindi.translate(option) for option in english_options] if english_options else None
+        english_data = validated_data.copy()
+        english_data['language'] = 'English'
+
+        try:
+            english_question = Question.objects.create(**english_data)
+        except KeyError as e:
+            raise serializers.ValidationError(f"Missing field {e.args[0]} in English question.")
+        
+        hindi_data = {
+            "text": hindi_text,
+            "solution": hindi_solution,
+            "options": hindi_options,
+            "language": "Hindi",  
+            "exam": validated_data.get("exam")
+        }
+        try:
+            hindi_question = Question.objects.create(**hindi_data)
+        except KeyError as e:
+            raise serializers.ValidationError(f"Missing field {e.args[0]} in Hindi question.")
+        return {
+            "english_data": QuestionSerializer(english_question).data,
+            "hindi_data": QuestionSerializer(hindi_question).data
+        }
+      
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # representation['exam'] = ExamSerializer(instance.exam).data

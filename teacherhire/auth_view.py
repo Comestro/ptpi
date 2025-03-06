@@ -31,7 +31,7 @@ class RegisterUser(APIView):
                 'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
             return Response({'message': serializer.errors},
-                            status=status.HTTP_409_CONFLICT)
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
         user = serializer.save()
