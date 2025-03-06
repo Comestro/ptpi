@@ -11,7 +11,6 @@ from rest_framework.decorators import action
 from .permissions import *
 import random
 import re
-from translate import Translator
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.conf import settings

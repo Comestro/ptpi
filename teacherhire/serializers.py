@@ -10,7 +10,7 @@ from .utils import Util
 from datetime import datetime
 from datetime import date
 import string
-from translate import Translator
+from googletrans import Translator
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
@@ -371,15 +371,15 @@ class QuestionSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        translate_hindi = Translator(to_lang='hi')
+        translator = Translator()
         english_text = validated_data.get("text")
         english_solution = validated_data.get("solution")
         english_options = validated_data.get("options")
         language = validated_data.get("language", "English")
 
-        hindi_text = translate_hindi.translate(english_text) if english_text else None
-        hindi_solution = translate_hindi.translate(english_solution) if english_solution else None
-        hindi_options = [translate_hindi.translate(option) for option in english_options] if english_options else None
+        hindi_text = translator.translate(english_text, src="en", dest='hi').text if english_text else None
+        hindi_solution = translator.translate(english_solution, src="en", dest='hi').text if english_solution else None
+        hindi_options = [translator.translate(option, src="en", dest='hi').text for option in english_options] if english_options else None
         english_data = validated_data.copy()
         english_data['language'] = 'English'
 
