@@ -888,7 +888,6 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -1712,17 +1711,14 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get_queryset(self):
+        user = self.request.user
+        return Exam.objects.filter(assigneduser__user=user)    
+
     @action(detail=False, methods=['get'])
     def count(self, request):
         count = Exam.objects.count()
         return Response({"Count": count})
-
-    @action(detail=False, methods=['get'])
-    def exams(self, request):
-        user = request.user
-        exams = Exam.objects.filter(assigneduser__user=user)
-        serializer = ExamSerializer(exams, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, *args, **kwargs):
         exam_id = request.data.get('id', None)
@@ -1762,8 +1758,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-    def put(self, request, *args, **kwargs):
-        exam_id = request.data.get('id', None)
+   
 
 
 class ExamViewSet(viewsets.ModelViewSet):
