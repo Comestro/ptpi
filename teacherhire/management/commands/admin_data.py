@@ -11,11 +11,7 @@ class Command(BaseCommand):
         if not CustomUser.objects.filter(email='ptpi854301@gmail.com').exists():
             CustomUser.objects.create_superuser(
                 email='ptpi854301@gmail.com',
-<<<<<<< HEAD
-                username='Manish',
-=======
                 username='Manish458',
->>>>>>> 7cbae0344548750ed4730bf4c2e5bc6330b2f260
                 password='adminpassword',
                 Fname='Manish',
                 Lname='Kumar Gandhi',
