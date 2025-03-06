@@ -358,11 +358,15 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
+
     def validate_text(self, value):
         if value is not None and len(value)< 5:
             raise serializers.ValidationError("Text must be at least 5 characters.")
-        if Question.objects.filter(text=value).exists():
-            raise serializers.ValidationError("This question is already exists.")
+        question_id = self.instance.id if self.instance else None  
+
+        if Question.objects.filter(text=value).exclude(id=question_id).exists():
+            raise serializers.ValidationError("This question already exists.")
+
         return value
     def to_representation(self, instance):
         representation = super().to_representation(instance)
