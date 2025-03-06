@@ -2457,7 +2457,6 @@ class AllTeacherViewSet(viewsets.ModelViewSet):
         # Ensure distinct results to avoid duplicates
         return queryset.distinct()
 
-
 class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2507,7 +2506,16 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
 
+class SelfAssignedQuestionUserViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = AssignedQuestionUserSerializer
+    queryset = AssignedQuestionUser.objects.all()
 
+    def get_queryset(self):
+        user = self.request.user
+        return AssignedQuestionUser.objects.filter(user=user)
+    
 class AllRecruiterViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
