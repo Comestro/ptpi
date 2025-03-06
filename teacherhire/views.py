@@ -969,7 +969,6 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
         language = request.query_params.get('language')
 
         questions = Question.objects.all()
-
         if not exam_id:
             return Response(
                 {"error": "Exam ID is required."},
