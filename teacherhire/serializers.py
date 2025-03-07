@@ -384,7 +384,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         translator = Translator()
         english_text = validated_data.get("text")
-        english_solution = validated_data.get("solution")
+        english_solution = validated_data.get("solution",None)
         english_options = validated_data.get("options")
         language = validated_data.get("language", "English")
 
