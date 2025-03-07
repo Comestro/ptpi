@@ -984,7 +984,10 @@ class HireRequestSerializer(serializers.ModelSerializer):
 
 class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    contact = serializers.CharField(max_length=15, required=False, allow_blank=True, validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all())])
+    contact = serializers.CharField(
+        max_length=15, required=False, allow_blank=True, 
+        validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all(), message="A RecruiterEnquiryForm with this contact already exists..")]
+    )
 
     class Meta:
         model = RecruiterEnquiryForm
@@ -997,6 +1000,11 @@ class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Phone number must be exactly 10 digits.")
             if not cleaned_value.startswith(('6', '7', '8', '9')):
                 raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
+            
+            # Check if the contact number already exists in the database
+            if RecruiterEnquiryForm.objects.filter(contact=cleaned_value).exists():
+                raise serializers.ValidationError("A RecruiterEnquiryForm with this contact already exists..")
+            
             return cleaned_value
         return value
 
