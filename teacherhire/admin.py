@@ -90,7 +90,7 @@ class ReportAdmin(admin.ModelAdmin):
 
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ['exam', 'time','display_text','display_image', 'options', 'correct_option','language', 'created_at']
+    list_display = ['exam','related_question', 'time','display_text','display_image', 'options', 'correct_option','language', 'created_at']
     def display_text(self, obj):
         if isinstance(obj.text, dict):
             return obj.text.get("text", "No Text")
