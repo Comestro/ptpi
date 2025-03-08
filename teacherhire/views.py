@@ -636,12 +636,12 @@ class TeacherQualificationViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return create_object(TeacherQualificationSerializer, request.data, TeacherQualification)
-
+    
     def get_queryset(self):
         teacher_id = self.request.query_params.get('teacher_id')
         if teacher_id:
             return TeacherQualification.objects.filter(user_id=teacher_id)
-        return TeacherQualification.objects.filter(user=self.request.user)
+        return TeacherQualification.objects.all()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -776,7 +776,7 @@ class TeacherExperiencesViewSet(viewsets.ModelViewSet):
         teacher_id = self.request.query_params.get('teacher_id')
         if teacher_id:
             return TeacherExperiences.objects.filter(user_id=teacher_id)
-        return TeacherExperiences.objects.filter(user=self.request.user)
+        return TeacherExperiences.objects.all()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
