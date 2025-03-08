@@ -2691,6 +2691,13 @@ class AllApplyViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    def get_queryset(self):
+        teacher_id  = self.request.query_params.get('teacher_id')
+        if teacher_id:
+            return Apply.objects.filter(user=teacher_id)
+        return Apply.objects.all()
+    
 
 
 class CountDataViewSet(viewsets.ViewSet):

@@ -90,7 +90,7 @@ class ClassCategory(models.Model):
     name = models.CharField(max_length=100,unique=True, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
     
 class Subject(models.Model):
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, related_name='subjects')
