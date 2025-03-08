@@ -9,10 +9,10 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
 from datetime import date
-import string
+from rest_framework import status
 from googletrans import Translator
 from rest_framework.validators import UniqueValidator
-from django.contrib.auth.password_validation import validate_password
+from rest_framework.response import Response
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -357,10 +357,11 @@ class QuestionSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(),required=False, allow_null=True)
     solution = serializers.CharField(max_length=2000, allow_null=True, required=False)
     language = serializers.ChoiceField(choices=[('Hindi', 'Hindi'), ('English', 'English')], required=True)
+    related_question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
+        fields = ['id', 'related_question', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
 
     def validate_text(self, value):
         if value is not None and len(value)< 5:
@@ -372,14 +373,21 @@ class QuestionSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         translator = Translator()
+        language = validated_data.get("language")
+        if language == 'Hindi':
+            try:
+                hindi_question = Question.objects.create(**validated_data)
+            except KeyError as e:
+                raise serializers.ValidationError(f"Missing field {e.args[0]} in Hindi question.")
+            return {
+                "hindi_data" : QuestionSerializer(hindi_question).data
+            }
         english_text = validated_data.get("text")
         english_solution = validated_data.get("solution")
-        english_options = validated_data.get("options")
-        language = validated_data.get("language", "English")
-
+        english_options = validated_data.get("options",[])
         hindi_text = translator.translate(english_text, src="en", dest='hi').text if english_text else None
         hindi_solution = translator.translate(english_solution, src="en", dest='hi').text if english_solution else None
-        hindi_options = [translator.translate(option, src="en", dest='hi').text for option in english_options] if english_options else None
+        hindi_options = [translator.translate(option, src="en", dest='hi').text for option in english_options] if english_options else []
         english_data = validated_data.copy()
         english_data['language'] = 'English'
 
@@ -393,7 +401,8 @@ class QuestionSerializer(serializers.ModelSerializer):
             "solution": hindi_solution,
             "options": hindi_options,
             "language": "Hindi",  
-            "exam": validated_data.get("exam")
+            "exam": validated_data.get("exam"),
+            'related_question': english_question
         }
         try:
             hindi_question = Question.objects.create(**hindi_data)
@@ -403,7 +412,48 @@ class QuestionSerializer(serializers.ModelSerializer):
             "english_data": QuestionSerializer(english_question).data,
             "hindi_data": QuestionSerializer(hindi_question).data
         }
-      
+    
+    def update(self, instance, validated_data):
+        translator = Translator()
+
+        instance.text = validated_data.get('text', instance.text)
+        instance.solution = validated_data.get('solution', instance.solution)
+        instance.options = validated_data.get('options', instance.options) or []
+        instance.correct_option = validated_data.get('correct_option', instance.correct_option)
+        instance.time = validated_data.get('time', instance.time)
+        instance.exam = validated_data.get('exam', instance.exam)
+        instance.language = validated_data.get('language', instance.language)
+
+        instance.save()
+
+        if instance.language == 'Hindi':
+            return instance
+
+        hindi_related_question = Question.objects.filter(related_question=instance).first()
+
+        if hindi_related_question:
+            hindi_related_question.text = translator.translate(instance.text, src="en", dest="hi").text
+            hindi_related_question.solution = translator.translate(instance.solution, src="en", dest="hi").text if instance.solution else None
+            hindi_related_question.options = [translator.translate(option, src="en", dest="hi").text for option in instance.options] if instance.options else []
+            hindi_related_question.correct_option = instance.correct_option
+            hindi_related_question.exam = instance.exam
+            hindi_related_question.time = instance.time
+            hindi_related_question.save()
+        else:
+            hindi_related_question = Question.objects.create(
+                related_question=instance,
+                text=translator.translate(instance.text, src="en", dest="hi").text,
+                solution=translator.translate(instance.solution, src="en", dest="hi").text if instance.solution else None,
+                options=[translator.translate(option, src="en", dest="hi").text for option in instance.options] if instance.options else [],
+                correct_option=instance.correct_option,
+                exam=instance.exam,
+                time=instance.time,
+                language='Hindi'
+            )
+
+        return instance
+
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # representation['exam'] = ExamSerializer(instance.exam).data
@@ -415,7 +465,6 @@ class ExamSerializer(serializers.ModelSerializer):
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
     assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False, allow_null=True)
-
     class Meta:
         model = Exam
         fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']

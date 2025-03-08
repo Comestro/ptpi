@@ -882,8 +882,17 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
 
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Question updated successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+            updated_instance = serializer.save()
+
+            hindi_data = Question.objects.get(related_question=updated_instance)
+            if hasattr(updated_instance, 'related_question'):
+                hindi_data = QuestionSerializer(hindi_data).data
+
+            return Response({
+                "message": "Question updated successfully",
+                "english_data": QuestionSerializer(updated_instance).data,
+                "hindi_data": hindi_data
+            }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -928,22 +937,42 @@ class QuestionViewSet(viewsets.ModelViewSet):
         user = request.user
         exam_id = request.query_params.get('exam_id')
         language = request.query_params.get('language')
-
         questions = Question.objects.all()
-
         if exam_id:
             try:
                 exam = Exam.objects.get(pk=exam_id)
             except Exam.DoesNotExist:
                 return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-
             questions = questions.filter(exam=exam)
-
         if language:
             questions = questions.filter(language=language)
-
         serialized_questions = QuestionSerializer(questions, many=True)
         return Response(serialized_questions.data, status=status.HTTP_200_OK)
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)  
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if serializer.is_valid():
+            updated_instance = serializer.save()
+            if updated_instance.language == "Hindi":
+                return Response({
+                    "message": "Question updated successfully",
+                    "hindi_data": QuestionSerializer(updated_instance).data  
+                }, status=status.HTTP_200_OK)
+            hindi_data = Question.objects.get(related_question=updated_instance)
+            if hasattr(updated_instance, 'related_question'):
+                hindi_data = QuestionSerializer(hindi_data).data
+
+            return Response({
+                "message": "Question updated successfully",
+                "english_data": QuestionSerializer(updated_instance).data,
+                "hindi_data": hindi_data
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1898,7 +1927,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         if not subject_id:
             return Response({"message": "Please choose a subject."}, status=status.HTTP_400_BAD_REQUEST)
 
-        teacher_subject = Subject.objects.filter(preference__user=user, id=subject_id).first()
+        teacher_subject = Subject.objects.filter(preference__user=user, id=subject_id, class_category_id=class_category_id).first()
         if teacher_subject:
             exams = exams.filter(subject=subject_id)
         else:
@@ -1926,7 +1955,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         # Filter exams based on qualifications
         if not qualified_level_1:
             exams = exams.filter(level__name="1st Level") 
-            print(exams) 
         elif qualified_level_1 and not online_qualified_level_2:
             exams = exams.filter(level__name__in=["1st Level", "2nd Level Online"], type='online')  
         elif online_qualified_level_2 and not offline_qualified_level_2:
