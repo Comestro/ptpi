@@ -636,12 +636,19 @@ class TeacherQualificationViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return create_object(TeacherQualificationSerializer, request.data, TeacherQualification)
-
+    
     def get_queryset(self):
         teacher_id = self.request.query_params.get('teacher_id')
+        if self.request.query_params.get('all') == 'true':
+            return TeacherQualification.objects.all()
         if teacher_id:
-            return TeacherQualification.objects.filter(user_id=teacher_id)
+            try:
+                teacher_id = int(teacher_id)
+                return TeacherQualification.objects.filter(user=teacher_id)
+            except ValueError:
+                raise serializers.ValidationError({"error": "Invalid teacher_id. It must be an integer."})
         return TeacherQualification.objects.filter(user=self.request.user)
+
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
