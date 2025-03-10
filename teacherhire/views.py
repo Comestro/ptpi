@@ -2625,7 +2625,7 @@ class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
 class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
-    permission_classes = [permissions.AllowAny]  # No authentication required
+    permission_classes = [permissions.AllowAny] 
 
     def list(self, request, *args, **kwargs):
         return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -2639,7 +2639,7 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class ApplyViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTeacherUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
     queryset = Apply.objects.all()
@@ -2685,7 +2685,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
         return Response({"message": "Applied Data deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 class AllApplyViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
     queryset = Apply.objects.all()
