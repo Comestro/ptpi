@@ -40,12 +40,31 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
+        extra_kwargs = {
+            'email': {'validators': []},  
+        }
 
     def validate_password(self, value):
         if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
             raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
         return value
-    
+
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            existing_user = CustomUser.objects.get(email=value)
+            if existing_user.is_recruiter:
+                role_name = 'recruiter'
+            elif existing_user.is_teacher:
+                role_name = 'teacher'
+            elif existing_user.is_centeruser:
+                role_name = 'centeruser'
+            elif existing_user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
+        return value
+
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -54,9 +73,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_recruiter = True
         is_verified = True
-        
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -66,9 +83,9 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 password=validated_data['password'],
                 Fname=Fname,
                 Lname=Lname,
-                is_recruiter=is_recruiter,   
-                is_verified=is_verified          
-            )            
+                is_recruiter=is_recruiter,
+                is_verified=is_verified
+            )
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
@@ -81,11 +98,31 @@ class CenterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
+        extra_kwargs = {
+            'email': {'validators': []},  
+        }
 
     def validate_password(self, value):
         if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
             raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
         return value
+    
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            existing_user = CustomUser.objects.get(email=value)
+            if existing_user.is_recruiter:
+                role_name = 'recruiter'
+            elif existing_user.is_teacher:
+                role_name = 'teacher'
+            elif existing_user.is_centeruser:
+                role_name = 'centeruser'
+            elif existing_user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
+        return value
+
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -95,8 +132,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_centeruser = True
         is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -121,10 +157,29 @@ class QuestionUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
+        extra_kwargs = {
+            'email': {'validators': []},  
+        }
 
     def validate_password(self, value):
         if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
             raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
+        return value
+    
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            existing_user = CustomUser.objects.get(email=value)
+            if existing_user.is_recruiter:
+                role_name = 'recruiter'
+            elif existing_user.is_teacher:
+                role_name = 'teacher'
+            elif existing_user.is_centeruser:
+                role_name = 'centeruser'
+            elif existing_user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
         return value
     
     def create(self, validated_data):
@@ -135,8 +190,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_questionuser = True
         is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+        
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -169,10 +223,29 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
+        extra_kwargs = {
+            'email': {'validators': []},  
+        }
 
     def validate_password(self, value):
         if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
             raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
+        return value
+    
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            existing_user = CustomUser.objects.get(email=value)
+            if existing_user.is_recruiter:
+                role_name = 'recruiter'
+            elif existing_user.is_teacher:
+                role_name = 'teacher'
+            elif existing_user.is_centeruser:
+                role_name = 'centeruser'
+            elif existing_user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
         return value
 
     def create(self, validated_data):
@@ -183,8 +256,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_teacher = True
         is_verified=True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
