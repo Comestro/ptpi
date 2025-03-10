@@ -2632,9 +2632,10 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
 
 
 class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]  
+    authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
-    permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -2643,7 +2644,7 @@ class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
 class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
-    permission_classes = [permissions.AllowAny]  # No authentication required
+    permission_classes = [permissions.AllowAny] 
 
     def list(self, request, *args, **kwargs):
         return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -2657,7 +2658,7 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
 
 
 class ApplyViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTeacherUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
     queryset = Apply.objects.all()
@@ -2703,13 +2704,20 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
 
 class AllApplyViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
     queryset = Apply.objects.all()
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    def get_queryset(self):
+        teacher_id  = self.request.query_params.get('teacher_id')
+        if teacher_id:
+            return Apply.objects.filter(user=teacher_id)
+        return Apply.objects.all()
+    
 
 
 class CountDataViewSet(viewsets.ViewSet):
