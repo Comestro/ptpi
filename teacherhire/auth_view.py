@@ -113,7 +113,7 @@ class PasswordResetRequest(APIView):
                 return Response({"msg": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
             token = default_token_generator.make_token(user)
-            reset_link = f'{settings.FRONTEND_URL}/reset-password/{token}'
+            reset_link = f'http://127.0.0.1:8000/api/reset-password/{token}'
             send_mail('Reset Your Password', f'Click to reset your password: {reset_link}', settings.EMAIL_HOST_USER,
                       [email])
 

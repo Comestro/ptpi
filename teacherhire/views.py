@@ -2615,9 +2615,10 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         return HireRequest.objects.filter(recruiter_id=recruiter_id)
     
 class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]  
+    authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
-    permission_classes = [permissions.AllowAny]  
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
