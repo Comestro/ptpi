@@ -1370,6 +1370,8 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         return Response(response_data)
 
 
+
+
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1378,21 +1380,20 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def create(self, request, *args, **kwargs):
-        data = request.data.copy()
         user = request.user
 
+        # Check if the user has applied for a job
         teacher_apply = Apply.objects.filter(user=user).first()
-
         if not teacher_apply:
-            return Response({"error": "No application found for the user."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "You must apply for a job before adding a job preference location."}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
-        return JobPreferenceLocation.objects.filter(teacher_apply__user=self.request.user)
+        return JobPreferenceLocation.objects.all()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1400,27 +1401,12 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         return Response({"message": "Job preference location deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     def update(self, request, *args, **kwargs):
-        data = request.data.copy()
-        user = request.user
-
-        teacher_apply = Apply.objects.filter(user=user).first()
-
-        if not teacher_apply:
-            return Response({"error": "You must apply for a job first."}, status=status.HTTP_400_BAD_REQUEST)
-
-        job_preference_location = self.get_object()
-
-        if job_preference_location.teacher_apply.id != teacher_apply.id:
-            return Response(
-                {"error": "You can only update locations linked to your applied data."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        serializer = self.get_serializer(instance=job_preference_location, data=data, partial=True)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class AllTeacherBasicProfileViewSet(viewsets.ModelViewSet):
@@ -2656,7 +2642,6 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class ApplyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsTeacherUser]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2666,7 +2651,14 @@ class ApplyViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data.copy()
         user = request.user
+        
+        if not JobPreferenceLocation.objects.filter(user=user).exists():
+            return Response(
+                {"error": "You must have at least one job preference location before applying."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        # Validate subjects and class categories
         subject_ids = data.get('subject', [])
         class_category_ids = data.get('class_category', [])
 
@@ -2675,21 +2667,28 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 {"error": "Subject and Class Category are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        apply_instance = Apply.objects.filter(user=user, subject__id__in=subject_ids,
-                                              class_category__id__in=class_category_ids,
-                                              ).first()
+
+        # Check if the application already exists
+        apply_instance = Apply.objects.filter(
+            user=user,
+            subject__id__in=subject_ids,
+            class_category__id__in=class_category_ids,
+        ).first()
+
         if apply_instance:
             apply_instance.status = not apply_instance.status
             apply_instance.save()
-            return Response({"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data},
-                            status=status.HTTP_200_OK
-                            )
+            return Response(
+                {"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data},
+                status=status.HTTP_200_OK
+            )
+
         data["user"] = user.id
 
+        # Save the new application
         serializer = ApplySerializer(data=data, context={"request": request})
         if serializer.is_valid():
             apply_instance = serializer.save(user=user)
-
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2701,6 +2700,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Applied Data deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 
 class AllApplyViewSet(viewsets.ModelViewSet):
