@@ -379,7 +379,7 @@ class QuestionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Text must be at least 5 characters.")
         question_id = self.instance.id if self.instance else None  
         if Question.objects.filter(text=value).exclude(id=question_id).exists():
-            raise serializers.ValidationError("This question already exists.")
+            raise serializers.ValidationError("This question already exists for this exam.")
         return value
     
     def create(self, validated_data):

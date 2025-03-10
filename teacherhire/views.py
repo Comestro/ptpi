@@ -866,7 +866,7 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
             exam = Exam.objects.get(pk=exam_id, assigneduser=assigned_user)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found or you do not have permission."},
-                            status=status.HTTP_404_NOT_FOUND)
+                status=status.HTTP_404_NOT_FOUND)
 
         serializer = QuestionSerializer(data=data)
         if serializer.is_valid():
