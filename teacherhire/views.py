@@ -1787,8 +1787,6 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-   
-
 
 class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1840,21 +1838,16 @@ class ExamViewSet(viewsets.ModelViewSet):
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request, *args, **kwargs):
-        exam_id = request.data.get('id', None)
-
-        if exam_id:
-            try:
-                exam_instance = Exam.objects.get(id=exam_id)
-                serializer = ExamSerializer(exam_instance, data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            except Exam.DoesNotExist:
-                return create_object(ExamSerializer, request.data, Exam)
-        else:
-            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = ExamSerializer(instance, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1907,7 +1900,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 {"message": "Please complete your preference details first."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        exams = Exam.objects.all()
+        exams = Exam.objects.filter(status=True)
 
         # Ensure class category is selected
         if not class_category_id:
