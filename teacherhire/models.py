@@ -438,7 +438,7 @@ class Apply(models.Model):
         return self.user.username
     
 class JobPreferenceLocation(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1)  
     state = models.CharField(max_length=200, null=True, blank=True)
     city = models.CharField(max_length=200, null=True, blank=True)
     sub_division = models.CharField(max_length=200, null=True, blank=True)
@@ -448,9 +448,8 @@ class JobPreferenceLocation(models.Model):
     pincode = models.CharField(max_length=6, null=True, blank=True)
 
     def __str__(self):
-        return self.user.username  
+        return str(self.user.username  )
 
-    
     def is_complete(self):
         required_fields = {
             "state": self.state,
