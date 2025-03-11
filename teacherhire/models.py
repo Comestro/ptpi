@@ -438,21 +438,21 @@ class Apply(models.Model):
         return self.user.username
     
 class JobPreferenceLocation(models.Model):
-    teacher_apply = models.ForeignKey(Apply, on_delete=models.CASCADE, default=1)
-    state = models.CharField(max_length=200,null=True, blank=True)
-    city = models.CharField(max_length=200,null=True, blank=True)
-    sub_division = models.CharField(max_length=200,null=True, blank=True)
-    block = models.CharField(max_length=200,null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)  
+    state = models.CharField(max_length=200, null=True, blank=True)
+    city = models.CharField(max_length=200, null=True, blank=True)
+    sub_division = models.CharField(max_length=200, null=True, blank=True)
+    block = models.CharField(max_length=200, null=True, blank=True)
     post_office = models.CharField(max_length=200, null=True, blank=True)
     area = models.TextField(null=True, blank=True)
     pincode = models.CharField(max_length=6, null=True, blank=True)
 
     def __str__(self):
-        return self.teacher_apply.user.username
+        return self.user.username  
+
     
     def is_complete(self):
         required_fields = {
-            "teacher_apply": self.teacher_apply,
             "state": self.state,
             "city": self.city,
             "sub_division": self.sub_division,
