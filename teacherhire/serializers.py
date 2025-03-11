@@ -14,6 +14,29 @@ from googletrans import Translator
 from rest_framework.validators import UniqueValidator
 from rest_framework.response import Response
 
+# global password validation function
+def validate_password(value):
+        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>?/]", value):
+            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and at least one special character.")
+        return value
+
+# global email validation function to check if the email is already registered
+def validate_email(value):
+        if CustomUser.objects.filter(email=value).exists():
+            existing_user = CustomUser.objects.get(email=value)
+            if existing_user.is_recruiter:
+                role_name = 'recruiter'
+            elif existing_user.is_teacher:
+                role_name = 'teacher'
+            elif existing_user.is_centeruser:
+                role_name = 'centeruser'
+            elif existing_user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
+        return value
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -32,8 +55,9 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+# Recruiter register serializer
 class RecruiterRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
@@ -41,29 +65,8 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
         extra_kwargs = {
-            'email': {'validators': []},  
+            'email': {'validators': [validate_email]},  
         }
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
-
-    def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
-            existing_user = CustomUser.objects.get(email=value)
-            if existing_user.is_recruiter:
-                role_name = 'recruiter'
-            elif existing_user.is_teacher:
-                role_name = 'teacher'
-            elif existing_user.is_centeruser:
-                role_name = 'centeruser'
-            elif existing_user.is_questionuser:
-                role_name = 'questionuser'
-            else:
-                role_name = 'candidate'
-            raise ValidationError(f"This email has been already registered as a {role_name}.")
-        return value
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -90,8 +93,9 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
             raise ValidationError({'error': str(e)})
         return user
     
+# Exam Center user register serializer
 class CenterUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
@@ -99,30 +103,8 @@ class CenterUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
         extra_kwargs = {
-            'email': {'validators': []},  
+            'email': {'validators': [validate_email]},  
         }
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
-    
-    def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
-            existing_user = CustomUser.objects.get(email=value)
-            if existing_user.is_recruiter:
-                role_name = 'recruiter'
-            elif existing_user.is_teacher:
-                role_name = 'teacher'
-            elif existing_user.is_centeruser:
-                role_name = 'centeruser'
-            elif existing_user.is_questionuser:
-                role_name = 'questionuser'
-            else:
-                role_name = 'candidate'
-            raise ValidationError(f"This email has been already registered as a {role_name}.")
-        return value
-
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -148,9 +130,10 @@ class CenterUserSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
-    
+
+# Assigned Question user register serializer
 class QuestionUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
@@ -158,29 +141,8 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
         extra_kwargs = {
-            'email': {'validators': []},  
+            'email': {'validators': [validate_email]},  
         }
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
-    
-    def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
-            existing_user = CustomUser.objects.get(email=value)
-            if existing_user.is_recruiter:
-                role_name = 'recruiter'
-            elif existing_user.is_teacher:
-                role_name = 'teacher'
-            elif existing_user.is_centeruser:
-                role_name = 'centeruser'
-            elif existing_user.is_questionuser:
-                role_name = 'questionuser'
-            else:
-                role_name = 'candidate'
-            raise ValidationError(f"This email has been already registered as a {role_name}.")
-        return value
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -214,9 +176,10 @@ class ChangePasswordSerializer(serializers.Serializer):
         if len(value) < 8:
             raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
-       
+
+# Teacher register serializer
 class TeacherRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
@@ -224,30 +187,9 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
         extra_kwargs = {
-            'email': {'validators': []},  
+            'email': {'validators': [validate_password]},  
         }
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
     
-    def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
-            existing_user = CustomUser.objects.get(email=value)
-            if existing_user.is_recruiter:
-                role_name = 'recruiter'
-            elif existing_user.is_teacher:
-                role_name = 'teacher'
-            elif existing_user.is_centeruser:
-                role_name = 'centeruser'
-            elif existing_user.is_questionuser:
-                role_name = 'questionuser'
-            else:
-                role_name = 'candidate'
-            raise ValidationError(f"This email has been already registered as a {role_name}.")
-        return value
-
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
