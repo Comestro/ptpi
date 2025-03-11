@@ -25,11 +25,7 @@ class RegisterUser(APIView):
         if not serializer.is_valid():
             return Response({
                 'error': serializer.errors, 
-                'message': 'Something went wrong'
             }, status=status.HTTP_409_CONFLICT)
-            return Response({'message': serializer.errors},
-                            status=status.HTTP_400_BAD_REQUEST)
-
 
         user = serializer.save()
         token, created = Token.objects.get_or_create(user=user) 
