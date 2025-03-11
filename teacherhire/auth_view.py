@@ -12,9 +12,6 @@ import uuid
 from teacherhire.serializers import *
 from teacherhire.utils import send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import update_session_auth_hash
-
 
 class RegisterUser(APIView):
     def post(self, request, role=None):
@@ -48,6 +45,7 @@ class RegisterUser(APIView):
             'access_token': token.key,
             'message': 'Check your email to verify your account.'
         }, status=status.HTTP_200_OK)
+    
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]

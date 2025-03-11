@@ -506,7 +506,7 @@ class ExamSerializer(serializers.ModelSerializer):
     assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False, allow_null=True)
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
+        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type','status']
         depth = 1 
 
     def create(self, validated_data):
