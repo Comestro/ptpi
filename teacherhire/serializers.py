@@ -187,7 +187,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
         extra_kwargs = {
-            'email': {'validators': [validate_password]},  
+            'email': {'validators': [validate_email]},  
         }
     
     def create(self, validated_data):
