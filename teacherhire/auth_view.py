@@ -12,10 +12,7 @@ import uuid
 from teacherhire.serializers import *
 from teacherhire.utils import send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
-from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
 
 class RegisterUser(APIView):
     def post(self, request, role=None):
@@ -26,33 +23,25 @@ class RegisterUser(APIView):
 
         serializer = serializer_class(data=request.data)
         if not serializer.is_valid():
-            return Response({
-                'error': serializer.errors, 
-                'message': 'Something went wrong'
-            }, status=status.HTTP_409_CONFLICT)
             return Response({'message': serializer.errors},
                             status=status.HTTP_400_BAD_REQUEST)
 
-
         user = serializer.save()
         token, created = Token.objects.get_or_create(user=user) 
+
         role = "admin" if user.is_staff else \
             "recruiter" if user.is_recruiter else \
                 "teacher" if user.is_teacher else \
                     "centeruser" if user.is_centeruser else \
                         "questionuser" if user.is_questionuser else "user"
-
-        # user = serializer.save()
-        # otp = send_otp_via_email(user.email)
-        # user.otp = otp
-        # user.otp_created_at = now()
-        # user.save(update_fields=['otp', 'otp_created_at'])
         return Response({
             'payload': serializer.data,
             'role': role,
             'access_token': token.key,
             'message': 'Check your email to verify your account.'
         }, status=status.HTTP_200_OK)
+
+
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -101,6 +90,7 @@ class LoginUser(APIView):
             'Fname': user.Fname,
             'email': user.email,
             'role': role,
+            'is_active': user.is_active,
             'message': 'Login successful'
         }, status=status.HTTP_200_OK)
 
@@ -118,30 +108,15 @@ class PasswordResetRequest(APIView):
     def post(self, request):
         serializer = SendPasswordResetEmailSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
-            try:
-                user = CustomUser.objects.get(email=email)
-            except CustomUser.DoesNotExist:
-                return Response({"msg": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-
-            token = default_token_generator.make_token(user)
-            reset_link = f'{settings.FRONTEND_URL}/reset-password/{token}'
-            send_mail('Reset Your Password', f'Click to reset your password: {reset_link}', settings.EMAIL_HOST_USER,
-                      [email])
-
             return Response({'msg': 'Password reset link sent. Check your email.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class ResetPasswordView(APIView):
-    def post(self, request, token):
-        try:
-            user = CustomUser.objects.filter(is_active=True).get(auth_token=token)
-            user.set_password(request.data.get('new_password'))
-            user.save()
+    def post(self, request, uid, token):
+        serializer = ResetPasswordSerializer(data=request.data, context={'uid': uid, 'token': token})
+        if serializer.is_valid():
             return Response({"msg": "Password reset successful."}, status=status.HTTP_200_OK)
-        except CustomUser.DoesNotExist:
-            return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyEmailView(APIView):
     def post(self, request):
@@ -149,13 +124,15 @@ class VerifyEmailView(APIView):
         user = CustomUser.objects.filter(email=email).first()
         if not user:
             return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)
+        
         if user.is_verified:
             return Response({"message":"Your account is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+        
         Token.objects.filter(user=user).delete()
         auth_token, _ = Token.objects.get_or_create(user=user)
         user.auth_token = auth_token
         user.save()
-        verify_link = f"https://ptpinstitute.com/verify-account/{auth_token.key}"
+        verify_link = f"http://127.0.0.1:8000/api/verify-account/{auth_token.key}"
         send_mail("Verify Your Account ",f"Click the link to verify your account: {verify_link}",settings.EMAIL_HOST_USER,[email])
         print(verify_link)
         return Response({"message": "Verification link sent to your email."},status=status.HTTP_200_OK)
@@ -178,6 +155,8 @@ class VerifyLinkView(APIView):
         },
         status=status.HTTP_200_OK
         )
+     
+    
 class VerifyOTP(APIView):
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)

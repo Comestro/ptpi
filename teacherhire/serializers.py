@@ -9,10 +9,33 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from .utils import Util
 from datetime import datetime
 from datetime import date
-import string
+from rest_framework import status
 from googletrans import Translator
 from rest_framework.validators import UniqueValidator
-from django.contrib.auth.password_validation import validate_password
+from rest_framework.response import Response
+
+# global password validation function
+def validate_password(value):
+        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>?/]", value):
+            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and at least one special character.")
+        return value
+
+# global email validation function to check if the email is already registered
+def validate_email(value):
+        if CustomUser.objects.filter(email=value).exists():
+            existing_user = CustomUser.objects.get(email=value)
+            if existing_user.is_recruiter:
+                role_name = 'recruiter'
+            elif existing_user.is_teacher:
+                role_name = 'teacher'
+            elif existing_user.is_centeruser:
+                role_name = 'centeruser'
+            elif existing_user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
+        return value
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,20 +55,19 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+# Recruiter register serializer
 class RecruiterRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
 
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
-    
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -54,9 +76,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_recruiter = True
         is_verified = True
-        
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -66,26 +86,25 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 password=validated_data['password'],
                 Fname=Fname,
                 Lname=Lname,
-                is_recruiter=is_recruiter,   
-                is_verified = is_verified
-            )            
+                is_recruiter=is_recruiter,
+                is_verified=is_verified
+            )
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
     
+# Exam Center user register serializer
 class CenterUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -95,8 +114,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_centeruser = True
         is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -107,25 +125,24 @@ class CenterUserSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_centeruser=is_centeruser,
-                is_verified=is_verified
+                is_verified=is_verified,
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
-    
+
+# Assigned Question user register serializer
 class QuestionUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -135,8 +152,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_questionuser = True
         is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+        
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -160,21 +176,20 @@ class ChangePasswordSerializer(serializers.Serializer):
         if len(value) < 8:
             raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
-       
+
+# Teacher register serializer
 class TeacherRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
-
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
+    
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -182,9 +197,8 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_teacher = True
-        is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+        is_verified=True
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -195,7 +209,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_teacher=is_teacher,
-                is_verified = is_verified,
+                is_verified=is_verified
             )            
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -266,33 +280,22 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
             # representation['user'] = UserSerializer(instance.user).data
             representation['role'] = RoleSerializer(instance.role).data
         return representation
-class SubjectSerializer(serializers.ModelSerializer):
-    class_category_name = serializers.SerializerMethodField()  # Add new field
 
+#subject serializer 
+class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ['id', 'subject_name', 'class_category', 'class_category_name']
+        fields = ['id', 'subject_name','class_category']
 
-    def get_class_category_name(self, obj):
-        """Returns the name of the class category"""
-        return obj.class_category.name if obj.class_category else None 
-
-    def validate(self, data):
-        subject_name = data.get('subject_name')
-        class_category = data.get('class_category')
-
-        if not subject_name or not class_category:
-            raise serializers.ValidationError("Both subject name and class category are required.")
-
-        # Case-insensitive check if subject already exists in the same class_category
-        if Subject.objects.filter(subject_name__iexact=subject_name, class_category=class_category).exists():
-            raise serializers.ValidationError(
-                f"The subject '{subject_name}' already exists for class category '{class_category.name}'."
-            )
-
-        return data
-
-
+    def validate_subject_name(self, value):
+        if Subject.objects.filter(subject_name=value).exists():
+            raise serializers.ValidationError("A subject with this name already exists.")
+        return value
+    
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     representation['class_category'] = ClassCategorySerializer(instance.class_category).data
+    #     return representation
 
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -368,10 +371,11 @@ class QuestionSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(),required=False, allow_null=True)
     solution = serializers.CharField(max_length=2000, allow_null=True, required=False)
     language = serializers.ChoiceField(choices=[('Hindi', 'Hindi'), ('English', 'English')], required=True)
+    related_question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
+        fields = ['id', 'related_question', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
 
     def validate_text(self, value):
         if value is not None and len(value)< 5:
@@ -383,14 +387,21 @@ class QuestionSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         translator = Translator()
+        language = validated_data.get("language")
+        if language == 'Hindi':
+            try:
+                hindi_question = Question.objects.create(**validated_data)
+            except KeyError as e:
+                raise serializers.ValidationError(f"Missing field {e.args[0]} in Hindi question.")
+            return {
+                "hindi_data" : QuestionSerializer(hindi_question).data
+            }
         english_text = validated_data.get("text")
-        english_solution = validated_data.get("solution",None)
-        english_options = validated_data.get("options")
-        language = validated_data.get("language", "English")
-
+        english_solution = validated_data.get("solution")
+        english_options = validated_data.get("options",[])
         hindi_text = translator.translate(english_text, src="en", dest='hi').text if english_text else None
         hindi_solution = translator.translate(english_solution, src="en", dest='hi').text if english_solution else None
-        hindi_options = [translator.translate(option, src="en", dest='hi').text for option in english_options] if english_options else None
+        hindi_options = [translator.translate(option, src="en", dest='hi').text for option in english_options] if english_options else []
         english_data = validated_data.copy()
         english_data['language'] = 'English'
 
@@ -404,7 +415,8 @@ class QuestionSerializer(serializers.ModelSerializer):
             "solution": hindi_solution,
             "options": hindi_options,
             "language": "Hindi",  
-            "exam": validated_data.get("exam")
+            "exam": validated_data.get("exam"),
+            'related_question': english_question
         }
         try:
             hindi_question = Question.objects.create(**hindi_data)
@@ -414,7 +426,48 @@ class QuestionSerializer(serializers.ModelSerializer):
             "english_data": QuestionSerializer(english_question).data,
             "hindi_data": QuestionSerializer(hindi_question).data
         }
-      
+    
+    def update(self, instance, validated_data):
+        translator = Translator()
+
+        instance.text = validated_data.get('text', instance.text)
+        instance.solution = validated_data.get('solution', instance.solution)
+        instance.options = validated_data.get('options', instance.options) or []
+        instance.correct_option = validated_data.get('correct_option', instance.correct_option)
+        instance.time = validated_data.get('time', instance.time)
+        instance.exam = validated_data.get('exam', instance.exam)
+        instance.language = validated_data.get('language', instance.language)
+
+        instance.save()
+
+        if instance.language == 'Hindi':
+            return instance
+
+        hindi_related_question = Question.objects.filter(related_question=instance).first()
+
+        if hindi_related_question:
+            hindi_related_question.text = translator.translate(instance.text, src="en", dest="hi").text
+            hindi_related_question.solution = translator.translate(instance.solution, src="en", dest="hi").text if instance.solution else None
+            hindi_related_question.options = [translator.translate(option, src="en", dest="hi").text for option in instance.options] if instance.options else []
+            hindi_related_question.correct_option = instance.correct_option
+            hindi_related_question.exam = instance.exam
+            hindi_related_question.time = instance.time
+            hindi_related_question.save()
+        else:
+            hindi_related_question = Question.objects.create(
+                related_question=instance,
+                text=translator.translate(instance.text, src="en", dest="hi").text,
+                solution=translator.translate(instance.solution, src="en", dest="hi").text if instance.solution else None,
+                options=[translator.translate(option, src="en", dest="hi").text for option in instance.options] if instance.options else [],
+                correct_option=instance.correct_option,
+                exam=instance.exam,
+                time=instance.time,
+                language='Hindi'
+            )
+
+        return instance
+
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # representation['exam'] = ExamSerializer(instance.exam).data
@@ -426,7 +479,6 @@ class ExamSerializer(serializers.ModelSerializer):
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
     assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False, allow_null=True)
-
     class Meta:
         model = Exam
         fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
@@ -703,6 +755,8 @@ class TeacherJobTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherJobType
         fields = ['id', 'teacher_job_name']
+
+# forget password serializer for send email for password reset 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=200)
     class Meta:
@@ -715,7 +769,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             print('Encoded UID', uid)
             token = PasswordResetTokenGenerator().make_token(user)
             print('Password reset token: ', token)
-            reset_link = 'http://localhost:8000/api/reset-password/'+uid+'/'+token
+            reset_link = 'http://localhost:8000/api/reset-password/'+uid+'/'+token+'/'
             print('Password reset link ', reset_link)
             body = 'Click Following Link to Reset Your Password '+reset_link
             data = {
@@ -727,6 +781,8 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             return attrs
         else:
             raise ValidationError('Not a valid Email. Please provide a valid Email.')
+
+# forget password serializer for reset password  
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)
@@ -741,17 +797,18 @@ class ResetPasswordSerializer(serializers.Serializer):
             uid = self.context.get('uid')
             token = self.context.get('token')
             if password != confirm_password:
-                raise serializers.ValidationError("Password and Confirm password doesn't match")
+                raise serializers.ValidationError({'confirm_password':"Password and Confirm password doesn't match"})
             id = smart_str(urlsafe_base64_decode(uid))
             user = CustomUser.objects.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user, token):
-                raise ValidationError('Token is not valid or Expired')
+                raise ValidationError({"error":'Token is not valid or Expired'})
             user.set_password(password)
             user.save()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
             raise ValidationError('Token is not valid or Expired')
+        
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
@@ -984,10 +1041,7 @@ class HireRequestSerializer(serializers.ModelSerializer):
 
 class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    contact = serializers.CharField(
-        max_length=15, required=False, allow_blank=True, 
-        validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all(), message="A RecruiterEnquiryForm with this contact already exists..")]
-    )
+    contact = serializers.CharField(max_length=15, required=False, allow_blank=True, validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all())])
 
     class Meta:
         model = RecruiterEnquiryForm
@@ -1000,11 +1054,6 @@ class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Phone number must be exactly 10 digits.")
             if not cleaned_value.startswith(('6', '7', '8', '9')):
                 raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
-            
-            # Check if the contact number already exists in the database
-            if RecruiterEnquiryForm.objects.filter(contact=cleaned_value).exists():
-                raise serializers.ValidationError("A RecruiterEnquiryForm with this contact already exists..")
-            
             return cleaned_value
         return value
 
