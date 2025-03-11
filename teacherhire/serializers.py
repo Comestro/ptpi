@@ -63,7 +63,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -87,7 +87,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_recruiter=is_recruiter,
-                is_verified=is_verified
+                is_verified=is_verified,
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -101,7 +101,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -139,7 +139,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -194,7 +194,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -1016,7 +1016,7 @@ class AllTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'Fname', 'Lname', 'email', 'teachersubjects',
+            'id', 'Fname', 'Lname', 'email', 'is_verified', 'is_active', 'teachersubjects',
             'teachersaddress', 'teacherqualifications', 'total_marks'
         ]
 
