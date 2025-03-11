@@ -2589,7 +2589,7 @@ class AllRecruiterViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-
+# rectruiter hire request for teacher, viewset for admin to get or update the hire request
 class HireRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2608,7 +2608,7 @@ class HireRequestViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-
+# recruiter hire request for teacher viewset for recruiter 
 class RecHireRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2630,7 +2630,7 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         recruiter_id = self.request.user
         return HireRequest.objects.filter(recruiter_id=recruiter_id)
 
-
+# without register recruiter user enquiry data viewset for admin
 class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]  
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2640,7 +2640,7 @@ class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
+# without register recruiter user enquiry viewset for recruiter
 class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
@@ -2652,12 +2652,13 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()  # Save the form without requiring authentication
+            serializer.save()  
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ApplyViewSet(viewsets.ModelViewSet):
+    
+# Teacher apply viewset
+    
+class TeacherApplyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsTeacherUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
@@ -2702,8 +2703,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Applied Data deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
-class AllApplyViewSet(viewsets.ModelViewSet):
+class AllTeacherApplyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
@@ -2719,32 +2719,85 @@ class AllApplyViewSet(viewsets.ModelViewSet):
         return Apply.objects.all()
     
 
-
 class CountDataViewSet(viewsets.ViewSet):
-    permissions_class = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
-    
-    def list(self, request):
-        count = {}
-        last_month = timezone.now() - timedelta(days=30)
 
-        if 'recruiter' in request.query_params:
-            count['recruiter'] = CustomUser.objects.filter(is_recruiter=True).count()
-        if 'teacher' in request.query_params:
-            count['teacher'] = CustomUser.objects.filter(is_teacher=True).count()
-        if 'subject' in request.query_params:
-            count['subject'] = Subject.objects.count()
-        if 'class_category' in request.query_params:
-            count['class_category'] = ClassCategory.objects.count()
-        if 'examcenter' in request.query_params:
-            count['examcenter'] = ExamCenter.objects.count()
-        if 'assignedquestionuser' in request.query_params:
-            count['assignedquestionuser'] = AssignedQuestionUser.objects.count()
-        if 'passkey' in request.query_params:
-            count['passkey'] = Passkey.objects.count()
-        if 'skill' in request.query_params:
-            count['skill'] = Skill.objects.count()
-        if 'last_month_users' in request.query_params:
-            count['last_month_users'] = CustomUser.objects.filter(date__gte=last_month).count()
+    def list(self, request):
+        last_month = timezone.now() - timedelta(days=30)
+        count = {}
+
+        if 'teachers' in request.query_params:
+            count["teachers"] = {
+                "total": CustomUser.objects.filter(is_teacher=True).count(),
+                "pending": CustomUser.objects.filter(is_teacher=True, is_verified=False).count(),
+                "thisMonth": CustomUser.objects.filter(is_teacher=True, date__gte=last_month).count(),
+            }
+
+        if 'recruiters' in request.query_params:
+            count["recruiters"] = {
+                "total": CustomUser.objects.filter(is_recruiter=True).count(),
+                "pending": CustomUser.objects.filter(is_recruiter=True, is_verified=False).count(),
+                "thisMonth": CustomUser.objects.filter(is_recruiter=True, date__gte=last_month).count(),
+            }
+        if 'interviews' in request.query_params:
+            count["interviews"] = {
+                "upcoming": Interview.objects.filter(time__gte=timezone.now(), grade__isnull=True).count(),
+                "completed": Interview.objects.filter(grade__isnull=False).count(),
+            }
+
+        if 'passkeys' in request.query_params:
+            count["passkeys"] = {
+                "total": Passkey.objects.count(),
+                "pending": Passkey.objects.filter(status=False).count(),
+                "approved": Passkey.objects.filter(status=True).count(),
+            }
+
+        if 'examcenters' in request.query_params:
+            count["examcenters"] = {
+                "total_examcenter": ExamCenter.objects.count(),
+            }
+
+        if 'questioReports' in request.query_params:
+            count["QuestioReports"] = {
+                "total": Report.objects.count(),
+            }
+        
+        if 'hireRequests' in request.query_params:
+            count["HireRequests"] = {
+                "total": HireRequest.objects.count(),
+                "requested": HireRequest.objects.filter(status="requested").count(),
+                "approved": HireRequest.objects.filter(status="approved").count(),
+                "rejected": HireRequest.objects.filter(status="rejected").count(),
+            }
+        if 'teacherApply' in request.query_params:
+            count["TeacherApply"] = {
+                "total": Apply.objects.count(),
+                "pending": Apply.objects.filter(status=False).count(),
+                "approved": Apply.objects.filter(status=True).count(),
+            }
+        if 'recruiterEnquiry' in request.query_params:
+            count["RecruiterEnquiryForm"] = {
+                "total": RecruiterEnquiryForm.objects.count(),
+            }
+        if 'subjects' in request.query_params:
+            count["subjects"] = {
+                'total': Subject.objects.count(),
+            }
+
+        if 'class_categories' in request.query_params:
+            count["class_categories"] = {
+                'total': ClassCategory.objects.count(),
+            }
+
+        if 'assignedquestionusers' in request.query_params:
+            count["assignedquestionusers"] = {
+                'total': AssignedQuestionUser.objects.count(),
+            }
+
+        if 'skills' in request.query_params:
+            count["skills"] = {
+                'total': Skill.objects.count(),
+            }
 
         return Response(count)

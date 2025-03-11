@@ -37,6 +37,7 @@ router.register(r"admin/examcenter", ExamCenterViewSets)
 router.register(r"admin/allTeacher", AllTeacherViewSet, basename="allTeacher")
 router.register(r"admin/allRecruiter", AllRecruiterViewSet, basename="allRecruiter")
 router.register(r"admin/assigneduser", AssignedQuestionUserViewSet)
+router.register(r"examsetter", ExamSetterViewSet, basename="examsetter")
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
 router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request')
 router.register(r"admin/preference", TeachersPreferenceViewSet, basename='admin-preference')
@@ -44,7 +45,7 @@ router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet, base
 router.register(r"all/teacher/basicProfile", AllTeacherBasicProfileViewSet, basename="teachers-basicProfile")
 router.register(r"all/recruiter/basicProfile", AllRecruiterBasicProfileViewSet, basename="recruiters-basicProfile")
 router.register(r"admin/teacherexamresult", AllTeacherExamResultViewSet, basename="admin-teacherexamresult")
-router.register(r"admin/apply", AllApplyViewSet, basename="admin-apply")
+router.register(r"admin/apply", AllTeacherApplyViewSet, basename="admin-apply")
 router.register(r"admin/count", CountDataViewSet, basename="admin-count")
 
 # === Teacher Routes ===
@@ -67,9 +68,8 @@ router.register(r"self/report", SelfReportViewSet, basename="self-report")
 router.register(r"self/interview", SelfInterviewViewSet, basename="self-interview")
 router.register(r"examcenters", SelfExamCenterViewSets, basename="self-examcenter")
 router.register(r"self/teacherReport", TeacherReportViewSet, basename="self-teacherReport")
-router.register(r"examsetter", ExamSetterViewSet, basename="examsetter")
 router.register(r"self/recruiterenquiryform", SelfRecruiterEnquiryFormViewSet, basename="recruiterenquiryform")
-router.register(r"self/apply", ApplyViewSet, basename="self-apply")
+router.register(r"self/apply", TeacherApplyViewSet, basename="self-apply")
 router.register(r"self/assigneduser", SelfAssignedQuestionUserViewSet, basename="self-assigneduser")
 # recruiter
 router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')
@@ -94,7 +94,7 @@ urlpatterns = [
     path("login/", LoginUser.as_view(), name="login"),
     path("logout/", LogoutUser.as_view(), name="logout"),
     path("password_reset_request/", PasswordResetRequest.as_view(), name="password_reset_request"),
-    path("reset_password/<str:token>/", ResetPasswordView.as_view(), name="reset_password"),
+    path("reset-password/<str:uid>/<str:token>/", ResetPasswordView.as_view(), name="reset_password"),
     path("verify_otp/", VerifyOTP.as_view(), name="verify_otp"),
     path("resend_otp/", ResendOTP.as_view(), name="resend_otp"),
     path("verify_user/", UserVerify.as_view(), name="verify_user"),
