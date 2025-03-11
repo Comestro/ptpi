@@ -107,6 +107,13 @@ class TeachersAddressViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "TeacherAddress deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+    def get_queryset(self):
+        teacher_id = self.request.query_params.get('teacher_id')
+        if teacher_id:
+            return TeachersAddress.objects.filter(user_id=teacher_id)
+        return TeachersAddress.objects.all()
+    
 
 
 class SingleTeachersAddressViewSet(viewsets.ModelViewSet):

@@ -375,6 +375,11 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
         if (not str(value).isdigit() or int(value) <= 0):
             raise serializers.ValidationError("Pincode must be positive integer.")
         return value
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        return representation
     
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
