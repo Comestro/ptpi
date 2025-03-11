@@ -2541,6 +2541,34 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "data": assign_user_subject_serializer.data,
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
+    
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Ensure 'status' is present in request data
+        new_status = request.data.get('status')
+        if new_status is None:
+            return Response(
+                {"error": "Status value is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Ensure 'status' is Boolean
+        if not isinstance(new_status, bool):
+            return Response(
+                {"error": "Invalid status value. Must be true or false."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update instance
+        instance.status = new_status
+        instance.save()
+
+        return Response({
+            "detail": "Status updated successfully.",
+            "data": AssignedQuestionUserSerializer(instance).data
+        }, status=status.HTTP_200_OK)
 
 class SelfAssignedQuestionUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

@@ -966,18 +966,22 @@ class TeacherReportSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
 
+
+    
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    
+    status = serializers.BooleanField(required=False)  # ensure this field name is lowercase
+
     class Meta:
         model = AssignedQuestionUser
-        fields = ['user', 'subject']
+        fields = ['user', 'subject', 'status']  # use 'status' in lowercase here
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         return representation
+
 class AllRecruiterSerializer(serializers.ModelSerializer):
     profiles = BasicProfileSerializer(required=False)
     class Meta:
