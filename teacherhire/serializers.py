@@ -170,11 +170,20 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         return user
     
 class ChangePasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(required=True, min_length=8)
+    old_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
 
     def validate_new_password(self, value):
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters long.")
+            raise serializers.ValidationError("New password must be at least 8 characters long.")
+        if value == self.initial_data.get('old_password'):
+            raise serializers.ValidationError("New password cannot be the same as the old password.")
         return value
 
 # Teacher register serializer
