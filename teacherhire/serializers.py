@@ -14,6 +14,29 @@ from googletrans import Translator
 from rest_framework.validators import UniqueValidator
 from rest_framework.response import Response
 
+# global password validation function
+def validate_password(value):
+        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>?/]", value):
+            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and at least one special character.")
+        return value
+
+# global email validation function to check if the email is already registered
+def validate_email(value):
+        if CustomUser.objects.filter(email=value).exists():
+            existing_user = CustomUser.objects.get(email=value)
+            if existing_user.is_recruiter:
+                role_name = 'recruiter'
+            elif existing_user.is_teacher:
+                role_name = 'teacher'
+            elif existing_user.is_centeruser:
+                role_name = 'centeruser'
+            elif existing_user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
+        return value
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -32,20 +55,19 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+# Recruiter register serializer
 class RecruiterRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
 
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
-    
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -54,9 +76,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_recruiter = True
         is_verified = True
-        
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -66,26 +86,25 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 password=validated_data['password'],
                 Fname=Fname,
                 Lname=Lname,
-                is_recruiter=is_recruiter,   
-                is_verified = is_verified
-            )            
+                is_recruiter=is_recruiter,
+                is_verified=is_verified
+            )
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
     
+# Exam Center user register serializer
 class CenterUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -95,8 +114,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_centeruser = True
         is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -112,20 +130,19 @@ class CenterUserSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
-    
+
+# Assigned Question user register serializer
 class QuestionUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
     
     def create(self, validated_data):
         email = validated_data['email']
@@ -135,8 +152,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_questionuser = True
         is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+        
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -160,21 +176,20 @@ class ChangePasswordSerializer(serializers.Serializer):
         if len(value) < 8:
             raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
-       
+
+# Teacher register serializer
 class TeacherRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
-
-    def validate_password(self, value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"@", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and '@'.")
-        return value
-
+        extra_kwargs = {
+            'email': {'validators': [validate_email]},  
+        }
+    
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -182,9 +197,8 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_teacher = True
-        is_verified = True
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError({'email': 'Email is already in use.'})
+        is_verified=True
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -750,6 +764,8 @@ class TeacherJobTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherJobType
         fields = ['id', 'teacher_job_name']
+
+# forget password serializer for send email for password reset 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=200)
     class Meta:
@@ -762,7 +778,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             print('Encoded UID', uid)
             token = PasswordResetTokenGenerator().make_token(user)
             print('Password reset token: ', token)
-            reset_link = 'http://localhost:8000/api/reset-password/'+uid+'/'+token
+            reset_link = 'http://localhost:8000/api/reset-password/'+uid+'/'+token+'/'
             print('Password reset link ', reset_link)
             body = 'Click Following Link to Reset Your Password '+reset_link
             data = {
@@ -774,6 +790,8 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
             return attrs
         else:
             raise ValidationError('Not a valid Email. Please provide a valid Email.')
+
+# forget password serializer for reset password  
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)
@@ -788,17 +806,18 @@ class ResetPasswordSerializer(serializers.Serializer):
             uid = self.context.get('uid')
             token = self.context.get('token')
             if password != confirm_password:
-                raise serializers.ValidationError("Password and Confirm password doesn't match")
+                raise serializers.ValidationError({'confirm_password':"Password and Confirm password doesn't match"})
             id = smart_str(urlsafe_base64_decode(uid))
             user = CustomUser.objects.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user, token):
-                raise ValidationError('Token is not valid or Expired')
+                raise ValidationError({"error":'Token is not valid or Expired'})
             user.set_password(password)
             user.save()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
             raise ValidationError('Token is not valid or Expired')
+        
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
