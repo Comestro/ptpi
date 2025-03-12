@@ -38,7 +38,7 @@ class IsQuestionUser(BasePermission):
     # Allows access only to question users.
 
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.is_question_user
+        return request.user.is_authenticated and request.user.is_questionuser
 
 
 class IsDefaultUser(BasePermission):

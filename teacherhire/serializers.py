@@ -410,7 +410,7 @@ class QuestionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This question already exists for this exam.")
         return value
     
-    def create(self, validated_data):
+    def create(self, validated_data, *args, **kwargs):
         translator = Translator()
         language = validated_data.get("language")
         if language == 'Hindi':
@@ -529,6 +529,7 @@ class ExamSerializer(serializers.ModelSerializer):
             print(admin_user)
             if admin_user:
                 assigneduser, created = AssignedQuestionUser.objects.get_or_create(user=admin_user)
+                validated_data['status'] = True
             validated_data['assigneduser'] = assigneduser
         validated_data['name'] = auto_name
         return super().create(validated_data) 
