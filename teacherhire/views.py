@@ -1743,13 +1743,13 @@ class CheckoutView(APIView):
 
 
 class ExamSetterViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsQuestionUser]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
 
     def create(self, request):
-        user = request.user
+        user = self.request.user
         subject = request.data.get('subject')
         try:
             assigned_user = AssignedQuestionUser.objects.filter(user=user, subject=subject).first()
