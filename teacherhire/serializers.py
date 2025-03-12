@@ -773,29 +773,29 @@ class TeacherJobTypeSerializer(serializers.ModelSerializer):
 # forget password serializer for send email for password reset 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=200)
-    class Meta:
-        fields = ['email']
+
     def validate(self, attrs):
         email = attrs.get('email')
-        if CustomUser.objects.filter(email=email).exists():
-            user = CustomUser.objects.get(email=email)
-            uid = urlsafe_base64_encode(force_bytes(user.id))
-            print('Encoded UID', uid)
-            token = PasswordResetTokenGenerator().make_token(user)
-            print('Password reset token: ', token)
-            reset_link = 'http://localhost:8000/api/reset-password/'+uid+'/'+token+'/'
-            print('Password reset link ', reset_link)
-            body = 'Click Following Link to Reset Your Password '+reset_link
-            data = {
-                'subject':'Reset your Password',
-                'body':body,
-                'to_email':user.email
-            }
-            Util.send_email(data)
-            return attrs
-        else:
+
+        user = CustomUser.objects.filter(email=email).first()
+        if not user:
             raise ValidationError('Not a valid Email. Please provide a valid Email.')
 
+        uid = urlsafe_base64_encode(force_bytes(user.id))
+        token = PasswordResetTokenGenerator().make_token(user)
+        
+        reset_link = f'http://localhost:5173/reset-password/{uid}/{token}'
+        print('reset_link',reset_link)
+        body = f'Click the following link to reset your password: {reset_link}'
+        data = {
+            'subject': 'Reset Your Password',
+            'body': body,
+            'to_email': user.email
+        }
+
+        Util.send_email(data)
+
+        return attrs
 # forget password serializer for reset password  
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
