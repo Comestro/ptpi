@@ -2513,7 +2513,6 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         # Get existing assignments for this user
         existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
 
-        # Check for duplicate assignments
         already_assigned = set(assign_user_subjects) & set(existing_subjects)
         if already_assigned:
             return Response({
@@ -2534,6 +2533,31 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "data": assign_user_subject_serializer.data,
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
+    
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Ensure 'status' is present in request data
+        new_status = request.data.get('status')
+        if new_status is None:
+            return Response(
+                {"error": "Status value is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not isinstance(new_status, bool):
+            return Response(
+                {"error": "Invalid status value. Must be true or false."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        instance.status = new_status
+        instance.save()
+
+        return Response({
+            "detail": "Status updated successfully.",
+            "data": AssignedQuestionUserSerializer(instance).data
+        }, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

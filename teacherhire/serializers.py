@@ -170,11 +170,20 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         return user
     
 class ChangePasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(required=True, min_length=8)
+    old_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
 
     def validate_new_password(self, value):
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters long.")
+            raise serializers.ValidationError("New password must be at least 8 characters long.")
+        if value == self.initial_data.get('old_password'):
+            raise serializers.ValidationError("New password cannot be the same as the old password.")
         return value
 
 # Teacher register serializer
@@ -957,18 +966,22 @@ class TeacherReportSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
 
+
+    
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    
+    status = serializers.BooleanField(required=False)  # ensure this field name is lowercase
+
     class Meta:
         model = AssignedQuestionUser
-        fields = ['id','user', 'subject']
+        fields = ['user', 'subject', 'status']  # use 'status' in lowercase here
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         return representation
+
 class AllRecruiterSerializer(serializers.ModelSerializer):
     profiles = BasicProfileSerializer(required=False)
     class Meta:
