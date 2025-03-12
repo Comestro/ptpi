@@ -1451,25 +1451,48 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
+        user = request.user
         data = request.data.copy()
-        data['user'] = request.user.id
 
-        profile = BasicProfile.objects.filter(user=request.user).first()
+        # Update first name & last name
+        Fname = data.get("Fname")
+        Lname = data.get("Lname")
 
+        if Fname:
+            user.Fname = Fname
+        if Lname:
+            user.Lname = Lname
+        user.save()
+
+        # Update profile fields
+        profile = BasicProfile.objects.filter(user=user).first()
         if profile:
-            return update_auth_data(
-                serialiazer_class=self.get_serializer_class(),
-                instance=profile,
-                request_data=data,
-                user=request.user
-            )
+            serializer = self.get_serializer(profile, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Fetch updated user data
+                user_data = {
+                    "id": user.id,
+                    "Fname": user.Fname,
+                    "Lname": user.Lname,
+                    "email": user.email,
+                    "is_verified": user.is_verified
+                }
+
+                profile_data = serializer.data
+                profile_data["user"] = user_data  # Embed user details properly
+
+                return Response(
+                    {
+                        "detail": "User and profile updated successfully.",
+                        "profile": profile_data
+                    },
+                    status=status.HTTP_200_OK
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return create_auth_data(
-                serializer_class=self.get_serializer_class(),
-                request_data=data,
-                user=request.user,
-                model_class=BasicProfile
-            )
+            return Response({"error": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
     def get_queryset(self):
         return BasicProfile.objects.filter(user=self.request.user)
