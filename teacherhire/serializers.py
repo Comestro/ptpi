@@ -14,33 +14,38 @@ from googletrans import Translator
 from rest_framework.validators import UniqueValidator
 from rest_framework.response import Response
 
+
 # global password validation function
 def validate_password(value):
-        if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>?/]", value):
-            raise serializers.ValidationError("Password must be at least 8 characters long, contain a letter, a number, and at least one special character.")
-        return value
+    if len(value) < 8 or not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value) or not re.search(
+            r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>?/]", value):
+        raise serializers.ValidationError(
+            "Password must be at least 8 characters long, contain a letter, a number, and at least one special character.")
+    return value
+
 
 # global email validation function to check if the email is already registered
 def validate_email(value):
-        if CustomUser.objects.filter(email=value).exists():
-            existing_user = CustomUser.objects.get(email=value)
-            if existing_user.is_recruiter:
-                role_name = 'recruiter'
-            elif existing_user.is_teacher:
-                role_name = 'teacher'
-            elif existing_user.is_centeruser:
-                role_name = 'centeruser'
-            elif existing_user.is_questionuser:
-                role_name = 'questionuser'
-            else:
-                role_name = 'candidate'
-            raise ValidationError(f"This email has been already registered as a {role_name}.")
-        return value
+    if CustomUser.objects.filter(email=value).exists():
+        existing_user = CustomUser.objects.get(email=value)
+        if existing_user.is_recruiter:
+            role_name = 'recruiter'
+        elif existing_user.is_teacher:
+            role_name = 'teacher'
+        elif existing_user.is_centeruser:
+            role_name = 'centeruser'
+        elif existing_user.is_questionuser:
+            role_name = 'questionuser'
+        else:
+            role_name = 'candidate'
+        raise ValidationError(f"This email has been already registered as a {role_name}.")
+    return value
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'password' ,'Fname', 'Lname', 'email','is_verified']
+        fields = ['id', 'password', 'Fname', 'Lname', 'email', 'is_verified']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -55,6 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
 # Recruiter register serializer
 class RecruiterRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -65,7 +71,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified', 'is_active']
         extra_kwargs = {
-            'email': {'validators': [validate_email]},  
+            'email': {'validators': [validate_email]},
         }
 
     def create(self, validated_data):
@@ -92,7 +98,8 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
-    
+
+
 # Exam Center user register serializer
 class CenterUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -103,9 +110,9 @@ class CenterUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified', 'is_active']
         extra_kwargs = {
-            'email': {'validators': [validate_email]},  
+            'email': {'validators': [validate_email]},
         }
-    
+
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -131,6 +138,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
             raise ValidationError({'error': str(e)})
         return user
 
+
 # Assigned Question user register serializer
 class QuestionUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -141,9 +149,9 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified', 'is_active']
         extra_kwargs = {
-            'email': {'validators': [validate_email]},  
+            'email': {'validators': [validate_email]},
         }
-    
+
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -152,7 +160,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         Lname = validated_data['Lname']
         is_questionuser = True
         is_verified = True
-        
+
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
         try:
@@ -163,12 +171,13 @@ class QuestionUserSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_questionuser=is_questionuser,
-                is_verified=is_verified 
+                is_verified=is_verified
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
-    
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True, required=True)
     new_password = serializers.CharField(write_only=True, required=True)
@@ -186,6 +195,7 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("New password cannot be the same as the old password.")
         return value
 
+
 # Teacher register serializer
 class TeacherRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -196,9 +206,9 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified', 'is_active']
         extra_kwargs = {
-            'email': {'validators': [validate_email]},  
+            'email': {'validators': [validate_email]},
         }
-    
+
     def create(self, validated_data):
         email = validated_data['email']
         base_username = email.split('@')[0]
@@ -206,7 +216,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_teacher = True
-        is_verified=True
+        is_verified = True
 
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
@@ -219,10 +229,11 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
                 Lname=Lname,
                 is_teacher=is_teacher,
                 is_verified=is_verified
-            )            
+            )
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
+
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=100)
@@ -239,16 +250,17 @@ class LoginSerializer(serializers.Serializer):
 
         if not user.check_password(password):
             raise ValidationError({'password': 'Incorrect password.'})
-        
+
         is_admin = user.is_staff
         is_recruiter = user.is_recruiter
         if is_admin and is_recruiter:
             is_admin = True
-            
+
         data["is_admin"] = True if user.is_staff else False
         data["is_recruiter"] = True if user.is_recruiter else False
         data["user"] = user
         return data
+
 
 class TeacherExperiencesSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
@@ -260,7 +272,7 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExperiences
-        fields = ['id','user','institution', 'role', 'start_date', 'end_date', 'achievements']
+        fields = ['id', 'user', 'institution', 'role', 'start_date', 'end_date', 'achievements']
 
     def validate_institution(self, value):
         if value and len(value) < 3:
@@ -290,36 +302,40 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
             representation['role'] = RoleSerializer(instance.role).data
         return representation
 
-#subject serializer 
+
+# subject serializer
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ['id', 'subject_name','class_category']
+        fields = ['id', 'subject_name', 'class_category']
 
     def validate_subject_name(self, value):
         if Subject.objects.filter(subject_name=value).exists():
             raise serializers.ValidationError("A subject with this name already exists.")
         return value
-    
+
     # def to_representation(self, instance):
     #     representation = super().to_representation(instance)
     #     representation['class_category'] = ClassCategorySerializer(instance.class_category).data
     #     return representation
 
+
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCategory
         fields = ['id', 'name', 'subjects']
-        depth = 1 
+        depth = 1
 
     def validate_name(self, value):
         if ClassCategory.objects.filter(name=value).exists():
             raise serializers.ValidationError("A classcategory with this name already exists.")
         return value
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['subjects'] = SubjectSerializer(instance.subjects.all(), many=True).data
         return representation
+
 
 class ReasonSerializer(serializers.ModelSerializer):
     class Meta:
@@ -331,41 +347,46 @@ class ReasonSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A Reason with this issue_type already exists.")
         return value
 
+
 class LevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Level
-        fields = ['id','name','description']
-    
+        fields = ['id', 'name', 'description']
+
     def validate_name(self, value):
         if Level.objects.filter(name=value).exists():
             raise serializers.ValidationError("A level with this name already exists.")
         return value
+
 
 class SkillSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=20, required=False, allow_null=True)
 
     class Meta:
         model = Skill
-        fields = ['id', 'name','description']
+        fields = ['id', 'name', 'description']
 
     def validate_name(self, value):
         if value is not None:
             if len(value) < 3:
                 raise serializers.ValidationError("Skill name must be at least 3 characters.")
         return value
-    
+
     def validate_name(self, value):
         if Skill.objects.filter(name=value).exists():
             raise serializers.ValidationError("A skill with this name already exists.")
         return value
+
+
 class TeachersAddressSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     pincode = serializers.CharField(max_length=6, required=False, allow_null=True)
-    
+
     class Meta:
         model = TeachersAddress
-        fields = ['id', 'user', 'address_type', 'state', 'division', 'district','postoffice', 'block', 'village', 'area', 'pincode']
-    
+        fields = ['id', 'user', 'address_type', 'state', 'division', 'district', 'postoffice', 'block', 'village',
+                  'area', 'pincode']
+
     def validate_pincode(self, value):
         # Only validate if the pincode is not empty or null
         if value and (len(str(value)) != 6):
@@ -378,27 +399,28 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         return representation
-    
+
+
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
     options = serializers.JSONField(required=False, allow_null=True)
-    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(),required=False, allow_null=True)
+    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False, allow_null=True)
     solution = serializers.CharField(max_length=2000, allow_null=True, required=False)
     language = serializers.ChoiceField(choices=[('Hindi', 'Hindi'), ('English', 'English')], required=True)
     related_question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'related_question', 'text', 'options','exam', 'solution', 'correct_option', 'language', 'time']
+        fields = ['id', 'related_question', 'text', 'options', 'exam', 'solution', 'correct_option', 'language', 'time']
 
     def validate_text(self, value):
-        if value is not None and len(value)< 5:
+        if value is not None and len(value) < 5:
             raise serializers.ValidationError("Text must be at least 5 characters.")
-        question_id = self.instance.id if self.instance else None  
+        question_id = self.instance.id if self.instance else None
         if Question.objects.filter(text=value).exclude(id=question_id).exists():
             raise serializers.ValidationError("This question already exists for this exam.")
         return value
-    
+
     def create(self, validated_data):
         translator = Translator()
         language = validated_data.get("language")
@@ -408,11 +430,11 @@ class QuestionSerializer(serializers.ModelSerializer):
             except KeyError as e:
                 raise serializers.ValidationError(f"Missing field {e.args[0]} in Hindi question.")
             return {
-                "hindi_data" : QuestionSerializer(hindi_question).data
+                "hindi_data": QuestionSerializer(hindi_question).data
             }
         english_text = validated_data.get("text")
         english_solution = validated_data.get("solution")
-        english_options = validated_data.get("options",[])
+        english_options = validated_data.get("options", [])
         hindi_text = translator.translate(english_text, src="en", dest='hi').text if english_text else None
         hindi_solution = translator.translate(english_solution, src="en", dest='hi').text if english_solution else None
         hindi_options = [translator.translate(option, src="en", dest='hi').text for option in english_options] if english_options else []
@@ -423,24 +445,25 @@ class QuestionSerializer(serializers.ModelSerializer):
             english_question = Question.objects.create(**english_data)
         except KeyError as e:
             raise serializers.ValidationError(f"Missing field {e.args[0]} in English question.")
-        
+
         hindi_data = {
             "text": hindi_text,
             "solution": hindi_solution,
             "options": hindi_options,
-            "language": "Hindi",  
+            "language": "Hindi",
             "exam": validated_data.get("exam"),
-            'related_question': english_question
         }
         try:
             hindi_question = Question.objects.create(**hindi_data)
+            hindi_question.related_question = english_question
+            hindi_question.save()
         except KeyError as e:
             raise serializers.ValidationError(f"Missing field {e.args[0]} in Hindi question.")
         return {
             "english_data": QuestionSerializer(english_question).data,
             "hindi_data": QuestionSerializer(hindi_question).data
         }
-    
+
     def update(self, instance, validated_data):
         translator = Translator()
 
@@ -481,22 +504,24 @@ class QuestionSerializer(serializers.ModelSerializer):
 
         return instance
 
-    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # representation['exam'] = ExamSerializer(instance.exam).data
         return representation
+
 
 class ExamSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=2000, required=False)
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
-    assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False, allow_null=True)
+    assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False,
+                                                      allow_null=True)
+
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type','status']
-        depth = 1 
+        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks',
+                  'duration', 'questions', 'type', 'status']
+        depth = 1
 
     def create(self, validated_data):
         subject = validated_data.get('subject')
@@ -520,151 +545,168 @@ class ExamSerializer(serializers.ModelSerializer):
                 assigneduser, created = AssignedQuestionUser.objects.get_or_create(user=admin_user)
             validated_data['assigneduser'] = assigneduser
         validated_data['name'] = auto_name
-        return super().create(validated_data) 
-    
+        return super().create(validated_data)
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['subject'] = SubjectSerializer(instance.subject).data
         representation['level'] = LevelSerializer(instance.level).data
         representation['class_category'] = ClassCategorySerializer(instance.class_category).data
         representation['questions'] = QuestionSerializer(instance.questions.all(), many=True).data
-        representation['assigneduser'] = AssignedQuestionUserSerializer(instance.assigneduser).data if instance.assigneduser else None
+        representation['assigneduser'] = AssignedQuestionUserSerializer(
+            instance.assigneduser).data if instance.assigneduser else None
         return representation
-    
+
+
 class TeacherSkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     skill = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), required=False)
+
     class Meta:
         model = TeacherSkill
-        fields = ['id', 'user' ,'skill']
+        fields = ['id', 'user', 'skill']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # representation['user'] = UserSerializer(instance.user).data
         representation['skill'] = SkillSerializer(instance.skill).data
         return representation
- 
+
     def validate(self, attrs):
         # user = attrs.get('user')
         skill = attrs.get('skill')
         # This user have skill already exists
-        if TeacherSkill.objects.filter( skill=skill).exists():
+        if TeacherSkill.objects.filter(skill=skill).exists():
             raise serializers.ValidationError('This user already has this skill.')
         return attrs
+
 
 class EducationalQualificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationalQualification
         fields = ['id', 'name']
 
+
 class TeacherQualificationSerializer(serializers.ModelSerializer):
     # This will allow you to include the user and qualification in the serialized data
     # user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    qualification = serializers.SlugRelatedField(queryset=EducationalQualification.objects.all(), slug_field="name", required=False)
-    
+    qualification = serializers.SlugRelatedField(queryset=EducationalQualification.objects.all(), slug_field="name",
+                                                 required=False)
+
     class Meta:
         model = TeacherQualification
         fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        
+
         # representation['user'] = UserSerializer(instance.user).data
         representation['qualification'] = EducationalQualificationSerializer(instance.qualification).data
-        
+
         return representation
-    
+
     def validate_year_of_passing(self, value):
         current_year = datetime.now().year
-        if not (1000 <= value <= current_year):  
-            raise serializers.ValidationError("Year of passing must be a valid four-digit year and cannot be in the future.")
+        if not (1000 <= value <= current_year):
+            raise serializers.ValidationError(
+                "Year of passing must be a valid four-digit year and cannot be in the future.")
         return value
 
     def validate_grade_or_percentage(self, value):
         value_str = str(value).strip()  # Convert to string for regex checking
 
         # Check if input is a valid letter grade (A, B+, C-, etc.)
-        if re.fullmatch(r"^[A-D][+-]?$", value_str, re.IGNORECASE):  
+        if re.fullmatch(r"^[A-D][+-]?$", value_str, re.IGNORECASE):
             return value_str.upper()  # Standardize to uppercase (e.g., "a" → "A")
 
         try:
             value_float = float(value_str)  # Convert to float
         except ValueError:
-            raise serializers.ValidationError("Grade or percentage must be a valid letter grade (A, B+, etc.) or a number (0-100).")
+            raise serializers.ValidationError(
+                "Grade or percentage must be a valid letter grade (A, B+, etc.) or a number (0-100).")
 
         # Ensure number is in range
         if value_float < 0 or value_float > 100:
             raise serializers.ValidationError("Grade or percentage must be between 0 and 100.")
-        return value_float  
+        return value_float
 
     def validate(self, data):
         user = data.get('user')
         if user:
             previous_qualification = TeacherQualification.objects.filter(user=user).order_by('-year_of_passing').first()
             if previous_qualification:
-                if data.get('year_of_passing')<= previous_qualification.year_of_passing:
+                if data.get('year_of_passing') <= previous_qualification.year_of_passing:
                     raise serializers.ValidationError(
                         "Year of passing should be greater than the previous qualification's year."
                     )
         return data
-    
+
+
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
-        fields = ['id','jobrole_name']
+        fields = ['id', 'jobrole_name']
 
     def validate_jobrole_name(self, value):
         if len(value) < 3:
             raise serializers.ValidationError("Role name must be at least 3 characters.")
-        
+
         if Role.objects.filter(jobrole_name=value).exists():
             raise serializers.ValidationError("A Role with this name already exists.")
         return value
 
+
 class PreferenceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    job_role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True,required=False,)
+    job_role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True, required=False, )
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False, many=True)
     prefered_subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True, required=False)
+    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True,
+                                                          required=False)
 
     class Meta:
         model = Preference
         fields = [
-            'id', 
-            'user', 
-            'job_role', 
-            'class_category', 
-            'prefered_subject', 
-            'teacher_job_type', 
+            'id',
+            'user',
+            'job_role',
+            'class_category',
+            'prefered_subject',
+            'teacher_job_type',
         ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['job_role'] = RoleSerializer(instance.job_role.all(), many=True).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data if instance.class_category else None
+        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(),
+                                                                   many=True).data if instance.class_category else None
         representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject.all(), many=True).data
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
 
+
 class TeacherSubjectSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
+
     class Meta:
         model = TeacherSubject
-        fields = ['id','user','subject']
-     
+        fields = ['id', 'user', 'subject']
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject).data
         return representation
-    
+
+
 class TeacherClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherClassCategory
         fields = '__all__'
+
+
 class TeacherExamResultSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
@@ -672,14 +714,20 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExamResult
-        fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer', 'total_question','isqualified','calculate_percentage','created_at','has_exam_attempt']
+        fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer',
+                  'total_question', 'isqualified', 'calculate_percentage', 'created_at', 'has_exam_attempt']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {"id":instance.user.id, "name":instance.user.username}
-        representation['exam'] = {"id":instance.exam.id, "name":instance.exam.name, "level_id": instance.exam.level.id, "level_name": instance.exam.level.name, "subject_id": instance.exam.subject.id, "subjet_name": instance.exam.subject.subject_name, "class_category_id": instance.exam.class_category.id, "class_category_name": instance.exam.class_category.name}
+        representation['user'] = {"id": instance.user.id, "name": instance.user.username}
+        representation['exam'] = {"id": instance.exam.id, "name": instance.exam.name,
+                                  "level_id": instance.exam.level.id, "level_name": instance.exam.level.name,
+                                  "subject_id": instance.exam.subject.id,
+                                  "subjet_name": instance.exam.subject.subject_name,
+                                  "class_category_id": instance.exam.class_category.id,
+                                  "class_category_name": instance.exam.class_category.name}
         return representation
-    
+
     def get_total_question(self, obj):
         correct = obj.correct_answer if obj.correct_answer is not None else 0
         unanswered = obj.is_unanswered if obj.is_unanswered is not None else 0
@@ -687,12 +735,11 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
         return correct + unanswered + incorrect
 
 
-
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobPreferenceLocation
         fields = '__all__'
-    
+
     def validate_area(self, value):
         user = self.context['request'].user
         teacher_apply = Apply.objects.filter(user=user).first()
@@ -708,12 +755,15 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
 
 class BasicProfileSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    bio = models.CharField(max_length=100, blank=True, null=True)    
-    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True, validators=[UniqueValidator(queryset=BasicProfile.objects.all())])
+    bio = models.CharField(max_length=100, blank=True, null=True)
+    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True,
+                                         validators=[UniqueValidator(queryset=BasicProfile.objects.all())])
     religion = models.CharField(max_length=15, blank=True, null=True)
+
     class Meta:
         model = BasicProfile
-        fields = ['id', 'user', 'bio', 'phone_number', 'religion','profile_picture','date_of_birth','marital_status','gender','language']
+        fields = ['id', 'user', 'bio', 'phone_number', 'religion', 'profile_picture', 'date_of_birth', 'marital_status',
+                  'gender', 'language']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -729,14 +779,16 @@ class BasicProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Phone number must start with 6, 7, 8, or 9.")
             return cleaned_value
         return value
-    
+
     def validate_date_of_birth(self, value):
         if value > date.today():
             raise serializers.ValidationError("Date of birth cannot be in the future.")
-        age = (date.today() - value).days // 365  
+        age = (date.today() - value).days // 365
         if age < 18:
             raise serializers.ValidationError("You must be at least 18 years old.")
         return value
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
 
@@ -763,12 +815,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         else:
             return "user"
 
+
 class TeacherJobTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherJobType
         fields = ['id', 'teacher_job_name']
 
-# forget password serializer for send email for password reset 
+
+# forget password serializer for send email for password reset
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=200)
 
@@ -781,9 +835,9 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
 
         uid = urlsafe_base64_encode(force_bytes(user.id))
         token = PasswordResetTokenGenerator().make_token(user)
-        
+
         reset_link = f'http://localhost:5173/reset-password/{uid}/{token}'
-        print('reset_link',reset_link)
+        print('reset_link', reset_link)
         body = f'Click the following link to reset your password: {reset_link}'
         data = {
             'subject': 'Reset Your Password',
@@ -794,14 +848,16 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
         Util.send_email(data)
 
         return attrs
-# forget password serializer for reset password  
+
+
+# forget password serializer for reset password
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)
 
     class Meta:
         fields = ['password', 'confirm_password']
-        
+
     def validate(self, attrs):
         try:
             password = attrs.get('password')
@@ -809,21 +865,23 @@ class ResetPasswordSerializer(serializers.Serializer):
             uid = self.context.get('uid')
             token = self.context.get('token')
             if password != confirm_password:
-                raise serializers.ValidationError({'confirm_password':"Password and Confirm password doesn't match"})
+                raise serializers.ValidationError({'confirm_password': "Password and Confirm password doesn't match"})
             id = smart_str(urlsafe_base64_decode(uid))
             user = CustomUser.objects.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user, token):
-                raise ValidationError({"error":'Token is not valid or Expired'})
+                raise ValidationError({"error": 'Token is not valid or Expired'})
             user.set_password(password)
             user.save()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
             PasswordResetTokenGenerator().check_token(user, token)
             raise ValidationError('Token is not valid or Expired')
-        
+
+
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
+
 
 class ReportSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
@@ -831,14 +889,15 @@ class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Report
-        fields = ['id', 'user', 'question','issue_type','status', 'created_at']
+        fields = ['id', 'user', 'question', 'issue_type', 'status', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
-        representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
+        representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data
         return representation
+
 
 class PasskeySerializer(serializers.ModelSerializer):
     class Meta:
@@ -847,20 +906,22 @@ class PasskeySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {"id":instance.user.id, "email":instance.user.email}
-        representation['exam'] = {"id":instance.exam.id, "name":instance.exam.name}
-        representation['center'] = {"id":instance.center.id, "name":instance.center.center_name}
+        representation['user'] = {"id": instance.user.id, "email": instance.user.email}
+        representation['exam'] = {"id": instance.exam.id, "name": instance.exam.name}
+        representation['center'] = {"id": instance.center.id, "name": instance.center.center_name}
         return representation
+
+
 class InterviewSerializer(serializers.ModelSerializer):
-    class Meta:                    
+    class Meta:
         model = Interview
-        fields = ['id','time', 'link', 'status','class_category', 'subject', 'grade']  # Exclude 'user' from here
-    
+        fields = ['id', 'time', 'link', 'status', 'class_category', 'subject', 'grade']  # Exclude 'user' from here
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         return representation
-    
+
 
 class TeacherSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
@@ -875,8 +936,8 @@ class TeacherSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             'id', 'Fname', 'Lname', 'email', 'profiles',
-            'teacherskill', 'teachersaddress', 
-            'teacherexperiences', 'teacherqualifications', 
+            'teacherskill', 'teachersaddress',
+            'teacherexperiences', 'teacherqualifications',
             'preferences', 'total_marks'
         ]
 
@@ -886,21 +947,23 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        
+
         if 'total_marks' not in representation:
             representation['total_marks'] = self.get_total_marks(instance)
-        
+
         if 'teacherskill' in representation:
             representation['teacherskill'] = [
                 {'skill': skill.get('skill')} for skill in representation['teacherskill']
             ]
         if 'teacherqualifications' in representation:
             representation['teacherqualifications'] = [
-                {'qualification': qualification.get('qualification')} for qualification in representation['teacherqualifications']
+                {'qualification': qualification.get('qualification')} for qualification in
+                representation['teacherqualifications']
             ]
         if 'teacherexperiences' in representation:
             representation['teacherexperiences'] = [
-                {'start_date': experience.get('start_date'), 'end_date': experience.get('end_date'), 'achievements': experience.get('achievements')}
+                {'start_date': experience.get('start_date'), 'end_date': experience.get('end_date'),
+                 'achievements': experience.get('achievements')}
                 for experience in representation['teacherexperiences']
             ]
         if 'profiles' in representation and representation['profiles'] is not None:
@@ -929,7 +992,7 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'teacher_job_type': preference.get('teacher_job_type'),
                 } for preference in representation['preferences']
             ]
-        
+
         return representation
 
 
@@ -942,21 +1005,22 @@ class ExamCenterSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         return representation
-        
+
+
 class TeacherReportSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
     teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
     teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
     teacherexamresult = TeacherExamResultSerializer(many=True, required=False)
-    preference = PreferenceSerializer(many=True, required=False)  
+    preference = PreferenceSerializer(many=True, required=False)
     rate = serializers.CharField(max_length=10, required=False)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
+        fields = ['id', 'Fname', 'Lname', 'email', 'rate', 'teacherskill', 'teacherqualifications',
+                  'teacherexperiences', 'teacherexamresult', 'preference']
 
 
-    
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
     status = serializers.BooleanField(required=False)  # ensure this field name is lowercase
@@ -971,11 +1035,13 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         return representation
 
+
 class AllRecruiterSerializer(serializers.ModelSerializer):
     profiles = BasicProfileSerializer(required=False)
+
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email','profiles']
+        fields = ['id', 'Fname', 'Lname', 'email', 'profiles']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -995,7 +1061,8 @@ class AllRecruiterSerializer(serializers.ModelSerializer):
             else:
                 del representation['profiles']
         return representation
-    
+
+
 class AllTeacherSerializer(serializers.ModelSerializer):
     teachersaddress = TeachersAddressSerializer(many=True, required=False)
     teachersubjects = TeacherSubjectSerializer(many=True, required=False)
@@ -1021,23 +1088,24 @@ class AllTeacherSerializer(serializers.ModelSerializer):
 
         if 'teacherqualifications' in representation and representation['teacherqualifications']:
             representation['teacherqualifications'] = [
-                {'qualification': qualification.get('qualification')} 
+                {'qualification': qualification.get('qualification')}
                 for qualification in representation['teacherqualifications']
             ]
 
         if 'teachersubjects' in representation and representation['teachersubjects']:
             representation['teachersubjects'] = [
-                {'subject': subject.get('subject')} 
+                {'subject': subject.get('subject')}
                 for subject in representation['teachersubjects']
             ]
 
         if 'teachersaddress' in representation and representation['teachersaddress']:
             representation['teachersaddress'] = [
-                {'state': address.get('state')} 
+                {'state': address.get('state')}
                 for address in representation['teachersaddress']
             ]
 
         return representation
+
 
 class HireRequestSerializer(serializers.ModelSerializer):
     teacher_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
@@ -1055,14 +1123,16 @@ class HireRequestSerializer(serializers.ModelSerializer):
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
 
+
 class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    contact = serializers.CharField(max_length=15, required=False, allow_blank=True, validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all())])
+    contact = serializers.CharField(max_length=15, required=False, allow_blank=True,
+                                    validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all())])
 
     class Meta:
         model = RecruiterEnquiryForm
         fields = "__all__"
-    
+
     def validate_contact(self, value):
         if value:
             cleaned_value = re.sub(r'[^0-9]', '', value)
@@ -1077,13 +1147,15 @@ class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         return representation
-    
+
+
 class AllBasicProfileSerializer(serializers.ModelSerializer):
-    profiles =  BasicProfileSerializer(required=False)
+    profiles = BasicProfileSerializer(required=False)
+
     class Meta:
         model = CustomUser
-        fields = ['id','Fname','Lname','email','is_verified','profiles']
-    
+        fields = ['id', 'Fname', 'Lname', 'email', 'is_verified', 'profiles']
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if 'profiles' in representation and representation['profiles'] is not None:
@@ -1102,11 +1174,13 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
             else:
                 del representation['profiles']
         return representation
-    
+
+
 class ApplySerializer(serializers.ModelSerializer):
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False, many=True)
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True, required=False)
+    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True,
+                                                          required=False)
 
     class Meta:
         model = Apply
@@ -1115,7 +1189,8 @@ class ApplySerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data if instance.class_category else None
+        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(),
+                                                                   many=True).data if instance.class_category else None
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
