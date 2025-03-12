@@ -2513,7 +2513,6 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         # Get existing assignments for this user
         existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
 
-        # Check for duplicate assignments
         already_assigned = set(assign_user_subjects) & set(existing_subjects)
         if already_assigned:
             return Response({
@@ -2547,14 +2546,11 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Ensure 'status' is Boolean
         if not isinstance(new_status, bool):
             return Response(
                 {"error": "Invalid status value. Must be true or false."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Update instance
         instance.status = new_status
         instance.save()
 
