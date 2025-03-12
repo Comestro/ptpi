@@ -2535,6 +2535,16 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        print(instance)
+        exam_created_user = Exam.objects.filter(assigneduser=instance).exists()
+        if exam_created_user:
+            return Response({"error": "This assignment is associated with an exam. Cannot delete."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        instance.delete()
+        return Response({"message": "Assigned question user deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
 class SelfAssignedQuestionUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]

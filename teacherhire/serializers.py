@@ -962,7 +962,7 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = AssignedQuestionUser
-        fields = ['user', 'subject']
+        fields = ['id','user', 'subject']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
