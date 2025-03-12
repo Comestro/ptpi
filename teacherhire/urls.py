@@ -40,12 +40,13 @@ router.register(r"admin/assigneduser", AssignedQuestionUserViewSet)
 router.register(r"examsetter", ExamSetterViewSet, basename="examsetter")
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
 router.register(r"admin/hirerequest", HireRequestViewSet, basename='hire-request')
+router.register(r"admin/teacherAddress", TeachersAddressViewSet, basename="admin-teacherAddress")
 router.register(r"admin/preference", TeachersPreferenceViewSet, basename='admin-preference')
 router.register(r"admin/recruiterenquiryform", RecruiterEnquiryFormViewSet, basename='recruiter-enquiryform')
 router.register(r"all/teacher/basicProfile", AllTeacherBasicProfileViewSet, basename="teachers-basicProfile")
 router.register(r"all/recruiter/basicProfile", AllRecruiterBasicProfileViewSet, basename="recruiters-basicProfile")
 router.register(r"admin/teacherexamresult", AllTeacherExamResultViewSet, basename="admin-teacherexamresult")
-router.register(r"admin/apply", AllTeacherApplyViewSet, basename="admin-apply")
+router.register(r"admin/apply", AllApplyViewSet, basename="admin-apply")
 router.register(r"admin/count", CountDataViewSet, basename="admin-count")
 
 # === Teacher Routes ===
@@ -69,7 +70,7 @@ router.register(r"self/interview", SelfInterviewViewSet, basename="self-intervie
 router.register(r"examcenters", SelfExamCenterViewSets, basename="self-examcenter")
 router.register(r"self/teacherReport", TeacherReportViewSet, basename="self-teacherReport")
 router.register(r"self/recruiterenquiryform", SelfRecruiterEnquiryFormViewSet, basename="recruiterenquiryform")
-router.register(r"self/apply", TeacherApplyViewSet, basename="self-apply")
+router.register(r"self/apply", ApplyViewSet, basename="self-apply")
 router.register(r"self/assigneduser", SelfAssignedQuestionUserViewSet, basename="self-assigneduser")
 # recruiter
 router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')

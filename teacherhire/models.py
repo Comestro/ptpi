@@ -305,6 +305,7 @@ class Exam(models.Model):
         default='online')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    status = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name 
@@ -437,21 +438,20 @@ class Apply(models.Model):
         return self.user.username
     
 class JobPreferenceLocation(models.Model):
-    teacher_apply = models.ForeignKey(Apply, on_delete=models.CASCADE, default=1)
-    state = models.CharField(max_length=200,null=True, blank=True)
-    city = models.CharField(max_length=200,null=True, blank=True)
-    sub_division = models.CharField(max_length=200,null=True, blank=True)
-    block = models.CharField(max_length=200,null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1)  
+    state = models.CharField(max_length=200, null=True, blank=True)
+    city = models.CharField(max_length=200, null=True, blank=True)
+    sub_division = models.CharField(max_length=200, null=True, blank=True)
+    block = models.CharField(max_length=200, null=True, blank=True)
     post_office = models.CharField(max_length=200, null=True, blank=True)
     area = models.TextField(null=True, blank=True)
     pincode = models.CharField(max_length=6, null=True, blank=True)
 
     def __str__(self):
-        return self.teacher_apply.user.username
-    
+        return str(self.user.username  )
+
     def is_complete(self):
         required_fields = {
-            "teacher_apply": self.teacher_apply,
             "state": self.state,
             "city": self.city,
             "sub_division": self.sub_division,

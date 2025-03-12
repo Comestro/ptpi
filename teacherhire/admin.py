@@ -45,7 +45,7 @@ class TeacherExamResultAdmin(admin.ModelAdmin):
 
 @admin.register(JobPreferenceLocation)
 class JobPreferenceLocationAdmin(admin.ModelAdmin):
-    list_display = ['teacher_apply', 'state', 'city', 'sub_division', 'block', 'area', 'pincode']
+    list_display = ['state', 'city', 'sub_division', 'block', 'area', 'pincode']
 
 @admin.register(BasicProfile)
 class BasicProfileAdmin(admin.ModelAdmin):
