@@ -2540,7 +2540,7 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         print(instance)
         exam_created_user = Exam.objects.filter(assigneduser=instance).exists()
         if exam_created_user:
-            return Response({"error": "This assignment is associated with an exam. Cannot delete."},
+            return Response({"error": "This user is assigned to an exam and cannot be deleted."},
                             status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "Assigned question user deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
