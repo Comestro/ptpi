@@ -1451,25 +1451,48 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
+        user = request.user
         data = request.data.copy()
-        data['user'] = request.user.id
 
-        profile = BasicProfile.objects.filter(user=request.user).first()
+        # Update first name & last name
+        Fname = data.get("Fname")
+        Lname = data.get("Lname")
 
+        if Fname:
+            user.Fname = Fname
+        if Lname:
+            user.Lname = Lname
+        user.save()
+
+        # Update profile fields
+        profile = BasicProfile.objects.filter(user=user).first()
         if profile:
-            return update_auth_data(
-                serialiazer_class=self.get_serializer_class(),
-                instance=profile,
-                request_data=data,
-                user=request.user
-            )
+            serializer = self.get_serializer(profile, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Fetch updated user data
+                user_data = {
+                    "id": user.id,
+                    "Fname": user.Fname,
+                    "Lname": user.Lname,
+                    "email": user.email,
+                    "is_verified": user.is_verified
+                }
+
+                profile_data = serializer.data
+                profile_data["user"] = user_data  # Embed user details properly
+
+                return Response(
+                    {
+                        "detail": "User and profile updated successfully.",
+                        "profile": profile_data
+                    },
+                    status=status.HTTP_200_OK
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return create_auth_data(
-                serializer_class=self.get_serializer_class(),
-                request_data=data,
-                user=request.user,
-                model_class=BasicProfile
-            )
+            return Response({"error": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
 
     def get_queryset(self):
         return BasicProfile.objects.filter(user=self.request.user)
@@ -2513,7 +2536,6 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         # Get existing assignments for this user
         existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
 
-        # Check for duplicate assignments
         already_assigned = set(assign_user_subjects) & set(existing_subjects)
         if already_assigned:
             return Response({
@@ -2534,13 +2556,38 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "data": assign_user_subject_serializer.data,
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
+    
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Ensure 'status' is present in request data
+        new_status = request.data.get('status')
+        if new_status is None:
+            return Response(
+                {"error": "Status value is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not isinstance(new_status, bool):
+            return Response(
+                {"error": "Invalid status value. Must be true or false."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        instance.status = new_status
+        instance.save()
+
+        return Response({
+            "detail": "Status updated successfully.",
+            "data": AssignedQuestionUserSerializer(instance).data
+        }, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         print(instance)
         exam_created_user = Exam.objects.filter(assigneduser=instance).exists()
         if exam_created_user:
-            return Response({"error": "This assignment is associated with an exam. Cannot delete."},
+            return Response({"error": "This user is assigned to an exam and cannot be deleted."},
                             status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "Assigned question user deleted successfully"}, status=status.HTTP_204_NO_CONTENT)

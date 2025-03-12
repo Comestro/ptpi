@@ -283,6 +283,7 @@ class ExamCenter(models.Model):
 class AssignedQuestionUser(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     subject = models.ManyToManyField(Subject)
+    status = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.user.id) if self.user else "Unassigned User"

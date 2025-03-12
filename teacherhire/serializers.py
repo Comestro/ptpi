@@ -170,11 +170,20 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         return user
     
 class ChangePasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(required=True, min_length=8)
+    old_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
 
     def validate_new_password(self, value):
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters long.")
+            raise serializers.ValidationError("New password must be at least 8 characters long.")
+        if value == self.initial_data.get('old_password'):
+            raise serializers.ValidationError("New password cannot be the same as the old password.")
         return value
 
 # Teacher register serializer
@@ -762,29 +771,29 @@ class TeacherJobTypeSerializer(serializers.ModelSerializer):
 # forget password serializer for send email for password reset 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=200)
-    class Meta:
-        fields = ['email']
+
     def validate(self, attrs):
         email = attrs.get('email')
-        if CustomUser.objects.filter(email=email).exists():
-            user = CustomUser.objects.get(email=email)
-            uid = urlsafe_base64_encode(force_bytes(user.id))
-            print('Encoded UID', uid)
-            token = PasswordResetTokenGenerator().make_token(user)
-            print('Password reset token: ', token)
-            reset_link = 'http://localhost:8000/api/reset-password/'+uid+'/'+token+'/'
-            print('Password reset link ', reset_link)
-            body = 'Click Following Link to Reset Your Password '+reset_link
-            data = {
-                'subject':'Reset your Password',
-                'body':body,
-                'to_email':user.email
-            }
-            Util.send_email(data)
-            return attrs
-        else:
+
+        user = CustomUser.objects.filter(email=email).first()
+        if not user:
             raise ValidationError('Not a valid Email. Please provide a valid Email.')
 
+        uid = urlsafe_base64_encode(force_bytes(user.id))
+        token = PasswordResetTokenGenerator().make_token(user)
+        
+        reset_link = f'http://localhost:5173/reset-password/{uid}/{token}'
+        print('reset_link',reset_link)
+        body = f'Click the following link to reset your password: {reset_link}'
+        data = {
+            'subject': 'Reset Your Password',
+            'body': body,
+            'to_email': user.email
+        }
+
+        Util.send_email(data)
+
+        return attrs
 # forget password serializer for reset password  
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
@@ -946,18 +955,22 @@ class TeacherReportSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'Fname', 'Lname', 'email','rate', 'teacherskill', 'teacherqualifications', 'teacherexperiences', 'teacherexamresult', 'preference']
 
+
+    
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    
+    status = serializers.BooleanField(required=False)  # ensure this field name is lowercase
+
     class Meta:
         model = AssignedQuestionUser
-        fields = ['id','user', 'subject']
+        fields = ['user', 'subject', 'status']  # use 'status' in lowercase here
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         return representation
+
 class AllRecruiterSerializer(serializers.ModelSerializer):
     profiles = BasicProfileSerializer(required=False)
     class Meta:

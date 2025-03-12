@@ -51,13 +51,18 @@ class ChangePasswordView(APIView):
     authentication_classes = [ExpiringTokenAuthentication]
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        
         if serializer.is_valid():
             request.user.set_password(serializer.validated_data['new_password'])
             request.user.save()
-            return Response({"message": "Password updated successfully!"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+            # Keep user logged in after password change
+            update_session_auth_hash(request, request.user)
+
+            return Response({"message": "Password updated successfully!"}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def generate_refresh_token():
     return str(uuid.uuid4())
