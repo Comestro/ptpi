@@ -63,7 +63,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -87,7 +87,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_recruiter=is_recruiter,
-                is_verified=is_verified
+                is_verified=is_verified,
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -101,7 +101,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -139,7 +139,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -185,7 +185,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified']
+        fields = ['email', 'password', 'Fname', 'Lname', 'is_verified', 'is_active']
         extra_kwargs = {
             'email': {'validators': [validate_email]},  
         }
@@ -375,6 +375,11 @@ class TeachersAddressSerializer(serializers.ModelSerializer):
         if (not str(value).isdigit() or int(value) <= 0):
             raise serializers.ValidationError("Pincode must be positive integer.")
         return value
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        return representation
     
 class QuestionSerializer(serializers.ModelSerializer):
     text = serializers.CharField(max_length=2000, allow_null=True, required=False)
@@ -492,7 +497,7 @@ class ExamSerializer(serializers.ModelSerializer):
     assigneduser = serializers.PrimaryKeyRelatedField(queryset=AssignedQuestionUser.objects.all(), required=False, allow_null=True)
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type']
+        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks', 'duration', 'questions','type','status']
         depth = 1 
 
     def create(self, validated_data):
@@ -957,7 +962,7 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = AssignedQuestionUser
-        fields = ['user', 'subject']
+        fields = ['id','user', 'subject']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -998,7 +1003,7 @@ class AllTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'Fname', 'Lname', 'email', 'teachersubjects',
+            'id', 'Fname', 'Lname', 'email', 'is_verified', 'is_active', 'teachersubjects',
             'teachersaddress', 'teacherqualifications', 'total_marks'
         ]
 
