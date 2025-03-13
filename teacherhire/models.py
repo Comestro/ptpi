@@ -375,7 +375,7 @@ class Report(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     issue_type = models.ManyToManyField(Reason)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.BooleanField(default=True)
+    status = models.BooleanField(default=False)
     
     def __str__(self):
         return f"Report by {self.user.username if self.user else 'Anonymous'} on {self.question.id}"
