@@ -849,6 +849,7 @@ class ReportSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
+        representation['question'] = QuestionSerializer(instance.question).data
         representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
         return representation
 
