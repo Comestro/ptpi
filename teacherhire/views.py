@@ -2317,6 +2317,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             "exam_center": exam_center_serializer.data,
             "message": "User and Exam Center created successfully"
         }, status=status.HTTP_201_CREATED)
+    
 
     def put(self, request, *args, **kwargs):
         examcenter_id = request.data.get('id', None)
@@ -2332,9 +2333,15 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
                 return create_object(ExamSerializer, request.data, Exam)
         else:
             return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
+        
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({"message": "ExamCenter deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class SelfExamCenterViewSets(viewsets.ModelViewSet):
