@@ -2489,30 +2489,71 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
             "message": "User and subjects assigned successfully"
         }, status=status.HTTP_201_CREATED)
     
-
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
 
-        # Ensure 'status' is present in request data
+        # Validate and update status
         new_status = request.data.get('status')
         if new_status is None:
             return Response(
                 {"error": "Status value is required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         if not isinstance(new_status, bool):
             return Response(
                 {"error": "Invalid status value. Must be true or false."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         instance.status = new_status
+
+        # Validate and update subjects
+        new_subjects = request.data.get('subject')
+        if new_subjects is None:
+            return Response(
+                {"error": "Subject field is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not isinstance(new_subjects, list):
+            return Response(
+                {"error": "Invalid subject format. Must be a list of subject IDs."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Filter and set the subjects
+        subjects_qs = Subject.objects.filter(id__in=new_subjects)
+        instance.subject.set(subjects_qs)
+
         instance.save()
 
         return Response({
-            "detail": "Status updated successfully.",
+            "detail": "Assigned question user updated successfully.",
             "data": AssignedQuestionUserSerializer(instance).data
         }, status=status.HTTP_200_OK)
+
+    
+
+    # def update(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+
+    #     # Ensure 'status' is present in request data
+    #     new_status = request.data.get('status')
+    #     if new_status is None:
+    #         return Response(
+    #             {"error": "Status value is required."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+
+    #     if not isinstance(new_status, bool):
+    #         return Response(
+    #             {"error": "Invalid status value. Must be true or false."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+    #     instance.status = new_status
+    #     instance.save()
+
+    #     return Response({
+    #         "detail": "Status updated successfully.",
+    #         "data": AssignedQuestionUserSerializer(instance).data
+    #     }, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
