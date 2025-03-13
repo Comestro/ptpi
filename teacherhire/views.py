@@ -30,7 +30,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
 from django.utils import timezone
 from datetime import timedelta
-
+from django.shortcuts import get_object_or_404
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterUser]
@@ -850,81 +850,40 @@ class SingleTeacherExperiencesViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TeacherExperiences.objects.filter(user=self.request.user)
 
-
 class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
 
-    def create(self, request):
+    def get_permissions(self):
+        """Dynamically assign permissions based on user type"""
+        if self.request.user.is_staff:
+            return [IsAdminUser()]
+        return [IsQuestionUser()]
+
+    def create(self, request, *args, **kwargs):
         data = request.data
         exam_id = data.get("exam")
 
         if not exam_id:
             return Response({"error": "Exam ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
+        if request.user.is_staff:  # Admin can create questions for any exam
+            try:
+                exam = Exam.objects.get(id=exam_id)
+            except Exam.DoesNotExist:
+                return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:  # Question setter can only create questions for their assigned exam
             assigned_user = AssignedQuestionUser.objects.filter(user=request.user).first()
-        except AssignedQuestionUser.DoesNotExist:
-            return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
+            if not assigned_user:
+                return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
 
-        try:
-            exam = Exam.objects.get(pk=exam_id, assigneduser=assigned_user)
-        except Exam.DoesNotExist:
-            return Response({"error": "Exam not found or you do not have permission."},
-                status=status.HTTP_404_NOT_FOUND)
-
-        serializer = QuestionSerializer(data=data)
-        if serializer.is_valid():
-            question_data = serializer.save()
-            return Response({
-                "message": "Questions stored in Hindi and English successfully",
-                "english_data": question_data['english_data'],
-                "hindi_data": question_data['hindi_data']
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)  
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-
-        if serializer.is_valid():
-            updated_instance = serializer.save()
-
-            hindi_data = Question.objects.get(related_question=updated_instance)
-            if hasattr(updated_instance, 'related_question'):
-                hindi_data = QuestionSerializer(hindi_data).data
-
-            return Response({
-                "message": "Question updated successfully",
-                "english_data": QuestionSerializer(updated_instance).data,
-                "hindi_data": hindi_data
-            }, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
-        return Response({"message": "ExamSetter deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
-class QuestionViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Question.objects.all()
-    serializer_class = QuestionSerializer
-
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        exam_id = data.get("exam")
-
-        try:
-            exam = Exam.objects.get(id=exam_id)
-        except Exam.DoesNotExist:
-            return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
+            try:
+                exam = Exam.objects.get(pk=exam_id, assigneduser=assigned_user)
+            except Exam.DoesNotExist:
+                return Response({"error": "Exam not found or you do not have permission."}, 
+                                status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
@@ -934,32 +893,11 @@ class QuestionViewSet(viewsets.ModelViewSet):
                 "english_data": question_data.get("english_data"),
                 "hindi_data": question_data.get("hindi_data")
             }, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'])
-    def count(self, request):
-        count = get_count(Question)
-        return Response({"Count": count})
-
-    @action(detail=False, methods=['get'])
-    def questions(self, request):
-        user = request.user
-        exam_id = request.query_params.get('exam_id')
-        language = request.query_params.get('language')
-        questions = Question.objects.all()
-        if exam_id:
-            try:
-                exam = Exam.objects.get(pk=exam_id)
-            except Exam.DoesNotExist:
-                return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-            questions = questions.filter(exam=exam)
-        if language:
-            questions = questions.filter(language=language)
-        serialized_questions = QuestionSerializer(questions, many=True)
-        return Response(serialized_questions.data, status=status.HTTP_200_OK)
-    
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)  
+        partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
 
@@ -982,11 +920,34 @@ class QuestionViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['get'])
+    def count(self, request):
+        count = Question.objects.count()
+        return Response({"Count": count})
+
+    @action(detail=False, methods=['get'])
+    def questions(self, request):
+        exam_id = request.query_params.get('exam_id')
+        language = request.query_params.get('language')
+        questions = Question.objects.all()
+
+        if exam_id:
+            try:
+                exam = Exam.objects.get(pk=exam_id)
+                questions = questions.filter(exam=exam)
+            except Exam.DoesNotExist:
+                return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if language:
+            questions = questions.filter(language=language)
+
+        serialized_questions = QuestionSerializer(questions, many=True)
+        return Response(serialized_questions.data, status=status.HTTP_200_OK)
 
 
 class SelfQuestionViewSet(viewsets.ModelViewSet):
@@ -1743,112 +1704,92 @@ class CheckoutView(APIView):
 
 
 class ExamSetterViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsQuestionUser]
-    authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Exam.objects.all()
-    serializer_class = ExamSerializer
-
-    def create(self, request):
-        user = self.request.user
-        subject = request.data.get('subject')
-        try:
-            assigned_user = AssignedQuestionUser.objects.filter(user=user, subject=subject).first()
-        except AssignedQuestionUser.DoesNotExist:
-            return Response({"error": "You are not assigned to post exam set for this subject."},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        serializer = ExamSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(assigneduser=assigned_user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def get_queryset(self):
-        user = self.request.user
-        return Exam.objects.filter(assigneduser__user=user)    
-
-    @action(detail=False, methods=['get'])
-    def count(self, request):
-        count = Exam.objects.count()
-        return Response({"Count": count})
-
-    def put(self, request, *args, **kwargs):
-        exam_id = request.data.get('id', None)
-        user = request.user
-
-        if not exam_id:
-            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            exam_instance = Exam.objects.get(id=exam_id)
-
-            # Check if the user is an admin
-            if user.is_staff:
-                serializer = ExamSerializer(exam_instance, data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-            # Check if the user is assigned to this exam
-            elif exam_instance.assigneduser.user == user:
-                serializer = ExamSerializer(exam_instance, data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-            else:
-                return Response({"error": "You do not have permission to update this exam."},
-                                status=status.HTTP_403_FORBIDDEN)
-
-        except Exam.DoesNotExist:
-            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
-        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
-
-class ExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
 
+    def get_permissions(self):
+        """Apply different permissions based on user type."""
+        if self.request.user.is_staff:
+            self.permission_classes = [IsAuthenticated, IsAdminUser]
+        else:
+            self.permission_classes = [IsAuthenticated, IsQuestionUser]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        """Admins see all exams, assigned users see only their exams."""
+        user = self.request.user
+        if user.is_staff:
+            return Exam.objects.all()
+        return Exam.objects.filter(assigneduser__user=user)
+
     def create(self, request):
-        return create_object(ExamSerializer, request.data, Exam)
+        """Admins can create any exam; assigned users are restricted."""
+        user = request.user
+        subject = request.data.get('subject')
+        if not user.is_staff:
+            assigned_user = AssignedQuestionUser.objects.filter(user=user, subject=subject).first()
+            if not assigned_user:
+                return Response({"error": "You are not assigned to this subject."}, status=status.HTTP_403_FORBIDDEN)
+            request.data["assigneduser"] = assigned_user.id
+
+        serializer = ExamSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        """Admins can update any exam; assigned users can update only their own."""
+        user = request.user
+        exam = get_object_or_404(Exam, id=kwargs.get('pk'))
+
+        if not user.is_staff and exam.assigneduser.user != user:
+            return Response({"error": "You do not have permission to update this exam."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ExamSerializer(exam, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        """Admins can delete any exam; assigned users can delete only their own."""
+        user = request.user
+        exam = get_object_or_404(Exam, id=kwargs.get('pk'))
+
+        if not user.is_staff and exam.assigneduser.user != user:
+            return Response({"error": "You do not have permission to delete this exam."}, status=status.HTTP_403_FORBIDDEN)
+
+        exam.delete()
+        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def count(self, request):
-        count = get_count(Exam)
+        """Get total exam count."""
+        count = Exam.objects.count()
         return Response({"Count": count})
 
     @action(detail=False, methods=['get'])
     def exams(self, request):
-        level_id = request.query_params.get('level_id', None)
-        class_category_id = request.query_params.get('class_category_id', None)
-        subject_id = request.query_params.get('subject_id', None)
+        """Filter exams based on class category, subject, or level."""
+        level_id = request.query_params.get('level_id')
+        class_category_id = request.query_params.get('class_category_id')
+        subject_id = request.query_params.get('subject_id')
 
         exams = Exam.objects.all()
 
         if class_category_id:
             class_category = ClassCategory.objects.filter(pk=class_category_id).first()
             if not class_category:
-                return Response(
-                    {"message": "Please choose a valid class category."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"message": "Invalid class category."}, status=status.HTTP_400_BAD_REQUEST)
             exams = exams.filter(class_category=class_category)
 
         if subject_id:
             subject = Subject.objects.filter(pk=subject_id).first()
             if not subject:
-                return Response(
-                    {"message": "Please choose a valid subject."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"message": "Invalid subject."}, status=status.HTTP_400_BAD_REQUEST)
             exams = exams.filter(subject=subject)
 
         if level_id:
@@ -1860,22 +1801,6 @@ class ExamViewSet(viewsets.ModelViewSet):
 
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def partial_update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = ExamSerializer(instance, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exam.DoesNotExist:
-            return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
-        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class SelfExamViewSet(viewsets.ModelViewSet):
