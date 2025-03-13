@@ -90,7 +90,7 @@ class ClassCategory(models.Model):
     name = models.CharField(max_length=100,unique=True, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
     
 class Subject(models.Model):
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, related_name='subjects')
@@ -98,7 +98,7 @@ class Subject(models.Model):
     subject_description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.subject_name
+        return str(self.subject_name)
     
 class Reason(models.Model):
     issue_type = models.CharField(max_length=200,unique=True, null=True, blank=True)
@@ -405,7 +405,7 @@ class Interview(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return self.user.username
+        return str(self.user.username)
     
 class HireRequest(models.Model):
     recruiter_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='recruiter')

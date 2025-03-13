@@ -2191,7 +2191,11 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
 
         print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
+    def get_queryset(self):
+        user = self.request.user
+        return Interview.objects.filter(user=user)
+    
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
