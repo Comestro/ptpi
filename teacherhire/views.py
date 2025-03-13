@@ -988,7 +988,6 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class RoleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2203,9 +2202,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
 
-    # Override the default create method for ExamCenter creation
     def create(self, request, *args, **kwargs):
-        # Extract user data
         user_data = request.data.get("user")
 
         # Validate user serializer
