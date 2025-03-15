@@ -421,6 +421,11 @@ class QuestionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This question already exists for this exam.")
         return value
     
+    def validate_options(self, value):
+        if len(value) != len(set(value)):  
+            raise serializers.ValidationError("Options must be unique.")
+        return value
+    
     def create(self, validated_data, *args, **kwargs):
         translator = Translator()
         language = validated_data.get("language")
