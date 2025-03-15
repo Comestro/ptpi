@@ -1029,7 +1029,7 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AssignedQuestionUser
-        fields = ['user', 'subject', 'status']  # use 'status' in lowercase here
+        fields = ['id','user', 'subject', 'status']  # use 'status' in lowercase here
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

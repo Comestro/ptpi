@@ -2250,21 +2250,18 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
 
-    def put(self, request, *args, **kwargs):
-        examcenter_id = request.data.get('id', None)
-        if examcenter_id:
-            try:
-                examcenter_instance = ExamCenter.objects.get(id=examcenter_id)
-                serializer = ExamSerializer(examcenter_instance, data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_200_OK)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            except Exam.DoesNotExist:
-                return create_object(ExamSerializer, request.data, Exam)
-        else:
-            return Response({"error": "ID field is required for PUT"}, status=status.HTTP_400_BAD_REQUEST)
-        
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()  
+        serializer = ExamCenterSerializer(instance, data=request.data, partial=True)
+        print(serializer)
+
+        if serializer.is_valid():
+            data = serializer.save()
+            print(data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
