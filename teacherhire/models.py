@@ -312,6 +312,7 @@ class Exam(models.Model):
         return self.name 
 
 class Question(models.Model):
+    related_question = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
     time = models.FloatField(default=2.5)
     language = models.CharField(
