@@ -2278,6 +2278,10 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        return ExamCenter.objects.filter(user=user)  
+    
     @action(detail=False, methods=['get'])
     def teachers(self, request):
         user = request.user
@@ -2308,7 +2312,7 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
 
         serializer = PasskeySerializer(teachers, many=True)
         return Response(serializer.data)
-
+    
     def update(self, request, *args, **kwargs):
         passkey_id = kwargs.get('pk')
         if passkey_id:
