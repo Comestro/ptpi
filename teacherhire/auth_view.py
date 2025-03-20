@@ -220,3 +220,12 @@ class UserVerify(APIView):
             "Last name": user.Lname,
             "message": 'User is verified'
         }, status=status.HTTP_200_OK)
+
+class DeactivateAccount(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.is_active = False
+        user.save()
+        return Response({'message': 'Account deactivated successfully'}, status=status.HTTP_200_OK)
