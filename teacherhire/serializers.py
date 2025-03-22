@@ -1131,8 +1131,7 @@ class HireRequestSerializer(serializers.ModelSerializer):
 
 class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    contact = serializers.CharField(max_length=15, required=False, allow_blank=True,
-                                    validators=[UniqueValidator(queryset=RecruiterEnquiryForm.objects.all())])
+    contact = serializers.CharField(max_length=15, required=False, allow_blank=True)
 
     class Meta:
         model = RecruiterEnquiryForm

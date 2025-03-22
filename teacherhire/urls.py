@@ -97,6 +97,7 @@ urlpatterns = [
     path("verify_otp/", VerifyOTP.as_view(), name="verify_otp"),
     path("resend_otp/", ResendOTP.as_view(), name="resend_otp"),
     path("verify_user/", UserVerify.as_view(), name="verify_user"),
+    path("self/deactivate/", DeactivateAccount.as_view(), name="self-deactivate"),
 
     # Passkey Routes
     path("generate-passkey/", GeneratePasskeyView.as_view(), name="generate_passkey"),
