@@ -113,7 +113,6 @@ class TeachersAddressViewSet(viewsets.ModelViewSet):
         if teacher_id:
             return TeachersAddress.objects.filter(user_id=teacher_id)
         return TeachersAddress.objects.all()
-    
 
 
 class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
