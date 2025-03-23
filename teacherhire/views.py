@@ -1805,7 +1805,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 class SelfExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Exam.objects.all()
+    queryset = Exam.objects.filter(status=True)
     serializer_class = ExamSerializer
 
     def retrieve(self, request, *args, **kwargs):
