@@ -1002,10 +1002,30 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 class ExamCenterSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
     class Meta:
         model = ExamCenter
-        fields = "__all__"
+        fields = ['id', 'center_name', 'pincode', 'state', 'city', 'area', 'status', 'user']
 
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+            user.Fname = user_data.get('Fname', user.Fname)
+            user.Lname = user_data.get('Lname', user.Lname)
+            user.is_active = user_data.get('is_active', user.is_active)
+            user.save()
+
+        instance.center_name = validated_data.get('center_name', instance.center_name)
+        instance.pincode = validated_data.get('pincode', instance.pincode)
+        instance.state = validated_data.get('state', instance.state)
+        instance.city = validated_data.get('city', instance.city)
+        instance.area = validated_data.get('area', instance.area)
+        instance.status = validated_data.get('status', instance.status)
+        instance.save()
+
+        return instance
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
