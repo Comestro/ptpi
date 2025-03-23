@@ -2554,6 +2554,9 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Assigned question user deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
+    def get_queryset(self):
+        return AssignedQuestionUser.objects.filter(user__is_staff=False)
+    
 class SelfAssignedQuestionUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
