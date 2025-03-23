@@ -2246,16 +2246,31 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()  
-        serializer = ExamCenterSerializer(instance, data=request.data, partial=True)
+    # def update(self, request, *args, **kwargs):
+    #     instance = self.get_object()  
+    #     serializer = ExamCenterSerializer(instance, data=request.data, partial=True)
 
+    #     if serializer.is_valid():
+    #         data = serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def patch(self, request, *args, **kwargs):
+        try:
+            examcenter = ExamCenter.objects.get(id=kwargs['pk'])
+        except ExamCenter.DoesNotExist:
+            return Response({"error": "ExamCenter not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ExamCenterSerializer(examcenter, data=request.data, partial=True)
         if serializer.is_valid():
-            data = serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
+            serializer.save()
+            return Response({
+                "message": "ExamCenter updated successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
