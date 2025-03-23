@@ -2552,6 +2552,23 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         subjects_qs = Subject.objects.filter(id__in=new_subjects)
         instance.subject.set(subjects_qs)
 
+        # Validate and update class categories
+        new_class_categories = request.data.get('class_category')
+        if new_class_categories is None:
+            return Response(
+                {"error": "Class category field is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not isinstance(new_class_categories, list):
+            return Response(
+                {"error": "Invalid class category format. Must be a list of class category IDs."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Filter and set the class categories
+        class_categories_qs = ClassCategory.objects.filter(id__in=new_class_categories)
+        instance.class_category.set(class_categories_qs)
+
+        # Save the updated instance
         instance.save()
 
         return Response({
