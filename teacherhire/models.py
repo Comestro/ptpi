@@ -119,21 +119,12 @@ class TeacherQualification(models.Model):
     institution = models.CharField(max_length=225, null=True, blank=True)
     year_of_passing = models.PositiveIntegerField(null=True, blank=True)
     grade_or_percentage = models.CharField(max_length=50, null=True, blank=True)
+    subjects = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         if self.user:
             return f"{self.user.username} - {self.qualification.name} ({self.year_of_passing})"
         return f"Unknown User - {self.qualification.name} ({self.year_of_passing})"
-    
-    def is_complete(self):
-        required_fields = {
-            "qualification": self.qualification,
-            "institution": self.institution,
-            "year_of_passing": self.year_of_passing,
-            "grade_or_percentage": self.grade_or_percentage
-        }
-        missing_fields = [field for field, value in required_fields.items() if not value]
-        return not missing_fields, missing_fields
 
 class Role(models.Model):
     jobrole_name = models.CharField(max_length=400, null=True, blank=True)
@@ -282,6 +273,7 @@ class ExamCenter(models.Model):
     
 class AssignedQuestionUser(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
+    class_category = models.ManyToManyField(ClassCategory)
     subject = models.ManyToManyField(Subject)
     status = models.BooleanField(default=True)
 

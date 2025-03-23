@@ -599,7 +599,7 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherQualification
-        fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage']
+        fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage', 'subjects']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1028,16 +1028,18 @@ class TeacherReportSerializer(serializers.ModelSerializer):
 
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), many=True, required=False)
     status = serializers.BooleanField(required=False)  # ensure this field name is lowercase
 
     class Meta:
         model = AssignedQuestionUser
-        fields = ['id','user', 'subject', 'status']  # use 'status' in lowercase here
+        fields = ['id','user', 'subject','class_category', 'status']  # use 'status' in lowercase here
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data
         return representation
 
 
