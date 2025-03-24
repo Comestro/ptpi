@@ -1834,7 +1834,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             exam__level=exam_level,
             language=language
         ).count()
-        print(attempt_count)
         if attempt_count >= 7:
             return Response(
                 {"message": f"You have reached the maximum limit of 7 attempts for exams in this subject ({exam_subject}), class category ({exam_class_category}), and level ({exam_level}) in {language}."},
