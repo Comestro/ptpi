@@ -113,7 +113,6 @@ class TeachersAddressViewSet(viewsets.ModelViewSet):
         if teacher_id:
             return TeachersAddress.objects.filter(user_id=teacher_id)
         return TeachersAddress.objects.all()
-    
 
 
 class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
@@ -1805,7 +1804,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 class SelfExamViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Exam.objects.all()
+    queryset = Exam.objects.filter(status=True)
     serializer_class = ExamSerializer
 
     def retrieve(self, request, *args, **kwargs):
@@ -2247,18 +2246,31 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()  
-        serializer = ExamCenterSerializer(instance, data=request.data, partial=True)
-        print(serializer)
+    # def update(self, request, *args, **kwargs):
+    #     instance = self.get_object()  
+    #     serializer = ExamCenterSerializer(instance, data=request.data, partial=True)
 
+    #     if serializer.is_valid():
+    #         data = serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def patch(self, request, *args, **kwargs):
+        try:
+            examcenter = ExamCenter.objects.get(id=kwargs['pk'])
+        except ExamCenter.DoesNotExist:
+            return Response({"error": "ExamCenter not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ExamCenterSerializer(examcenter, data=request.data, partial=True)
         if serializer.is_valid():
-            data = serializer.save()
-            print(data)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
+            serializer.save()
+            return Response({
+                "message": "ExamCenter updated successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -2462,17 +2474,26 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
 
         user = user_serializer.save()
 
-        assign_user_subjects = request.data.get("subject", [])
-        if not assign_user_subjects or not isinstance(assign_user_subjects, list):
+        # Extract and validate class_category
+        class_category_ids = request.data.get("class_category", [])
+        if not isinstance(class_category_ids, list) or not class_category_ids:
             return Response({
-                "error": "Subjects not provided",
-                "message": "Please provide a subject."
+                "error": "Class category not provided",
+                "message": "Please provide at least one class category."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get existing assignments for this user
-        existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
+        # Extract and validate subjects
+        assign_user_subjects = request.data.get("subject", [])
+        if not isinstance(assign_user_subjects, list) or not assign_user_subjects:
+            return Response({
+                "error": "Subjects not provided",
+                "message": "Please provide at least one subject."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check for already assigned subjects
+        existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
         already_assigned = set(assign_user_subjects) & set(existing_subjects)
+
         if already_assigned:
             return Response({
                 "error": "User is already assigned to some subjects",
@@ -2481,17 +2502,22 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
 
         # Create or get AssignedQuestionUser instance
         assigned_user_subject, created = AssignedQuestionUser.objects.get_or_create(user=user)
-        subjects_to_assign = Subject.objects.filter(id__in=assign_user_subjects)
 
-        # Assign subjects to the user
+        # Assign subjects
+        subjects_to_assign = Subject.objects.filter(id__in=assign_user_subjects)
         assigned_user_subject.subject.set(subjects_to_assign)
+
+        # Assign class categories
+        class_categories_to_assign = ClassCategory.objects.filter(id__in=class_category_ids)
+        assigned_user_subject.class_category.set(class_categories_to_assign)
 
         # Serialize and return response
         assign_user_subject_serializer = AssignedQuestionUserSerializer(assigned_user_subject)
         return Response({
             "data": assign_user_subject_serializer.data,
-            "message": "User and subjects assigned successfully"
+            "message": "User, subjects, and class categories assigned successfully"
         }, status=status.HTTP_201_CREATED)
+
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -2526,6 +2552,23 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         subjects_qs = Subject.objects.filter(id__in=new_subjects)
         instance.subject.set(subjects_qs)
 
+        # Validate and update class categories
+        new_class_categories = request.data.get('class_category')
+        if new_class_categories is None:
+            return Response(
+                {"error": "Class category field is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not isinstance(new_class_categories, list):
+            return Response(
+                {"error": "Invalid class category format. Must be a list of class category IDs."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Filter and set the class categories
+        class_categories_qs = ClassCategory.objects.filter(id__in=new_class_categories)
+        instance.class_category.set(class_categories_qs)
+
+        # Save the updated instance
         instance.save()
 
         return Response({
@@ -2542,6 +2585,9 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "Assigned question user deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+    def get_queryset(self):
+        return AssignedQuestionUser.objects.filter(user__is_staff=False)
     
 class SelfAssignedQuestionUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

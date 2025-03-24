@@ -599,7 +599,7 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherQualification
-        fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage']
+        fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage', 'subjects']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1002,10 +1002,30 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 class ExamCenterSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
     class Meta:
         model = ExamCenter
-        fields = "__all__"
+        fields = ['id', 'center_name', 'pincode', 'state', 'city', 'area', 'status', 'user']
 
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+            user.Fname = user_data.get('Fname', user.Fname)
+            user.Lname = user_data.get('Lname', user.Lname)
+            user.is_active = user_data.get('is_active', user.is_active)
+            user.save()
+
+        instance.center_name = validated_data.get('center_name', instance.center_name)
+        instance.pincode = validated_data.get('pincode', instance.pincode)
+        instance.state = validated_data.get('state', instance.state)
+        instance.city = validated_data.get('city', instance.city)
+        instance.area = validated_data.get('area', instance.area)
+        instance.status = validated_data.get('status', instance.status)
+        instance.save()
+
+        return instance
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
@@ -1028,16 +1048,18 @@ class TeacherReportSerializer(serializers.ModelSerializer):
 
 class AssignedQuestionUserSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), many=True, required=False)
     status = serializers.BooleanField(required=False)  # ensure this field name is lowercase
 
     class Meta:
         model = AssignedQuestionUser
-        fields = ['id','user', 'subject', 'status']  # use 'status' in lowercase here
+        fields = ['id','user', 'subject','class_category', 'status']  # use 'status' in lowercase here
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data
         return representation
 
 
