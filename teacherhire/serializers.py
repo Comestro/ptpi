@@ -720,7 +720,7 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherExamResult
-        fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer',
+        fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer','language',
                   'total_question', 'isqualified', 'calculate_percentage', 'created_at', 'has_exam_attempt']
 
     def to_representation(self, instance):
@@ -731,7 +731,9 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
                                   "subject_id": instance.exam.subject.id,
                                   "subjet_name": instance.exam.subject.subject_name,
                                   "class_category_id": instance.exam.class_category.id,
-                                  "class_category_name": instance.exam.class_category.name}
+                                  "class_category_name": instance.exam.class_category.name,
+                                }
+                                  
         return representation
 
     def get_total_question(self, obj):
