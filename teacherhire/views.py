@@ -1814,22 +1814,51 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve an Exam instance and filter its questions by language if specified.
+        Limit attempts across all exams within the same subject, class category, and level to 7 attempts.
         """
+        user = request.user
         exam = self.get_object()
         language = request.query_params.get('language', None)
 
-        questions = list(exam.questions.all())
+        if language and language not in ['Hindi', 'English']:
+            return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
 
+        exam_subject = exam.subject  
+        exam_class_category = exam.class_category  
+        exam_level = exam.level  
+
+        attempt_count = TeacherExamResult.objects.filter(
+            user=user,
+            exam__subject=exam_subject,
+            exam__class_category=exam_class_category,
+            exam__level=exam_level,
+            language=language
+        ).count()
+        print(attempt_count)
+        if attempt_count >= 7:
+            return Response(
+                {"message": f"You have reached the maximum limit of 7 attempts for exams in this subject ({exam_subject}), class category ({exam_class_category}), and level ({exam_level}) in {language}."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        questions = list(exam.questions.all())
         if language:
-            if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
             questions = [q for q in questions if q.language == language]
 
         serializer = self.get_serializer(exam)
         exam_data = serializer.data
         exam_data['questions'] = QuestionSerializer(questions, many=True).data
 
-        return Response(exam_data, status=status.HTTP_200_OK)
+        exam_result = TeacherExamResult.objects.create(
+            user=user,
+            exam=exam,
+            language=language,
+            has_exam_attempt=True
+        )
+        return Response(
+            {"exam": exam_data, "exam_result_id": exam_result.examresult_id},
+            status=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['get'])
     def exams(self, request):
