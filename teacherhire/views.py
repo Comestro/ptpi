@@ -1755,12 +1755,16 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """Admins can delete any exam; assigned users can delete only their own."""
         user = request.user
-        exam = get_object_or_404(Exam, id=kwargs.get('pk'))
+        instance = get_object_or_404(Exam, id=kwargs.get('pk'))
 
         if not user.is_staff and exam.assigneduser.user != user:
             return Response({"error": "You do not have permission to delete this exam."}, status=status.HTTP_403_FORBIDDEN)
-
-        exam.delete()
+        exam =  Exam.objects.get(id=instance.id)
+        questions = exam.questions.all().count()
+        if questions == 0:
+            instance.delete()
+        else:
+            return Response({"error": "This exam cannot be deleted because it is associated with questions. Please delete the associated questions first."}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
@@ -1807,25 +1811,27 @@ class SelfExamViewSet(viewsets.ModelViewSet):
     queryset = Exam.objects.filter(status=True)
     serializer_class = ExamSerializer
 
+    
     def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve an Exam instance and filter its questions by language if specified.
-        """
-        exam = self.get_object()
-        language = request.query_params.get('language', None)
+            """
+            Retrieve an Exam instance and filter its questions by language if specified.
+            Limit attempts across all exams within the same subject, class category, and level to 7 attempts.
+            """
+            user = request.user
+            exam = self.get_object()
+            language = request.query_params.get('language', None)
 
-        questions = list(exam.questions.all())
-
-        if language:
-            if language not in ['Hindi', 'English']:
-                return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
+            questions = list(exam.questions.all())
+            if language:
+                if language not in ['Hindi', 'English']:
+                    return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
+            
             questions = [q for q in questions if q.language == language]
 
-        serializer = self.get_serializer(exam)
-        exam_data = serializer.data
-        exam_data['questions'] = QuestionSerializer(questions, many=True).data
-
-        return Response(exam_data, status=status.HTTP_200_OK)
+            serializer = self.get_serializer(exam)
+            exam_data = serializer.data
+            exam_data['questions'] = QuestionSerializer(questions, many=True).data
+            return Response(exam_data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'])
     def exams(self, request):

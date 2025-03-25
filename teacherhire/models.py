@@ -341,6 +341,13 @@ class TeacherExamResult(models.Model):
     isqualified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     has_exam_attempt = models.BooleanField(default=False)
+    language = models.CharField(
+        max_length=20,
+        choices=[
+            ('Hindi', 'Hindi'),
+            ('English', 'English'),
+        ],blank=True
+    )
 
     def __str__(self):
         return f"ExamResult-{self.examresult_id}"
