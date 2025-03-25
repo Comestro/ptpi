@@ -733,7 +733,6 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
                                   "class_category_id": instance.exam.class_category.id,
                                   "class_category_name": instance.exam.class_category.name,
                                 }
-                                  
         return representation
 
     def get_total_question(self, obj):
