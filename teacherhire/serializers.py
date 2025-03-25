@@ -723,15 +723,17 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {"id": instance.user.id, "name": instance.user.username}
-        representation['exam'] = {"id": instance.exam.id, "name": instance.exam.name,
-                                  "level_id": instance.exam.level.id, "level_name": instance.exam.level.name,
-                                  "subject_id": instance.exam.subject.id,
-                                  "subjet_name": instance.exam.subject.subject_name,
-                                  "class_category_id": instance.exam.class_category.id,
-                                  "class_category_name": instance.exam.class_category.name,
-                                }
-                                  
+        representation['user'] = {"id": instance.user.id, "name": instance.user.username} if instance.user else None
+        representation['exam'] = {
+            "id": instance.exam.id, 
+            "name": instance.exam.name,
+            "level_id": instance.exam.level.id, 
+            "level_name": instance.exam.level.name,
+            "subject_id": instance.exam.subject.id,
+            "subjet_name": instance.exam.subject.subject_name,
+            "class_category_id": instance.exam.class_category.id,
+            "class_category_name": instance.exam.class_category.name,
+        } if instance.exam else None
         return representation
 
     def get_total_question(self, obj):
