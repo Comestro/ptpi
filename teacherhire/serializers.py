@@ -739,8 +739,6 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-<<<<<<< HEAD
-<<<<<<< HEAD
         representation['user'] = {"id": instance.user.id, "name": instance.user.username} if instance.user else None
         representation['exam'] = {
             "id": instance.exam.id, 
@@ -752,9 +750,6 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
             "class_category_id": instance.exam.class_category.id,
             "class_category_name": instance.exam.class_category.name,
         } if instance.exam else None
-=======
-=======
->>>>>>> 69f072fe661252c1a364fc7799aaa3fdb193a158
 
         representation['user'] = {
             "id": instance.user.id,
@@ -793,11 +788,6 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
                     "created_at": interview.created_at
                 } for interview in interviews
             ] if interviews.exists() else []
-
-<<<<<<< HEAD
->>>>>>> 17a6debc42fc364dfd274bdce59afe3c305f326e
-=======
->>>>>>> 69f072fe661252c1a364fc7799aaa3fdb193a158
         return representation
 
 
