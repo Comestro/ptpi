@@ -270,7 +270,7 @@ class ExamCenter(models.Model):
     status = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.center_name
+        return str(self.center_name)
     
 class AssignedQuestionUser(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
@@ -302,7 +302,7 @@ class Exam(models.Model):
     status = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name 
+        return str(self.name) 
 
 class Question(models.Model):
     related_question = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
