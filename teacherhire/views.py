@@ -2134,7 +2134,7 @@ class InterviewViewSet(viewsets.ModelViewSet):
             <html>
                 <body>
                     <p>Dear {user},</p>
-                    <p>Your interview for <strong>{subject} {class_category}</strong> has been scheduled.</p>
+                    <p>Your interview for <strong>{subject}, {class_category}</strong> has been scheduled.</p>
                     <p><strong>Interview Time:</strong> {time}</p>
                     <p><strong>Interview Link:</strong> <a href="{link}">Join your interview here</a></p>
                     <p>Please make sure to join at the scheduled time.</p>
