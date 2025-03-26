@@ -2062,7 +2062,7 @@ class GeneratePasskeyView(APIView):
             exam=exam,
             code=str(passkey),
             center=center,
-            status=False,
+            status='requested',
         )
         user_serializer = UserSerializer(user)
         exam_serializer = ExamSerializer(exam)

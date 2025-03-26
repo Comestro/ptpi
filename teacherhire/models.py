@@ -393,7 +393,7 @@ class Passkey(models.Model):
     reject_reason = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return f"{self.code} - {self.exam}"
+        return str(self.user.username)
     
 class Interview(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
