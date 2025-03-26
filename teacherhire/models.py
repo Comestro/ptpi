@@ -316,7 +316,7 @@ class Question(models.Model):
         ],blank=True, null=True)
     text = models.CharField(max_length=2000)
     options = models.JSONField()
-    solution = models.TextField(blank=True, default="")
+    solution = models.TextField(blank=True,null=True, default="")
     correct_option = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
