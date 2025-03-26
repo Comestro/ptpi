@@ -1299,8 +1299,8 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TeacherExamResult.objects.filter(user=self.request.user)
     
-
-    # def get_queryset(self):
+    # @action(detail=False, methods=['get'])
+    # def interview(self):
     #     user = self.request.user
     #     user_interview = Interview.objects.filter(user=user)
     #     user_result = TeacherExamResult.objects.filter(user=user)
