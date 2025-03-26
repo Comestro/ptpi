@@ -153,6 +153,7 @@ class Skill(models.Model):
     
 class Level(models.Model):
     name = models.CharField(max_length=100, null=True, blank=True, choices=[('1st Level','1st Level'),('2nd Level Online','2nd Level Online'),('2nd Level Offline','2nd Level Offline')])
+    level_code = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
 
     def __str__(self):
@@ -315,7 +316,7 @@ class Question(models.Model):
         ],blank=True, null=True)
     text = models.CharField(max_length=2000)
     options = models.JSONField()
-    solution = models.TextField(null=True,blank=True)
+    solution = models.TextField(blank=True,null=True, default="")
     correct_option = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 

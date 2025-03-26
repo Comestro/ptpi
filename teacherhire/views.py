@@ -1295,9 +1295,18 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+    
     def get_queryset(self):
         return TeacherExamResult.objects.filter(user=self.request.user)
+    
+    # @action(detail=False, methods=['get'])
+    # def interview(self):
+    #     user = self.request.user
+    #     user_interview = Interview.objects.filter(user=user)
+    #     user_result = TeacherExamResult.objects.filter(user=user)
+    #     if user_interview:
+    #         return user_result, user_interview
+    #     return user_result
 
     @action(detail=False, methods=['get'])
     def count(self, request):
@@ -2204,7 +2213,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
