@@ -49,6 +49,7 @@ router.register(r"admin/count", CountDataViewSet, basename="admin-count")
 
 # === Teacher Routes ===
 router.register(r"admin/teacher", TeacherViewSet, basename="admin-teacher")
+router.register(r"admin/teacherSearch", RecruiterTeacherSearch, basename="admin-teacherSearch")
 router.register(r"self/customuser", CustomUserViewSet, basename="self-customuser")
 router.register(r"self/teacherexperience", SingleTeacherExperiencesViewSet, basename="self-teacherexperience")
 router.register(r"self/teacherexamresult", TeacherExamResultViewSet, basename="self-teacherexamresult")

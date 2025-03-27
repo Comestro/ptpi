@@ -571,6 +571,39 @@ class TeacherViewSet(viewsets.ModelViewSet):
         return None
 
 
+class RecruiterTeacherSearch(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsRecruiterUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = TeacherSerializer
+
+    def get_queryset(self):
+        queryset = CustomUser.objects.all()
+        search_query = self.request.query_params.get('search', None)
+
+        if search_query:
+            search_query = search_query.strip()  
+            name_parts = search_query.split()
+
+            name_query = Q()
+            if len(name_parts) >= 2:
+                fname = name_parts[0]
+                lname = name_parts[-1]
+                name_query = Q(Fname__icontains=fname) & Q(Lname__icontains=lname)
+            else:
+                fname = name_parts[0]
+                name_query = Q(Fname__icontains=fname) | Q(Lname__icontains=fname)
+
+            search_conditions = (
+                name_query |                
+                Q(teacherqualifications__qualification__name__icontains=search_query) |
+                Q(preferences__prefered_subject__subject_name__icontains=search_query) |
+                Q(preferences__class_category__name__icontains=search_query) |
+                Q(preferences__teacher_job_type__teacher_job_name__icontains=search_query)
+            )
+
+            queryset = queryset.filter(search_conditions).distinct()
+
+        return queryset
 class ClassCategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -1285,11 +1318,29 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherExamResultSerializer
 
     def create(self, request, *args, **kwargs):
-        # Add the authenticated user to the request data
         data = request.data.copy()
         user = request.user.id
         data['user'] = user
         data['has_exam_attempt'] = True
+        try:
+            exam = Exam.objects.get(id=data['exam'])
+        except Exam.DoesNotExist:
+            return Response(
+                {"error": "Invalid exam ID."},
+                status=status.HTTP_400_BAD_REQUEST
+        )
+        existing_result = TeacherExamResult.objects.filter(
+        user=user,
+        exam__subject=exam.subject,
+        exam__class_category=exam.class_category,
+        exam__level=exam.level
+        ).first()
+
+        if existing_result:
+            existing_result.attempt += 1
+            existing_result.save()
+            serializer = self.get_serializer(existing_result)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -1299,53 +1350,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TeacherExamResult.objects.filter(user=self.request.user)
     
-    # @action(detail=False, methods=['get'])
-    # def interview(self):
-    #     user = self.request.user
-    #     user_interview = Interview.objects.filter(user=user)
-    #     user_result = TeacherExamResult.objects.filter(user=user)
-    #     if user_interview:
-    #         return user_result, user_interview
-    #     return user_result
-
-    @action(detail=False, methods=['get'])
-    def count(self, request):
-        user = request.user
-
-        if not user.is_authenticated:
-            return Response({"detail": "Authentication credentials were not provided."}, status=401)
-
-        preferred_subjects = Subject.objects.filter(preference__user=user).distinct()
-
-        response_data = {}
-
-        for subject in preferred_subjects:
-            class_category_name = subject.class_category.name
-
-            if class_category_name not in response_data:
-                response_data[class_category_name] = {}
-
-            level1_count = TeacherExamResult.objects.filter(
-                user=user,
-                exam__subject=subject,
-                exam__level_id=1
-            ).count()
-
-            level2_count = TeacherExamResult.objects.filter(
-                user=user,
-                exam__subject=subject,
-                exam__level_id=2
-            ).count()
-
-            response_data[class_category_name][subject.subject_name] = {
-                "level1": level1_count,
-                "level2": level2_count
-            }
-
-        return Response(response_data)
-
-
-
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1822,10 +1826,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
     
     def retrieve(self, request, *args, **kwargs):
-            """
-            Retrieve an Exam instance and filter its questions by language if specified.
-            Limit attempts across all exams within the same subject, class category, and level to 7 attempts.
-            """
             user = request.user
             exam = self.get_object()
             language = request.query_params.get('language', None)
@@ -1927,7 +1927,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_1_exam = exam_set.filter(level__name="1st Level").first()
         level_2_online_exam = exam_set.filter(level__name="2nd Level Online", type='online').first()
         level_2_offline_exam = exam_set.filter(level__name="2nd Level Offline", type='offline').first()
-
         final_exam_set = []
         if level_1_exam:
             final_exam_set.append(level_1_exam)
@@ -1940,8 +1939,42 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ExamSerializer(final_exam_set, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response_data = {
+            "exams": serializer.data
+        }
 
+        if online_qualified_level_2:
+            exam = exam_set.filter(level__name="2nd Level Online", type='online').first()
+            if not exam:
+                return Response({"error": "No valid exam found for the 2nd Level Online."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if Interview.objects.filter(user=user, status='requested').exists():
+                return Response(
+                    {"error": "You already have a pending interview. Please complete it before scheduling another."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if Interview.objects.filter(user=user,
+                    subject=exam.subject,
+                    class_category=exam.class_category).exists():
+                return Response({"error": "Interview with the same details already exists."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if exam:
+                interview = Interview.objects.create(
+                    user=user,
+                    subject=exam.subject,
+                    class_category=exam.class_category
+                ) 
+
+                if interview:
+                    interview_serializer = InterviewSerializer(interview)
+                    response_data["interview_details"] = interview_serializer.data
+                else:
+                    response_data["interview_details"] = f"Congratulations! You are eligible for an interview for {exam.subject.name} - {exam.class_category.name}. No interview scheduled yet."
+            else:
+                response_data["interview_details"] = "Congratulations! You are eligible for an interview.  Could not determine the specific exam details."
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
@@ -2175,37 +2208,24 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def create(self, request, *args, **kwargs):
-        # Deserialize data
-        serializer = self.get_serializer(data=request.data)
-
-        if serializer.is_valid():
-            user = request.user
-            time = serializer.validated_data.get('time')
-            subject = serializer.validated_data.get('subject')
-            class_category = serializer.validated_data.get('class_category')
-            check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject,
-                                                                    exam__class_category_id=class_category,
-                                                                    exam__level_id=2, exam__type='online').exists()
-
-            if not check_exam_qualified:
-                return Response({"error": "First qualify this classcategory subject exams for Interview "})
-
-            # Check if user already has a pending interview
-            if Interview.objects.filter(user=user, status='requested').exists():
-                return Response(
-                    {"error": "You already have a pending interview. Please complete it before scheduling another."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Check for duplicate interview
-            if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
-                return Response({"error": "Interview with the same details already exists."},
-                                status=status.HTTP_400_BAD_REQUEST)
-            serializer.save(user=user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        print("Validation errors:", serializer.errors)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+        subject = request.data.get('subject')
+        class_category = request.data.get('class_category')
+        if not subject or not class_category:
+            return Response({"error": "Subject and Class Category are required."}, status=status.HTTP_400_BAD_REQUEST)
+        interview = Interview.objects.filter(user=user, subject_id=subject, class_category_id=class_category).first()
+        if interview:
+            interview.status = 'requested'
+            interview.save()
+            return Response(
+                {"message": "Your Interview request is sent successfully.", "interview": InterviewSerializer(interview).data},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"error": "No interview found for the given subject and class category."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
     def get_queryset(self):
         user = self.request.user
