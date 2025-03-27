@@ -125,7 +125,7 @@ class PasskeyAdmin(admin.ModelAdmin):
 
 @admin.register(Interview)
 class InterviewAdmin(admin.ModelAdmin):
-    list_display = ['user', 'time','link','grade','status','created_at']
+    list_display = ['user', 'time','link','subject','class_category','grade','status','created_at']
 @admin.register(ExamCenter)
 class ExamCenter(admin.ModelAdmin):
     list_display = ['user', 'center_name', 'pincode', 'state', 'city', 'status','area']
