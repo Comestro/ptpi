@@ -570,6 +570,39 @@ class TeacherViewSet(viewsets.ModelViewSet):
                     teacherexperiences__start_date__lt=end_date_threshold)
         return None
 
+class RecruiterTeacherSearch(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsRecruiterUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = TeacherSerializer
+
+    def get_queryset(self):
+        queryset = CustomUser.objects.all() 
+        search_query = self.request.query_params.get('search', None)
+
+        if search_query:
+            search_query = search_query.strip().lower()
+
+            name_query = Q()
+
+            name_parts = search_query.split()
+
+            if len(name_parts) >= 2:
+                fname = name_parts[0]
+                lname = name_parts[-1]
+                name_query |= Q(Fname__icontains=fname) & Q(Lname__icontains=lname)
+            else:
+                fname = name_parts[0]
+                name_query |= Q(Fname__icontains=fname) | Q(Lname__icontains=fname)
+
+            queryset = queryset.filter(name_query)
+
+            queryset = queryset.filter(
+                Q(email__icontains=search_query) |
+                Q(teacherskill__skill__name__icontains=search_query) |                  
+                Q(teacherqualifications__qualification__name__icontains=search_query) 
+            )
+
+        return queryset
 
 class ClassCategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
