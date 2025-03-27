@@ -1318,11 +1318,29 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherExamResultSerializer
 
     def create(self, request, *args, **kwargs):
-        # Add the authenticated user to the request data
         data = request.data.copy()
         user = request.user.id
         data['user'] = user
         data['has_exam_attempt'] = True
+        try:
+            exam = Exam.objects.get(id=data['exam'])
+        except Exam.DoesNotExist:
+            return Response(
+                {"error": "Invalid exam ID."},
+                status=status.HTTP_400_BAD_REQUEST
+        )
+        existing_result = TeacherExamResult.objects.filter(
+        user=user,
+        exam__subject=exam.subject,
+        exam__class_category=exam.class_category,
+        exam__level=exam.level
+        ).first()
+
+        if existing_result:
+            existing_result.attempt += 1
+            existing_result.save()
+            serializer = self.get_serializer(existing_result)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -1332,53 +1350,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TeacherExamResult.objects.filter(user=self.request.user)
     
-    # @action(detail=False, methods=['get'])
-    # def interview(self):
-    #     user = self.request.user
-    #     user_interview = Interview.objects.filter(user=user)
-    #     user_result = TeacherExamResult.objects.filter(user=user)
-    #     if user_interview:
-    #         return user_result, user_interview
-    #     return user_result
-
-    @action(detail=False, methods=['get'])
-    def count(self, request):
-        user = request.user
-
-        if not user.is_authenticated:
-            return Response({"detail": "Authentication credentials were not provided."}, status=401)
-
-        preferred_subjects = Subject.objects.filter(preference__user=user).distinct()
-
-        response_data = {}
-
-        for subject in preferred_subjects:
-            class_category_name = subject.class_category.name
-
-            if class_category_name not in response_data:
-                response_data[class_category_name] = {}
-
-            level1_count = TeacherExamResult.objects.filter(
-                user=user,
-                exam__subject=subject,
-                exam__level_id=1
-            ).count()
-
-            level2_count = TeacherExamResult.objects.filter(
-                user=user,
-                exam__subject=subject,
-                exam__level_id=2
-            ).count()
-
-            response_data[class_category_name][subject.subject_name] = {
-                "level1": level1_count,
-                "level2": level2_count
-            }
-
-        return Response(response_data)
-
-
-
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -1855,10 +1826,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
     
     def retrieve(self, request, *args, **kwargs):
-            """
-            Retrieve an Exam instance and filter its questions by language if specified.
-            Limit attempts across all exams within the same subject, class category, and level to 7 attempts.
-            """
             user = request.user
             exam = self.get_object()
             language = request.query_params.get('language', None)
@@ -1960,7 +1927,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         level_1_exam = exam_set.filter(level__name="1st Level").first()
         level_2_online_exam = exam_set.filter(level__name="2nd Level Online", type='online').first()
         level_2_offline_exam = exam_set.filter(level__name="2nd Level Offline", type='offline').first()
-
         final_exam_set = []
         if level_1_exam:
             final_exam_set.append(level_1_exam)

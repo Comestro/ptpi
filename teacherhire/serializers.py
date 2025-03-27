@@ -731,7 +731,7 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherExamResult
         fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer','language',
-                  'total_question', 'isqualified', 'calculate_percentage', 'created_at', 'has_exam_attempt','interview']
+                  'total_question', 'isqualified', 'calculate_percentage', 'created_at', 'has_exam_attempt','attempt','interview']
         
     def get_interview(self, obj):
         """Fetch the interview details for the user."""
