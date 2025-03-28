@@ -342,7 +342,7 @@ class TeacherExamResult(models.Model):
     isqualified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     has_exam_attempt = models.BooleanField(default=False)
-    attempt = models.IntegerField(default=0)
+    attempt = models.IntegerField(default=1)
     language = models.CharField(
         max_length=20,
         choices=[
@@ -404,7 +404,7 @@ class Interview(models.Model):
     link = models.CharField(max_length=200,null= True, blank=True)
     status = models.CharField(max_length=200,choices=[('requested','requested'),('scheduled','scheduled'),('fulfilled','fulfilled'),('rejected','rejected')], default='', null=True, blank=True)
     reject_reason = models.CharField(max_length=500, null=True, blank=True)
-    grade = models.IntegerField(default=0,null=True, blank=True)
+    grade = models.FloatField(default=0,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
