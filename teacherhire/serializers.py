@@ -414,8 +414,12 @@ class QuestionSerializer(serializers.ModelSerializer):
     def validate_text(self, value):
         if value is not None and len(value) < 5:
             raise serializers.ValidationError("Text must be at least 5 characters.")
+        if self.instance and self.instance.language == "Hindi":
+            return value
         question_id = self.instance.id if self.instance else None
-        if Question.objects.filter(text=value).exclude(id=question_id).exists():
+        exam = self.instance.exam if self.instance else self.initial_data.get('exam')
+
+        if Question.objects.filter(text=value, exam=exam).exclude(id=question_id).exists():
             raise serializers.ValidationError("This question already exists for this exam.")
         return value
     
@@ -427,6 +431,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     def create(self, validated_data, *args, **kwargs):
         translator = Translator()
         language = validated_data.get("language")
+        subject = validated_data.get("exam").subject if validated_data.get("exam") else None
         if language == 'Hindi':
             try:
                 hindi_question = Question.objects.create(**validated_data)
@@ -435,6 +440,15 @@ class QuestionSerializer(serializers.ModelSerializer):
             return {
                 "hindi_data": QuestionSerializer(hindi_question).data
             }
+        if subject and subject.subject_name.lower() == 'english':
+            try:
+                english_question = Question.objects.create(**validated_data)
+            except KeyError as e:
+                raise serializers.ValidationError(f"Missing field {e.args[0]} in English question.")
+            return {
+                "english_data": QuestionSerializer(english_question).data
+            }
+
         english_text = validated_data.get("text")
         english_solution = validated_data.get("solution")
         english_options = validated_data.get("options", [])
@@ -480,7 +494,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
         instance.save()
 
-        if instance.language == 'Hindi':
+        if instance.language == 'Hindi' or instance.exam.subject.subject_name.lower() == 'english' == 'English':
             return instance
 
         hindi_related_question = Question.objects.filter(related_question=instance).first()

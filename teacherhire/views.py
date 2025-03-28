@@ -935,23 +935,32 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             updated_instance = serializer.save()
+            english_data = QuestionSerializer(updated_instance).data
             if updated_instance.language == "Hindi":
                 return Response({
                     "message": "Question updated successfully",
                     "hindi_data": QuestionSerializer(updated_instance).data  
                 }, status=status.HTTP_200_OK)
-            hindi_data = Question.objects.get(related_question=updated_instance)
-            if hasattr(updated_instance, 'related_question'):
-                hindi_data = QuestionSerializer(hindi_data).data
+            if updated_instance.exam.subject.subject_name == "English":
+                return Response({
+                    "message": "Question updated successfully",
+                    "english_data": english_data
+                }, status=status.HTTP_200_OK)
+            hindi_data = None
+            try:
+                hindi_related_question = Question.objects.get(related_question=updated_instance)
+                hindi_data = QuestionSerializer(hindi_related_question).data
+            except Question.DoesNotExist:
+                pass
 
             return Response({
                 "message": "Question updated successfully",
-                "english_data": QuestionSerializer(updated_instance).data,
+                "english_data": english_data,
                 "hindi_data": hindi_data
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -2204,7 +2213,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        return Interview.objects.filter(user=user)
+        return Interview.objects.filter(user=user).exclude(status='fulfilled')
     
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
