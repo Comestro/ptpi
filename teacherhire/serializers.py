@@ -710,34 +710,16 @@ class TeacherClassCategorySerializer(serializers.ModelSerializer):
         model = TeacherClassCategory
         fields = '__all__'
 
-class InterviewSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Interview
-        fields = ['id', 'time', 'link', 'status', 'class_category', 'subject', 'grade']  # Exclude 'user' from here
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
-        representation['subject'] = SubjectSerializer(instance.subject).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category).data
-        return representation
 
 class TeacherExamResultSerializer(serializers.ModelSerializer):
     exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     total_question = serializers.SerializerMethodField()
-    interview = InterviewSerializer(many=True, required=False)
 
     class Meta:
         model = TeacherExamResult
         fields = ['examresult_id', 'exam', 'user', 'correct_answer', 'is_unanswered', 'incorrect_answer','language',
-                  'total_question', 'isqualified', 'calculate_percentage', 'created_at', 'has_exam_attempt','attempt','interview']
-        
-    def get_interview(self, obj):
-        """Fetch the interview details for the user."""
-        interviews = Interview.objects.filter(user=obj.user)
-        return InterviewSerializer(interviews, many=True).data
-        
+                  'total_question', 'isqualified', 'calculate_percentage', 'created_at', 'has_exam_attempt']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -752,62 +734,13 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
             "class_category_id": instance.exam.class_category.id,
             "class_category_name": instance.exam.class_category.name,
         } if instance.exam else None
-
-        representation['user'] = {
-            "id": instance.user.id,
-            "name": instance.user.username
-        }
-
-        if instance.exam:
-            representation['exam'] = {
-                "id": instance.exam.id,
-                "name": instance.exam.name,
-                "level_id": instance.exam.level.id,
-                "level_name": instance.exam.level.name,
-                "subject_id": instance.exam.subject.id,
-                "subject_name": instance.exam.subject.subject_name,
-                "class_category_id": instance.exam.class_category.id,
-                "class_category_name": instance.exam.class_category.name,
-            }
-
-            # 🔹 Debugging Logs
-            print(f"Exam: {instance.exam.subject.subject_name}, Created At: {instance.created_at}")
-
-            # 🔹 Fetch interviews AFTER the exam result
-            interviews = Interview.objects.filter(
-                user=instance.user,
-                subject=instance.exam.subject,
-                class_category=instance.exam.class_category,
-                created_at__gte=instance.created_at  # Changed to >=
-            ).exclude(grade__isnull=True).order_by('-created_at')
-
-            print(f"Interviews Found: {interviews.count()}")
-
-            representation['interviews'] = [
-                {
-                    "id": interview.id,
-                    "subject": interview.subject.subject_name,
-                    "class_category": interview.class_category.name,
-                    "time": interview.time,
-                    "link": interview.link,
-                    "status": interview.status,
-                    "grade": interview.grade if interview.grade is not None else "N/A",
-                    "created_at": interview.created_at
-                } for interview in interviews
-            ] if interviews.exists() else []
         return representation
 
-
-
-
     def get_total_question(self, obj):
-        if isinstance(obj, TeacherExamResult):
-            correct = obj.correct_answer if obj.correct_answer is not None else 0
-            unanswered = obj.is_unanswered if obj.is_unanswered is not None else 0
-            incorrect = obj.incorrect_answer if obj.incorrect_answer is not None else 0
-            return correct + unanswered + incorrect
-        return None  
-
+        correct = obj.correct_answer if obj.correct_answer is not None else 0
+        unanswered = obj.is_unanswered if obj.is_unanswered is not None else 0
+        incorrect = obj.incorrect_answer if obj.incorrect_answer is not None else 0
+        return correct + unanswered + incorrect
 
 
 class JobPreferenceLocationSerializer(serializers.ModelSerializer):
@@ -985,6 +918,17 @@ class PasskeySerializer(serializers.ModelSerializer):
         representation['user'] = {"id": instance.user.id, "email": instance.user.email}
         representation['exam'] = {"id": instance.exam.id, "name": instance.exam.name}
         representation['center'] = {"id": instance.center.id, "name": instance.center.center_name}
+        return representation
+
+
+class InterviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Interview
+        fields = ['id', 'time', 'link', 'status', 'class_category', 'subject', 'grade']  # Exclude 'user' from here
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
         return representation
 
 
