@@ -1954,11 +1954,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            if Interview.objects.filter(user=user,
-                    subject=exam.subject,
-                    class_category=exam.class_category).exists():
-                return Response({"error": "Interview with the same details already exists."},
-                                status=status.HTTP_400_BAD_REQUEST)
             if exam:
                 interview = Interview.objects.create(
                     user=user,
@@ -1975,6 +1970,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 response_data["interview_details"] = "Congratulations! You are eligible for an interview.  Could not determine the specific exam details."
 
         return Response(response_data, status=status.HTTP_200_OK)
+
 
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
