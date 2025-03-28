@@ -1936,41 +1936,10 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             final_exam_set.append(level_2_offline_exam)
 
         if not final_exam_set:
-            return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
+           return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ExamSerializer(final_exam_set, many=True)
-        response_data = {
-            "exams": serializer.data
-        }
-
-        if online_qualified_level_2:
-            exam = exam_set.filter(level__name="2nd Level Online", type='online').first()
-            if not exam:
-                return Response({"error": "No valid exam found for the 2nd Level Online."}, status=status.HTTP_400_BAD_REQUEST)
-
-            if Interview.objects.filter(user=user, status='requested').exists():
-                return Response(
-                    {"error": "You already have a pending interview. Please complete it before scheduling another."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            if exam:
-                interview = Interview.objects.create(
-                    user=user,
-                    subject=exam.subject,
-                    class_category=exam.class_category
-                ) 
-
-                if interview:
-                    interview_serializer = InterviewSerializer(interview)
-                    response_data["interview_details"] = interview_serializer.data
-                else:
-                    response_data["interview_details"] = f"Congratulations! You are eligible for an interview for {exam.subject.name} - {exam.class_category.name}. No interview scheduled yet."
-            else:
-                response_data["interview_details"] = "Congratulations! You are eligible for an interview.  Could not determine the specific exam details."
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
