@@ -759,18 +759,12 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
                 "class_category_name": instance.exam.class_category.name,
             }
 
-            # 🔹 Debugging Logs
-            print(f"Exam: {instance.exam.subject.subject_name}, Created At: {instance.created_at}")
-
-            # 🔹 Fetch interviews AFTER the exam result
             interviews = Interview.objects.filter(
                 user=instance.user,
                 subject=instance.exam.subject,
                 class_category=instance.exam.class_category,
                 created_at__gte=instance.created_at  # Changed to >=
             ).exclude(grade__isnull=True).order_by('-created_at')
-
-            print(f"Interviews Found: {interviews.count()}")
 
             representation['interviews'] = [
                 {
