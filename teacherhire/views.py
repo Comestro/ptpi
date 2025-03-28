@@ -1732,7 +1732,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         """Admins see all exams, assigned users see only their exams."""
         user = self.request.user
         if user.is_staff:
-            return Exam.objects.all()
+            return Exam.objects.all().order_by('-created_at')
         return Exam.objects.filter(assigneduser__user=user)
 
     def create(self, request):
@@ -1944,7 +1944,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Report.objects.all()
+    queryset = Report.objects.all().order_by('-id')
     serializer_class = ReportSerializer
 
     @action(detail=False, methods=['get'])
@@ -1999,7 +1999,7 @@ class SelfReportViewSet(viewsets.ModelViewSet):
 class PasskeyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Passkey.objects.all()
+    queryset = Passkey.objects.all().order_by('-id')
     serializer_class = PasskeySerializer
 
     @action(detail=True, methods=['put'])
@@ -2114,7 +2114,7 @@ class VerifyPasscodeView(APIView):
 class InterviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    queryset = Interview.objects.all()
+    queryset = Interview.objects.all().order_by('-id')
     serializer_class = InterviewSerializer
 
     @action(detail=False, methods=['get'])
@@ -2196,10 +2196,6 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Check for duplicate interview
-            if Interview.objects.filter(user=user, time=time, subject=subject, class_category=class_category).exists():
-                return Response({"error": "Interview with the same details already exists."},
-                                status=status.HTTP_400_BAD_REQUEST)
             serializer.save(user=user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
