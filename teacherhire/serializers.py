@@ -956,6 +956,8 @@ class InterviewSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category).data
+        representation['subject'] = SubjectSerializer(instance.subject).data
         return representation
 
 
