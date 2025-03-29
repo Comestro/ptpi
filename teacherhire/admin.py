@@ -41,7 +41,7 @@ class TeacherClassCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherExamResult)
 class TeacherExamResultAdmin(admin.ModelAdmin):
-    list_display = ['user', 'exam', 'correct_answer', 'is_unanswered', 'incorrect_answer', 'isqualified','has_exam_attempt']
+    list_display = ['user', 'exam', 'correct_answer', 'is_unanswered', 'incorrect_answer', 'isqualified','has_exam_attempt','attempt']
 
 @admin.register(JobPreferenceLocation)
 class JobPreferenceLocationAdmin(admin.ModelAdmin):
@@ -125,7 +125,7 @@ class PasskeyAdmin(admin.ModelAdmin):
 
 @admin.register(Interview)
 class InterviewAdmin(admin.ModelAdmin):
-    list_display = ['user', 'time','link','subject','class_category','grade','status','created_at']
+    list_display = ['user', 'time','link','subject','class_category','grade','status','attempt','created_at']
 @admin.register(ExamCenter)
 class ExamCenter(admin.ModelAdmin):
     list_display = ['user', 'center_name', 'pincode', 'state', 'city', 'status','area']

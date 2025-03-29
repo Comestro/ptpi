@@ -2193,21 +2193,28 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             class_category = serializer.validated_data.get('class_category')
             check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject,
                                                                     exam__class_category_id=class_category,
-                                                                    exam__level_id=2, exam__type='online').exists()
-
+                                                                    exam__level__name='2nd Level Online', exam__type='online').exists()
             if not check_exam_qualified:
                 return Response({"error": "First qualify this classcategory subject exams for Interview "})
 
-            # Check if user already has a pending interview
-            if Interview.objects.filter(user=user, status='requested').exists():
+            pending_interview = Interview.objects.filter(user=user, status='requested').exists()
+            if pending_interview:
                 return Response(
                     {"error": "You already have a pending interview. Please complete it before scheduling another."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
+            previous_attempts = Interview.objects.filter(
+                user=user,
+                subject=subject,
+                class_category=class_category
+            ).count()
 
-            serializer.save(user=user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+            serializer.save(user=user, attempt=previous_attempts + 1)
+            return Response(
+                {"message": "Your interview request is sent successfully.", "data": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
         print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

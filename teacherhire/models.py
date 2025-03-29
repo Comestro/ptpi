@@ -405,6 +405,7 @@ class Interview(models.Model):
     status = models.CharField(max_length=200,choices=[('requested','requested'),('scheduled','scheduled'),('fulfilled','fulfilled'),('rejected','rejected')], default='requested', null=True, blank=True)
     reject_reason = models.CharField(max_length=500, null=True, blank=True)
     grade = models.FloatField(default=0,null=True, blank=True)
+    attempt = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
