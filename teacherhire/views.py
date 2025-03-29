@@ -2220,7 +2220,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        return Interview.objects.filter(user=user).exclude(status='fulfilled')
+        return Interview.objects.filter(user=user).exclude(status__in=['fulfilled', 'rejected'])
     
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
