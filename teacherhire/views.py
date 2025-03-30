@@ -1370,14 +1370,9 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         user = request.user
 
-        # Check if the user has applied for a job
-        teacher_apply = Apply.objects.filter(user=user).first()
-        if not teacher_apply:
-            return Response({"error": "You must apply for a job before adding a job preference location."}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(user=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):

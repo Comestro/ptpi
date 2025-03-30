@@ -791,15 +791,15 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
 
     def validate_area(self, value):
         user = self.context['request'].user
-        teacher_apply = Apply.objects.filter(user=user).first()
-
-        if not teacher_apply:
-            raise serializers.ValidationError("You must apply for a job before adding a job preference location.")
-
-        if JobPreferenceLocation.objects.filter(area=value).exists():
+        job_preference_location_id = self.instance.id if self.instance else None
+        if JobPreferenceLocation.objects.filter(user=user, area=value).exclude(id=job_preference_location_id).exists():
             raise serializers.ValidationError("This area name already exists.")
-
         return value
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        return representation
 
 
 class BasicProfileSerializer(serializers.ModelSerializer):
