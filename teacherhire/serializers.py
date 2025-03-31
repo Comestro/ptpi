@@ -406,7 +406,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     solution = serializers.CharField(max_length=2000, allow_null=True, required=False)
     language = serializers.ChoiceField(choices=[('Hindi', 'Hindi'), ('English', 'English')], required=True)
     related_question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all(), required=False, allow_null=True)
-
+    correct_option = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     class Meta:
         model = Question
         fields = ['id', 'related_question', 'text', 'options', 'exam', 'solution', 'correct_option', 'language', 'time']
@@ -467,6 +467,7 @@ class QuestionSerializer(serializers.ModelSerializer):
             "text": hindi_text,
             "solution": hindi_solution,
             "options": hindi_options,
+            "correct_option": english_question.correct_option,
             "language": "Hindi",
             "exam": validated_data.get("exam"),
         }
