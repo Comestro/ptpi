@@ -25,6 +25,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=150, unique=True, default='default_username')
     Fname = models.CharField(max_length=100, null=True, blank=True)
     Lname = models.CharField(max_length=100, null=True, blank=True)
+    user_code = models.CharField(max_length=100, null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_recruiter = models.BooleanField(default=False)
@@ -42,17 +43,44 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
-    
-    def is_complete(self):
-        required_fields = {
-            "email": self.email,
-            "username": self.username,
-            "Fname": self.Fname,
-            "Lname": self.Lname,
 
-        }
-        missing_fields = [field for field, value in required_fields.items() if not value]
-        return not missing_fields, missing_fields
+    def save(self, *args, **kwargs):
+        if not self.user_code and (self.is_teacher or self.is_recruiter):  # Only generate for teachers/recruiters
+            self.user_code = self.generate_user_code()
+        super().save(*args, **kwargs)
+
+    def generate_user_code(self):
+        """
+        Generate a unique user code in the format: o1-04-2025 001
+        - 'o1' is a fixed prefix
+        - '04-2025' is the current month-year
+        - '001' is an incremental number
+        """
+        today = now()
+        date_part = today.strftime("%m-%Y")  # e.g., "04-2025"
+        prefix = "o1"
+
+        last_user = CustomUser.objects.filter(user_code__startswith=f"{prefix}-{date_part}").order_by('-id').first()
+
+        if last_user and last_user.user_code:
+            last_number = int(last_user.user_code.split(" ")[-1])
+            new_number = str(last_number + 1).zfill(3)  # Increment and format as 3-digit
+        else:
+            new_number = "001" 
+
+        return f"{prefix}-{date_part} {new_number}"
+    
+    
+    # def is_complete(self):
+    #     required_fields = {
+    #         "email": self.email,
+    #         "username": self.username,
+    #         "Fname": self.Fname,
+    #         "Lname": self.Lname,
+
+    #     }
+    #     missing_fields = [field for field, value in required_fields.items() if not value]
+    #     return not missing_fields, missing_fields
 
 class TeachersAddress(models.Model):
     ADDRESS_TYPE_CHOICES = [
@@ -407,6 +435,7 @@ class Interview(models.Model):
     grade = models.FloatField(default=0,null=True, blank=True)
     attempt = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+    # level = models.ForeignKey(Level , on_delete=models.CASCADE, default="2nd Level")
     
     def __str__(self):
         return str(self.user.username)
