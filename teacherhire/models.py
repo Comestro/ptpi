@@ -424,9 +424,13 @@ class Passkey(models.Model):
     def __str__(self):
         return str(self.user.username)
     
+
+def get_default_level():
+    return Level.objects.get_or_create(name='2nd Level Online')[0]   
 class Interview(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    level = models.ForeignKey(Level, on_delete=models.CASCADE, default=get_default_level)
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True, blank=True)
     link = models.CharField(max_length=200,null= True, blank=True)
@@ -435,8 +439,7 @@ class Interview(models.Model):
     grade = models.FloatField(default=0,null=True, blank=True)
     attempt = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    # level = models.ForeignKey(Level , on_delete=models.CASCADE, default="2nd Level")
-    
+
     def __str__(self):
         return str(self.user.username)
     
