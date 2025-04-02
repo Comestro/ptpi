@@ -51,25 +51,25 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def generate_user_code(self):
         """
-        Generate a unique user code in the format: o1-04-2025 001
+        Generate a unique user code in the format: o1-02-04-2025 001
         - 'o1' is a fixed prefix
-        - '04-2025' is the current month-year
-        - '001' is an incremental number
+        - '02-04-2025' is the current day-month-year
+        - '001' is an incremental number that resets daily
         """
         today = now()
-        date_part = today.strftime("%m-%Y")  # e.g., "04-2025"
+        date_part = today.strftime("%d-%m-%Y")  # Include day, e.g., "02-04-2025"
         prefix = "o1"
 
+        # Fetch the last user code for today
         last_user = CustomUser.objects.filter(user_code__startswith=f"{prefix}-{date_part}").order_by('-id').first()
 
         if last_user and last_user.user_code:
-            last_number = int(last_user.user_code.split(" ")[-1])
+            last_number = int(last_user.user_code.split(" ")[-1])  # Extract the last number
             new_number = str(last_number + 1).zfill(3)  # Increment and format as 3-digit
         else:
-            new_number = "001" 
+            new_number = "001"  # Reset daily
 
         return f"{prefix}-{date_part} {new_number}"
-    
     
     # def is_complete(self):
     #     required_fields = {
