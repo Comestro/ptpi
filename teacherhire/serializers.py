@@ -966,7 +966,7 @@ class PasskeySerializer(serializers.ModelSerializer):
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interview
-        fields = ['id', 'time', 'link', 'status', 'class_category', 'subject', 'grade','attempt','created_at']  # Exclude 'user' from here
+        fields = ['id', 'time', 'link', 'status', 'class_category','level' ,'subject', 'grade','attempt','created_at']  # Exclude 'user' from here
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

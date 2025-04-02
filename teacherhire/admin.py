@@ -10,7 +10,7 @@ class EducationalQualificationAdmin(admin.ModelAdmin):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ['email', 'username', 'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter', 'is_teacher','is_centeruser', 'is_verified', 'otp', 'otp_created_at','date']
+    list_display = ['email', 'username', 'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter', 'is_teacher','is_centeruser', 'is_verified', 'otp', 'user_code', 'otp_created_at','date']
 @admin.register(TeacherQualification)
 class TeacherQualificationAdmin(admin.ModelAdmin):
     list_display = ['user', 'qualification','institution','year_of_passing','grade_or_percentage']
@@ -117,7 +117,7 @@ class TeacherJobTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Exam)
 class ExamAdmin(admin.ModelAdmin):
-    list_display = ['assigneduser','subject', 'level', 'class_category', 'duration', 'name', 'description', 'total_marks','type', 'created_at','updated_at']
+    list_display = ['assigneduser','subject', 'level', 'class_category', 'duration', 'name', 'description', 'total_marks','type', 'created_at','updated_at', 'status']
 
 @admin.register(Passkey)
 class PasskeyAdmin(admin.ModelAdmin):
