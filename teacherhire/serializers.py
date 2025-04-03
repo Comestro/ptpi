@@ -974,6 +974,7 @@ class InterviewSerializer(serializers.ModelSerializer):
         representation['user'] = UserSerializer(instance.user).data
         representation['class_category'] = ClassCategorySerializer(instance.class_category).data
         representation['subject'] = SubjectSerializer(instance.subject).data
+        representation['level'] = LevelSerializer(instance.level).data
         return representation
 
 
