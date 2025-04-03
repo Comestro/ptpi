@@ -349,7 +349,7 @@ class ReasonSerializer(serializers.ModelSerializer):
 class LevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Level
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'level_code', 'description']
 
     def validate_name(self, value):
         if Level.objects.filter(name=value).exists():

@@ -109,7 +109,7 @@ admin.site.register(Question, QuestionAdmin)
 
 @admin.register(Level)
 class LevelAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description']
+    list_display = ['name','level_code', 'description']
 
 @admin.register(TeacherJobType)
 class TeacherJobTypeAdmin(admin.ModelAdmin):
