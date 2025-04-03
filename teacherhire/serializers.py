@@ -750,6 +750,7 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
                 "name": instance.exam.name,
                 "level_id": instance.exam.level.id,
                 "level_name": instance.exam.level.name,
+                "level_code": instance.exam.level.level_code,
                 "subject_id": instance.exam.subject.id,
                 "subject_name": instance.exam.subject.subject_name,
                 "class_category_id": instance.exam.class_category.id,
