@@ -49,38 +49,30 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             self.user_code = self.generate_user_code()
         super().save(*args, **kwargs)
 
+
     def generate_user_code(self):
         """
-        Generate a unique user code in the format: o1-02-04-2025 001
-        - 'o1' is a fixed prefix
-        - '02-04-2025' is the current day-month-year
-        - '001' is an incremental number that resets daily
+        Generate a unique user code in the format: "DD-MM-YYYY XXX"
+        - 'DD-MM-YYYY' is the current day-month-year
+        - 'XXX' is an incremental number that resets daily
         """
         today = now()
-        date_part = today.strftime("%d-%m-%Y")  # Include day, e.g., "02-04-2025"
-        prefix = "o1"
+        date_part = today.strftime("%d-%m-%Y")
 
-        # Fetch the last user code for today
-        last_user = CustomUser.objects.filter(user_code__startswith=f"{prefix}-{date_part}").order_by('-id').first()
+        last_user = CustomUser.objects.filter(
+            user_code__startswith=f"{date_part}"
+        ).order_by('-id').first()
 
         if last_user and last_user.user_code:
-            last_number = int(last_user.user_code.split(" ")[-1])  # Extract the last number
-            new_number = str(last_number + 1).zfill(3)  # Increment and format as 3-digit
+            try:
+                last_number = int(last_user.user_code.split(" ")[-1])
+                new_number = str(last_number + 1).zfill(3) 
+            except ValueError:
+                new_number = "001"  # If format is wrong, start fresh
         else:
             new_number = "001"  # Reset daily
 
-        return f"{prefix}-{date_part} {new_number}"
-    
-    # def is_complete(self):
-    #     required_fields = {
-    #         "email": self.email,
-    #         "username": self.username,
-    #         "Fname": self.Fname,
-    #         "Lname": self.Lname,
-
-    #     }
-    #     missing_fields = [field for field, value in required_fields.items() if not value]
-    #     return not missing_fields, missing_fields
+        return f"{date_part} {new_number}"
 
 class TeachersAddress(models.Model):
     ADDRESS_TYPE_CHOICES = [
