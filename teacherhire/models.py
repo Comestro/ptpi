@@ -172,7 +172,7 @@ class Skill(models.Model):
         return self.name
     
 class Level(models.Model):
-    name = models.CharField(max_length=100, null=True, blank=True, choices=[('1st Level','1st Level'),('2nd Level Online','2nd Level Online'),('2nd Level Offline','2nd Level Offline')])
+    name = models.CharField(max_length=100, null=True, blank=True)
     level_code = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
 
@@ -422,7 +422,7 @@ def get_default_level():
 class Interview(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    level = models.ForeignKey(Level, on_delete=models.CASCADE, default=get_default_level)
+    level = models.ForeignKey(Level, on_delete=models.CASCADE, null=True,blank=True)
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True, blank=True)
     link = models.CharField(max_length=200,null= True, blank=True)
