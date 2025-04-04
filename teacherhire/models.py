@@ -347,7 +347,7 @@ class Question(models.Model):
                 'correct_option': f'Correct option must be between 1 and {len(self.options)}.'
             })
     class Meta:
-        ordering = ['created_at']
+        ordering = ['-created_at']
 
     def __str__(self):
        return self.text
@@ -386,11 +386,22 @@ class TeacherExamResult(models.Model):
 
     def save(self, *args, **kwargs):
         self.isqualified = self.get_()
-        if self.pk is None:  # Handle attempts only for new entries
-            last_result = TeacherExamResult.objects.filter(
-                user=self.user
-            ).order_by('-created_at').first()
+        
+        if self.pk is None:
+            existing_result = TeacherExamResult.objects.filter(
+                user=self.user,
+                exam__subject=self.exam.subject,
+                exam__class_category=self.exam.class_category,
+                exam__level=self.exam.level
+            ).order_by('-created_at').first()  
+
+            if existing_result:
+                self.attempt = existing_result.attempt + 1
+            else:
+                self.attempt = 1
+
         super().save(*args, **kwargs)
+
 
 class Report(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_reports", null=True)

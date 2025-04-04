@@ -1338,18 +1338,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid exam ID."},
                 status=status.HTTP_400_BAD_REQUEST
         )
-        existing_result = TeacherExamResult.objects.filter(
-        user=user,
-        exam__subject=exam.subject,
-        exam__class_category=exam.class_category,
-        exam__level=exam.level
-        ).first()
-
-        if existing_result:
-            existing_result.attempt += 1
-            existing_result.save()
-            serializer = self.get_serializer(existing_result)
-            return Response(serializer.data, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

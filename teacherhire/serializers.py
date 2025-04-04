@@ -759,9 +759,10 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
 
             interviews = Interview.objects.filter(
                 user=instance.user,
+                level=instance.exam.level,
                 subject=instance.exam.subject,
                 class_category=instance.exam.class_category,
-                created_at__gte=instance.created_at  # Changed to >=
+                created_at__gte=instance.created_at  
             ).exclude(grade__isnull=True).order_by('-created_at')
 
             representation['interviews'] = [
@@ -772,6 +773,7 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
                     "time": interview.time,
                     "link": interview.link,
                     "status": interview.status,
+                    'attempt': interview.attempt,
                     "grade": interview.grade if interview.grade is not None else "N/A",
                     "created_at": interview.created_at
                 } for interview in interviews
