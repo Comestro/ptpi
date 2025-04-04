@@ -14,3 +14,4 @@ ptpi/__pycache__
 /server
 /.idea/
 /venv
+/static/
