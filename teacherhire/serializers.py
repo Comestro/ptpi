@@ -632,14 +632,13 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_grade_or_percentage(self, value):
-        value_str = str(value).strip()  # Convert to string for regex checking
+        value_str = str(value).strip()
 
-        # Check if input is a valid letter grade (A, B+, C-, etc.)
         if re.fullmatch(r"^[A-D][+-]?$", value_str, re.IGNORECASE):
-            return value_str.upper()  # Standardize to uppercase (e.g., "a" → "A")
+            return value_str.upper()  
 
         try:
-            value_float = float(value_str)  # Convert to float
+            value_float = float(value_str) 
         except ValueError:
             raise serializers.ValidationError(
                 "Grade or percentage must be a valid letter grade (A, B+, etc.) or a number (0-100).")
