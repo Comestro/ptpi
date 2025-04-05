@@ -305,15 +305,14 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ['id', 'subject_name', 'class_category']
+        fields = ['id', 'subject_name','subject_description', 'class_category']
 
     def validate(self, data):
         subject_name = data.get("subject_name")
         class_category = data.get("class_category")
-
-        if Subject.objects.filter(subject_name=subject_name, class_category=class_category).exists():
+        subject_id = self.instance.id if self.instance else None
+        if Subject.objects.filter(subject_name=subject_name, class_category=class_category).exclude(id=subject_id).exists():
             raise serializers.ValidationError("A subject with this name already exists in this class category.")
-
         return data
 
 
@@ -325,8 +324,9 @@ class ClassCategorySerializer(serializers.ModelSerializer):
         depth = 1
 
     def validate_name(self, value):
-        if ClassCategory.objects.filter(name=value).exists():
-            raise serializers.ValidationError("A classcategory with this name already exists.")
+        class_category_id = self.instance.id if self.instance else None
+        if ClassCategory.objects.filter(name=value).exclude(id=class_category_id).exists():
+            raise serializers.ValidationError("A class category with this name already exists.")
         return value
 
     def to_representation(self, instance):
@@ -341,8 +341,9 @@ class ReasonSerializer(serializers.ModelSerializer):
         fields = ['id', 'issue_type']
 
     def validate_issue_type(self, value):
-        if Reason.objects.filter(issue_type=value).exists():
-            raise serializers.ValidationError("A Reason with this issue_type already exists.")
+        reason_id = self.instance.id if self.instance else None
+        if Reason.objects.filter(issue_type=value).exclude(id=reason_id).exists():
+            raise serializers.ValidationError("A reason with this issue type already exists.")
         return value
 
 
@@ -352,7 +353,8 @@ class LevelSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'level_code', 'description']
 
     def validate_name(self, value):
-        if Level.objects.filter(name=value).exists():
+        level_id = self.instance.id if self.instance else None
+        if Level.objects.filter(name=value).exclude(id=level_id).exists():
             raise serializers.ValidationError("A level with this name already exists.")
         return value
 
@@ -371,7 +373,8 @@ class SkillSerializer(serializers.ModelSerializer):
         return value
 
     def validate_name(self, value):
-        if Skill.objects.filter(name=value).exists():
+        skill_id = self.instance.id if self.instance else None
+        if Skill.objects.filter(name=value).exclude(id=skill_id).exists():
             raise serializers.ValidationError("A skill with this name already exists.")
         return value
 
@@ -603,7 +606,7 @@ class TeacherSkillSerializer(serializers.ModelSerializer):
 class EducationalQualificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationalQualification
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'description']
 
 
 class TeacherQualificationSerializer(serializers.ModelSerializer):
