@@ -43,36 +43,47 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
 
     def save(self, *args, **kwargs):
-        if not self.user_code and (self.is_teacher or self.is_recruiter):  # Only generate for teachers/recruiters
+        if not self.user_code:
             self.user_code = self.generate_user_code()
         super().save(*args, **kwargs)
 
-
     def generate_user_code(self):
-        """
-        Generate a unique user code in the format: "DD-MM-YYYY XXX"
-        - 'DD-MM-YYYY' is the current day-month-year
-        - 'XXX' is an incremental number that resets daily
-        """
-        today = now()
-        date_part = today.strftime("%d-%m-%Y")
+        from datetime import datetime
 
-        last_user = CustomUser.objects.filter(
-            user_code__startswith=f"{date_part}"
-        ).order_by('-id').first()
+        # Determine prefix based on role
+        if self.is_teacher:
+            prefix = "T"
+        elif self.is_recruiter:
+            prefix = "R"
+        elif self.is_centeruser:
+            prefix = "C"
+        elif self.is_questionuser:
+            prefix = "Q"
+        elif self.is_staff:  # For admin
+            prefix = "A"
+        else:
+            prefix = "U"  # Unknown/default
+
+        date_part = datetime.now().strftime("%d%m%Y")  # e.g., 05042025
+        code_prefix = f"{prefix}-{date_part}"
+
+        # Find the latest user with matching code_prefix
+        last_user = CustomUser.objects.filter(user_code__startswith=code_prefix).order_by('-id').first()
 
         if last_user and last_user.user_code:
             try:
-                last_number = int(last_user.user_code.split(" ")[-1])
-                new_number = str(last_number + 1).zfill(3) 
+                last_number = int(last_user.user_code[len(code_prefix):])
+                new_number = str(last_number + 1).zfill(3)
             except ValueError:
-                new_number = "001"  # If format is wrong, start fresh
+                new_number = "001"
         else:
-            new_number = "001"  # Reset daily
+            new_number = "001"
 
-        return f"{date_part} {new_number}"
+        return f"{code_prefix}{new_number}"
+
 
 class TeachersAddress(models.Model):
     ADDRESS_TYPE_CHOICES = [
@@ -177,7 +188,7 @@ class Level(models.Model):
     description = models.CharField(max_length=2000, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 class TeacherSkill(models.Model):
     user = models.ForeignKey(CustomUser, related_name='teacherskill', on_delete=models.CASCADE)
