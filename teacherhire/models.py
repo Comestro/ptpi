@@ -437,11 +437,12 @@ class Interview(models.Model):
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True, blank=True)
     link = models.CharField(max_length=200,null= True, blank=True)
-    status = models.CharField(max_length=200,choices=[('requested','requested'),('scheduled','scheduled'),('fulfilled','fulfilled'),('rejected','rejected')], default='requested', null=True, blank=True)
+    status = models.CharField(max_length=200,choices=[('pending','pending'),('requested','requested'),('scheduled','scheduled'),('fulfilled','fulfilled'),('rejected','rejected')], default='pending', null=True, blank=True)
     reject_reason = models.CharField(max_length=500, null=True, blank=True)
     grade = models.FloatField(default=0,null=True, blank=True)
     attempt = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.user.username)

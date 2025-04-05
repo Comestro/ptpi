@@ -1862,7 +1862,40 @@ class SelfExamViewSet(viewsets.ModelViewSet):
            return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ExamSerializer(final_exam_set, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response_data = {
+            "exams": serializer.data
+        }
+
+        if online_qualified_level_2:
+            qualified_exam = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__level__level_code=2.0,exam__subject_id=subject_id,
+                exam__class_category_id=class_category_id, exam__type='online').first()
+            if not qualified_exam:
+                return Response({"error": "No valid exam found for the 2nd Level Online."}, status=status.HTTP_400_BAD_REQUEST)
+
+            pending_interview = Interview.objects.filter(user=user,subject=qualified_exam.exam.subject,class_category=qualified_exam.exam.class_category_id, status='pending').first()
+
+            if pending_interview:
+                response_data["interview_details"] = {
+                    "message": "You already have a pending interview. Please complete it before scheduling another.",
+                    "interview": InterviewSerializer(pending_interview).data
+                }
+            else:
+                # Safe to create new interview
+                interview = Interview.objects.create(
+                    user=user,
+                    subject=qualified_exam.exam.subject,
+                    level=qualified_exam.exam.level,
+                    class_category=qualified_exam.exam.class_category
+                )
+
+                if interview:
+                    interview_serializer = InterviewSerializer(interview)
+                    response_data["interview_details"] = interview_serializer.data
+                else:
+                    response_data["interview_details"] = f"Congratulations! You are eligible for an interview for {qualified_exam.subject.name} - {qualified_exam.class_category.name}. No interview scheduled yet."
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
 
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
@@ -2099,41 +2132,39 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
 
     
     def create(self, request, *args, **kwargs):
-        # Deserialize data
-        serializer = self.get_serializer(data=request.data)
+        data = request.data.copy()
+        user = request.user
+        subject = data.get("subject")
+        class_category = data.get("class_category")
+        level = data.get("level") 
+        if not subject or not class_category or not level:
+            return Response({
+                "message": "Subject, class category, and level are required to request an interview."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        user_interview = Interview.objects.filter(
+            user=user,
+            subject_id=subject,
+            class_category_id=class_category,
+            level_id=level,
+            status='pending'
+        ).first()
+        if user_interview:
+            user_interview.status = 'requested'
+            interview_time = data.get('time')
+            if interview_time:
+                try:
+                    naive_dt = datetime.strptime(interview_time, "%Y-%m-%d %H:%M:%S")
+                    aware_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
+                    user_interview.time = aware_dt  
+                except ValueError:
+                    return Response({"error": "Invalid datetime format. Use YYYY-MM-DD HH:MM:SS"}, status=400)
+            user_interview.save()
+            return Response({"message": "Interview request sent successfully.",
+                             "data": InterviewSerializer(user_interview).data}, status=status.HTTP_200_OK)
+        return Response({
+            "message": "First qualify Level 2 exam to give interview."
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            user = request.user
-            time = serializer.validated_data.get('time')
-            subject = serializer.validated_data.get('subject')
-            class_category = serializer.validated_data.get('class_category')
-            check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject,
-                                                                    exam__class_category_id=class_category,
-                                                                    exam__level__level_code=2.0, 
-                                                                    exam__type='online').exists()
-            if not check_exam_qualified:
-                return Response({"error": "First qualify this classcategory subject exams for Interview "})
-
-            pending_interview = Interview.objects.filter(user=user, status='requested').exists()
-            if pending_interview:
-                return Response(
-                    {"error": "You already have a pending interview. Please complete it before scheduling another."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            previous_attempts = Interview.objects.filter(
-                user=user,
-                subject=subject,
-                class_category=class_category
-            ).count()
-
-            serializer.save(user=user, attempt=previous_attempts + 1)
-            return Response(
-                {"message": "Your interview request is sent successfully.", "data": serializer.data},
-                status=status.HTTP_201_CREATED
-            )
-        print("Validation errors:", serializer.errors)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def get_queryset(self):
         user = self.request.user
