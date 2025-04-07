@@ -2152,7 +2152,12 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             user_interview.status = 'requested'
             interview_time = data.get('time')
             if interview_time:
-                user_interview.time = interview_time
+                try:
+                    naive_dt = datetime.strptime(interview_time, "%Y-%m-%d %H:%M:%S")
+                    aware_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
+                    user_interview.time = aware_dt  
+                except ValueError:
+                    return Response({"error": "Invalid datetime format. Use YYYY-MM-DD HH:MM:SS"}, status=400)
             user_interview.save()
             return Response({"message": "Interview request sent successfully.",
                              "data": InterviewSerializer(user_interview).data}, status=status.HTTP_200_OK)
