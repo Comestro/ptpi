@@ -1872,11 +1872,11 @@ class SelfExamViewSet(viewsets.ModelViewSet):
             if not qualified_exam:
                 return Response({"error": "No valid exam found for the 2nd Level Online."}, status=status.HTTP_400_BAD_REQUEST)
 
-            pending_interview = Interview.objects.filter(user=user,subject=qualified_exam.exam.subject,class_category=qualified_exam.exam.class_category_id, status='pending').first()
+            pending_interview = Interview.objects.filter(user=user,subject=qualified_exam.exam.subject,class_category=qualified_exam.exam.class_category_id).exclude(status__in=['fulfilled', 'rejected']).first()
 
             if pending_interview:
                 response_data["interview_details"] = {
-                    "message": "You already have a pending interview. Please complete it before scheduling another.",
+                    "message": "You already have an interview in progress. Please complete it before scheduling another.",
                     "interview": InterviewSerializer(pending_interview).data
                 }
             else:
