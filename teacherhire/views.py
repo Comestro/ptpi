@@ -2162,7 +2162,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             return Response({"message": "Interview request sent successfully.",
                              "data": InterviewSerializer(user_interview).data}, status=status.HTTP_200_OK)
         return Response({
-            "message": "First qualify Level 2 exam to give interview."
+            "message": "You must qualify the Level 2 online exam before requesting an interview."
         }, status=status.HTTP_400_BAD_REQUEST)
 
     
