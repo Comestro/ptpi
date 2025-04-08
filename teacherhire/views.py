@@ -2031,6 +2031,32 @@ class GeneratePasskeyView(APIView):
                          },
                         status=status.HTTP_200_OK)
 
+    def get(self, request, user_id=None):
+        exam_id = request.query_params.get('exam_id')
+
+        passkeys = Passkey.objects.all()
+
+        if user_id:
+            passkeys = passkeys.filter(user__id=user_id)
+        if exam_id:
+            passkeys = passkeys.filter(exam__id=exam_id)
+
+        if not passkeys.exists():
+            return Response({"message": "No passkeys found."}, status=status.HTTP_404_NOT_FOUND)
+
+        data = [{
+            "user": passkey.user.id,
+            "exam_name": passkey.exam.name,
+            "subject": passkey.exam.subject.subject_name,
+            "class_category": passkey.exam.class_category.name if passkey.exam.class_category else None,
+            "level": passkey.exam.level.name if passkey.exam.level else None,
+            "level_code": passkey.exam.level.level_code if passkey.exam.level else None,
+            "code": passkey.code,
+            "center": passkey.center.center_name,
+            "status": passkey.status
+        } for passkey in passkeys]
+
+        return Response(data, status=status.HTTP_200_OK)
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
