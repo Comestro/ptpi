@@ -438,6 +438,7 @@ def get_pincodes_by_post_office(post_office_name):
 #     queryset = CustomUser.objects.filter(is_recruiter=True)
 #     serializer_class = RecruiterSerializer
 
+
 class TeacherViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsRecruiterUser]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -449,8 +450,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
 
         # Handle 'all' query parameter
         if return_all and return_all.lower() == 'true':
-            pass  # No filtering needed if 'all' is true
-
+            return queryset.distinct()  
+        # Filter by teacher name
         teacher_name = self.request.query_params.getlist('name[]', [])
         if teacher_name:
             teacher_name = [name.strip().lower() for name in teacher_name]
@@ -466,7 +467,6 @@ class TeacherViewSet(viewsets.ModelViewSet):
                     name_query |= Q(Fname__icontains=fname) | Q(Lname__icontains=fname)
             queryset = queryset.filter(name_query)
 
-        # Fuzzy matching and filtering by teacher skills
         teacher_skills = self.request.query_params.getlist('skill[]', [])
         if teacher_skills:
             teacher_skills = [skill.strip().lower() for skill in teacher_skills]
@@ -475,16 +475,32 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 skill_query |= Q(teacherskill__skill__name__iexact=skill)
             queryset = queryset.filter(skill_query)
 
-        # Filter by teacher qualifications
         teacher_qualifications = self.request.query_params.getlist('qualification[]', [])
         if teacher_qualifications:
             teacher_qualifications = [qualification.strip().lower() for qualification in teacher_qualifications]
+            
+            qualification_hierarchy = {
+                '10th': 1,
+                '12th': 2,
+                'graduation': 3,
+                'post-graduation': 4,
+                'phd': 5,
+                'post-doctorate': 6,
+                'professional diploma': 7,
+                'honorary doctorate': 8
+            }
+            
             qualification_query = Q()
             for qualification in teacher_qualifications:
-                qualification_query |= Q(teacherqualifications__qualification__name__iexact=qualification)
+                if qualification in qualification_hierarchy:
+                    min_level = qualification_hierarchy[qualification]
+                    valid_qualifications = [
+                        q for q, level in qualification_hierarchy.items() if level >= min_level
+                    ]
+                    for valid_q in valid_qualifications:
+                        qualification_query |= Q(teacherqualifications__qualification__name__iexact=valid_q)
             queryset = queryset.filter(qualification_query)
 
-        # Filters for other fields like state, district, etc.
         filters = {
             'state': self.request.query_params.get('state[]', []),
             'district': self.request.query_params.getlist('district[]', []),
@@ -534,6 +550,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
             pincodes = filters['pincode']
             queryset = queryset.filter(teachersaddress__pincode__in=pincodes)
 
+        # Ensure distinct results
         queryset = queryset.distinct()
         return queryset
 
@@ -550,12 +567,10 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 value = value.strip()
                 best_match = process.extractOne(value.lower(),
                                                 queryset.values_list(f'teachersaddress__{field}', flat=True))
-
                 if best_match and best_match[1] >= 70:
                     q_objects |= Q(**{f'teachersaddress__{field}__iexact': best_match[0]})
                 else:
                     q_objects |= Q(**{f'teachersaddress__{field}__icontains': value})
-
             queryset = queryset.filter(q_objects)
         return queryset
 
@@ -569,7 +584,6 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 return Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
                     teacherexperiences__start_date__lt=end_date_threshold)
         return None
-
 
 class RecruiterTeacherSearch(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsRecruiterUser]
@@ -1338,6 +1352,18 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid exam ID."},
                 status=status.HTTP_400_BAD_REQUEST
         )
+        existing_result = TeacherExamResult.objects.filter(
+        user=user,
+        exam__subject=exam.subject,
+        exam__class_category=exam.class_category,
+        exam__level=exam.level
+        ).first()
+
+        if existing_result:
+            existing_result.attempt += 1
+            existing_result.save()
+            serializer = self.get_serializer(existing_result)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -1606,15 +1632,16 @@ class CheckoutView(APIView):
 
         levels = []
         for subject in user_preference.prefered_subject.all():
+            # for class_category in user_preference.class_category.all():
             unlocked_levels = ["Level 1"]
 
-            has_level_1 = qualified_exams.filter(exam__level__level_code=1.0, exam__type="online",
+            has_level_1 = qualified_exams.filter(exam__level_id=1, exam__type="online",
                                                  exam__subject=subject,
                                                  exam__class_category=subject.class_category).exists()
-            has_level_2_online = qualified_exams.filter(exam__level__level_code=2.0, exam__type="online",
+            has_level_2_online = qualified_exams.filter(exam__level_id=2, exam__type="online",
                                                         exam__subject=subject,
                                                         exam__class_category=subject.class_category).exists()
-            has_level_2_offline = qualified_exams.filter(exam__level__level_code=2.5, exam__type="offline",
+            has_level_2_offline = qualified_exams.filter(exam__level_id=2, exam__type="offline",
                                                          exam__subject=subject,
                                                          exam__class_category=subject.class_category).exists()
 
@@ -1634,6 +1661,75 @@ class CheckoutView(APIView):
             })
 
         return Response(levels, status=status.HTTP_200_OK)
+
+    # def get(self, request, *args, **kwargs):
+    #     user = request.user
+    #     try:
+    #         user_basic_profile = BasicProfile.objects.get(user=user)
+    #     except BasicProfile.DoesNotExist:
+    #         return Response(
+    #             {"message": "Please complete your basic profile first."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+    #     user_qualification = TeacherQualification.objects.filter(user=user)
+    #     if not user_qualification:
+    #         return Response(
+    #             {"message": "Please complete at least one qualification detail."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+    #     user_preference = Preference.objects.filter(user=user)
+
+    #     if not user_preference.exists():
+    #         return Response(
+    #             {"message": "Please complete your preference details first."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+
+    #     # Get the first preference object
+    #     user_preference = user_preference.first()
+
+    #     if not user_preference.prefered_subject.exists() or not user_preference.class_category.exists():
+    #         return Response(
+    #             {"message": "Please select at least one subject and class category in your preferences."},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+
+    #     qualified_exams = TeacherExamResult.objects.filter(user=user, isqualified=True)
+
+    #     levels = []
+    #     for subject in user_preference.prefered_subject.all():
+    #         for class_category in user_preference.class_category.all():
+    #             unlocked_levels = ["Level 1"]
+
+    #             has_level_1 = qualified_exams.filter(
+    #                 exam__level_id=1, exam__type="online",
+    #                 exam__subject=subject, exam__class_category=class_category
+    #             ).exists()
+    #             has_level_2_online = qualified_exams.filter(
+    #                 exam__level_id=2, exam__type="online",
+    #                 exam__subject=subject, exam__class_category=class_category
+    #             ).exists()
+    #             has_level_2_offline = qualified_exams.filter(
+    #                 exam__level_id=2, exam__type="offline",
+    #                 exam__subject=subject, exam__class_category=class_category
+    #             ).exists()
+
+    #             if has_level_1:
+    #                 unlocked_levels.append("Level 2 Online")
+    #             if has_level_2_online:
+    #                 unlocked_levels.append("Level 2 Offline")
+    #             if has_level_2_offline:
+    #                 unlocked_levels.append("Interview")
+
+    #             levels.append({
+    #                 "subject_id": subject.id,
+    #                 "subject_name": subject.subject_name,
+    #                 "classcategory_id": class_category.id,
+    #                 "classcategory_name": class_category.name,
+    #                 "levels": unlocked_levels
+    #             })
+
+    #     return Response(levels, status=status.HTTP_200_OK)
 
 
 class ExamSetterViewSet(viewsets.ModelViewSet):
@@ -1814,29 +1910,29 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Check qualification for Level 1 and Level 2 exams using level_code
+        # Check qualification for Level 1 and Level 2 exams
         qualified_level_1 = TeacherExamResult.objects.filter(
             user=user, isqualified=True, exam__subject_id=subject_id,
-            exam__class_category_id=class_category_id, exam__level__level_code=1.0
+            exam__class_category_id=class_category_id, exam__level__name="1st Level"
         ).exists()
 
         online_qualified_level_2 = TeacherExamResult.objects.filter(
             user=user, exam__type='online', isqualified=True,
-            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level__level_code=2.0
+            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level__name="2nd Level Online"
         ).exists()
 
         offline_qualified_level_2 = TeacherExamResult.objects.filter(
             user=user, exam__type='offline', isqualified=True,
-            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level__level_code=2.5
+            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level__name="2nd Level Offline"
         ).exists()
         
-        # Filter exams based on qualifications using level_code
+        # Filter exams based on qualifications
         if not qualified_level_1:
-            exams = exams.filter(level__level_code=1.0)
+            exams = exams.filter(level__name="1st Level") 
         elif qualified_level_1 and not online_qualified_level_2:
-            exams = exams.filter(level__level_code__in=[1.0, 2.0], type='online')
+            exams = exams.filter(level__name__in=["1st Level", "2nd Level Online"], type='online')  
         elif online_qualified_level_2 and not offline_qualified_level_2:
-            exams = exams.filter(level__level_code__in=[1.0, 2.0, 2.5])
+            exams = exams.filter(level__name__in=["1st Level", "2nd Level Online", "2nd Level Offline"])  
 
         unqualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=False).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=unqualified_exam_ids)
@@ -1844,12 +1940,11 @@ class SelfExamViewSet(viewsets.ModelViewSet):
         qualified_exam_ids = TeacherExamResult.objects.filter(user=user, isqualified=True).values_list('exam_id', flat=True)
         exams = exams.exclude(id__in=qualified_exam_ids)
 
-        exam_set = exams.order_by('created_at')
+        exam_set = exams.order_by('created_at')  
 
-        level_1_exam = exam_set.filter(level__level_code=1.0).first()
-        level_2_online_exam = exam_set.filter(level__level_code=2.0, type='online').first()
-        level_2_offline_exam = exam_set.filter(level__level_code=2.5, type='offline').first()
-        
+        level_1_exam = exam_set.filter(level__name="1st Level").first()
+        level_2_online_exam = exam_set.filter(level__name="2nd Level Online", type='online').first()
+        level_2_offline_exam = exam_set.filter(level__name="2nd Level Offline", type='offline').first()
         final_exam_set = []
         if level_1_exam:
             final_exam_set.append(level_1_exam)
@@ -1862,40 +1957,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
            return Response({"message": "No exams available for the given criteria."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ExamSerializer(final_exam_set, many=True)
-        response_data = {
-            "exams": serializer.data
-        }
-
-        if online_qualified_level_2:
-            qualified_exam = TeacherExamResult.objects.filter(user=user, isqualified=True, exam__level__level_code=2.0,exam__subject_id=subject_id,
-                exam__class_category_id=class_category_id, exam__type='online').first()
-            if not qualified_exam:
-                return Response({"error": "No valid exam found for the 2nd Level Online."}, status=status.HTTP_400_BAD_REQUEST)
-
-            pending_interview = Interview.objects.filter(user=user,subject=qualified_exam.exam.subject,class_category=qualified_exam.exam.class_category_id).exclude(status__in=['fulfilled', 'rejected']).first()
-
-            if pending_interview:
-                response_data["interview_details"] = {
-                    "message": "You already have an interview in progress. Please complete it before scheduling another.",
-                    "interview": InterviewSerializer(pending_interview).data
-                }
-            else:
-                # Safe to create new interview
-                interview = Interview.objects.create(
-                    user=user,
-                    subject=qualified_exam.exam.subject,
-                    level=qualified_exam.exam.level,
-                    class_category=qualified_exam.exam.class_category
-                )
-
-                if interview:
-                    interview_serializer = InterviewSerializer(interview)
-                    response_data["interview_details"] = interview_serializer.data
-                else:
-                    response_data["interview_details"] = f"Congratulations! You are eligible for an interview for {qualified_exam.subject.name} - {qualified_exam.class_category.name}. No interview scheduled yet."
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
@@ -1989,7 +2051,7 @@ class GeneratePasskeyView(APIView):
 
         try:
             exam = Exam.objects.get(id=exam_id)
-            if exam.level.level_code == 1.0 or (exam.level.level_code == 2.0 and exam.type == 'online'):
+            if exam.level.id == 1 or exam.level.id == 2 and exam.type == 'online':
                 return Response({"error": "The provided exam is not valid exam"}, status=status.HTTP_400_BAD_REQUEST)
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
@@ -1999,11 +2061,9 @@ class GeneratePasskeyView(APIView):
             return Response({"error": "A passkey has already been generated for this exam."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        level_1_qualified = TeacherExamResult.objects.filter(user=user, exam__level__level_code=1.0, 
-                                                             exam__type="online",
+        level_1_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=1, exam__type="online",
                                                              isqualified=True).exists()
-        level_2_online_qualified = TeacherExamResult.objects.filter(user=user, exam__level__level_code=2.0, 
-                                                                    exam__type="online",
+        level_2_online_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=2, exam__type="online",
                                                                     isqualified=True).exists()
 
         if not (level_1_qualified and level_2_online_qualified):
@@ -2031,32 +2091,6 @@ class GeneratePasskeyView(APIView):
                          },
                         status=status.HTTP_200_OK)
 
-    def get(self, request, user_id=None):
-        exam_id = request.query_params.get('exam_id')
-
-        passkeys = Passkey.objects.all()
-
-        if user_id:
-            passkeys = passkeys.filter(user__id=user_id)
-        if exam_id:
-            passkeys = passkeys.filter(exam__id=exam_id)
-
-        if not passkeys.exists():
-            return Response({"message": "No passkeys found."}, status=status.HTTP_404_NOT_FOUND)
-
-        data = [{
-            "user": passkey.user.id,
-            "exam_name": passkey.exam.name,
-            "subject": passkey.exam.subject.subject_name,
-            "class_category": passkey.exam.class_category.name if passkey.exam.class_category else None,
-            "level": passkey.exam.level.name if passkey.exam.level else None,
-            "level_code": passkey.exam.level.level_code if passkey.exam.level else None,
-            "code": passkey.code,
-            "center": passkey.center.center_name,
-            "status": passkey.status
-        } for passkey in passkeys]
-
-        return Response(data, status=status.HTTP_200_OK)
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
@@ -2158,39 +2192,40 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
 
     
     def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        user = request.user
-        subject = data.get("subject")
-        class_category = data.get("class_category")
-        level = data.get("level") 
-        if not subject or not class_category or not level:
-            return Response({
-                "message": "Subject, class category, and level are required to request an interview."
-            }, status=status.HTTP_400_BAD_REQUEST)
-        user_interview = Interview.objects.filter(
-            user=user,
-            subject_id=subject,
-            class_category_id=class_category,
-            level_id=level,
-            status='pending'
-        ).first()
-        if user_interview:
-            user_interview.status = 'requested'
-            interview_time = data.get('time')
-            if interview_time:
-                try:
-                    naive_dt = datetime.strptime(interview_time, "%Y-%m-%d %H:%M:%S")
-                    aware_dt = timezone.make_aware(naive_dt, timezone.get_current_timezone())
-                    user_interview.time = aware_dt  
-                except ValueError:
-                    return Response({"error": "Invalid datetime format. Use YYYY-MM-DD HH:MM:SS"}, status=400)
-            user_interview.save()
-            return Response({"message": "Interview request sent successfully.",
-                             "data": InterviewSerializer(user_interview).data}, status=status.HTTP_200_OK)
-        return Response({
-            "message": "You must qualify the Level 2 online exam before requesting an interview."
-        }, status=status.HTTP_400_BAD_REQUEST)
+        # Deserialize data
+        serializer = self.get_serializer(data=request.data)
 
+        if serializer.is_valid():
+            user = request.user
+            time = serializer.validated_data.get('time')
+            subject = serializer.validated_data.get('subject')
+            class_category = serializer.validated_data.get('class_category')
+            check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject,
+                                                                    exam__class_category_id=class_category,
+                                                                    exam__level__name='2nd Level Online', exam__type='online').exists()
+            if not check_exam_qualified:
+                return Response({"error": "First qualify this classcategory subject exams for Interview "})
+
+            pending_interview = Interview.objects.filter(user=user, status='requested').exists()
+            if pending_interview:
+                return Response(
+                    {"error": "You already have a pending interview. Please complete it before scheduling another."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            previous_attempts = Interview.objects.filter(
+                user=user,
+                subject=subject,
+                class_category=class_category
+            ).count()
+
+            serializer.save(user=user, attempt=previous_attempts + 1)
+            return Response(
+                {"message": "Your interview request is sent successfully.", "data": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        print("Validation errors:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def get_queryset(self):
         user = self.request.user
