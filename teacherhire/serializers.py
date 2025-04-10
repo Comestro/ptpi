@@ -610,10 +610,10 @@ class TeacherSkillSerializer(serializers.ModelSerializer):
         return representation
 
     def validate(self, attrs):
-        # user = attrs.get('user')
+        user = attrs.get('user')
         skill = attrs.get('skill')
         # This user have skill already exists
-        if TeacherSkill.objects.filter(skill=skill).exists():
+        if TeacherSkill.objects.filter(skill=skill,user=user).exists():
             raise serializers.ValidationError('This user already has this skill.')
         return attrs
 
