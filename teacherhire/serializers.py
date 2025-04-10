@@ -696,7 +696,6 @@ class PreferenceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     job_role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True, required=False, )
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False, many=True)
-    prefered_subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
     teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True,
                                                           required=False)
 
@@ -707,20 +706,22 @@ class PreferenceSerializer(serializers.ModelSerializer):
             'user',
             'job_role',
             'class_category',
-            'prefered_subject',
             'teacher_job_type',
         ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
-        # Filter class_category and teacher_job_type based on the user's preferences
         user_selected_class_categories = instance.class_category.filter(preference__user=instance.user)
-        user_selected_teacher_job_types = instance.teacher_job_type.filter(preference__user=instance.user)
-        # Serialize only the filtered data
-        representation['class_category'] = ClassCategorySerializer(user_selected_class_categories, many=True).data
-        representation['teacher_job_type'] = TeacherJobTypeSerializer(user_selected_teacher_job_types, many=True).data
-
+        filtered_class_categories = []
+        for class_category in user_selected_class_categories:
+            user_selected_subjects = class_category.subjects.filter(preference__user=instance.user)
+            class_category_data = ClassCategorySerializer(class_category).data
+            class_category_data['subjects'] = SubjectSerializer(user_selected_subjects, many=True).data
+            filtered_class_categories.append(class_category_data)
+        representation['class_category'] = filtered_class_categories
+        representation['job_role'] = RoleSerializer(instance.job_role, many=True).data
+        representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type, many=True).data
         return representation
 
 
