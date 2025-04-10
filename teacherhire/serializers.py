@@ -1106,13 +1106,20 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AssignedQuestionUser
-        fields = ['id','user', 'subject','class_category', 'status']  # use 'status' in lowercase here
+        fields = ['id','user', 'subject','class_category', 'status']  
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data
+        user_class_categories = instance.class_category.filter(assignedquestionuser__user=instance.user)
+        filtered_class_categories = []
+        for class_category in user_class_categories:
+            user_subjects = class_category.subjects.filter(assignedquestionuser__user=instance.user)
+            class_category_data = ClassCategorySerializer(class_category).data
+            class_category_data['subjects'] = SubjectSerializer(user_subjects, many=True).data
+            filtered_class_categories.append(class_category_data)
+        representation['class_category'] = filtered_class_categories
         return representation
 
 

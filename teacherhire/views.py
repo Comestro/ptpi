@@ -1756,13 +1756,18 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         """Admins can create any exam; assigned users are restricted."""
-        user = request.user
+        user = self.request.user
+        print(user)
         subject = request.data.get('subject')
         if not user.is_staff:
             assigned_user = AssignedQuestionUser.objects.filter(user=user, subject=subject).first()
+            print(assigned_user)
             if not assigned_user:
                 return Response({"error": "You are not assigned to this subject."}, status=status.HTTP_403_FORBIDDEN)
             request.data["assigneduser"] = assigned_user.id
+            request.data["status"] = False
+        else:
+            request.data["status"] = True
 
         serializer = ExamSerializer(data=request.data)
         if serializer.is_valid():

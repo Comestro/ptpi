@@ -140,9 +140,12 @@ class RecruiterEnquiryForm(admin.ModelAdmin):
 
 @admin.register(AssignedQuestionUser)
 class AssignedQuestionUserAdmin(admin.ModelAdmin):
-    list_display = ['user', 'get_subject']
+    list_display = ['user', 'get_subject', 'get_class_category']
     def get_subject(self, obj):
         return ", ".join([str(subject) for subject in obj.subject.all()])
+    
+    def get_class_category(self, obj):
+        return ", ".join([str(class_category) for class_category in obj.class_category.all()])
     
 @admin.register(HireRequest)
 class HireRequestAdmin(admin.ModelAdmin):
