@@ -1140,6 +1140,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
+
     def get_object(self):
         try:
             return Preference.objects.filter(user=self.request.user).first()
@@ -2076,7 +2077,6 @@ class ExamCard(viewsets.ModelViewSet):
             exam_serializer = ExamDetailSerializer(exam_set).data
             return Response(exam_serializer, status=status.HTTP_200_OK)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
@@ -2350,6 +2350,15 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return Interview.objects.filter(user=user).exclude(status__in=['fulfilled', 'rejected'])
     
+class TeacherExamCenters(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = ExamCenter.objects.all()
+    serializer_class = ExamCenterSerializer
+
+    def get_queryset(self):
+        center = ExamCenter.objects.filter(status=True)   
+        return center if center.exists() else None
 
 class ExamCenterViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrTeacher]
