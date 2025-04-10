@@ -75,6 +75,7 @@ router.register(r"self/assigneduser", SelfAssignedQuestionUserViewSet, basename=
 # recruiter
 router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')
 router.register(r"self/teacher", SelfViewSet, basename="self-teacher")
+router.register(r"self/teacherexamcenter", TeacherExamCenters, basename="self-teacher-examcenter")
 
 # public
 router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="public-classcategory")
