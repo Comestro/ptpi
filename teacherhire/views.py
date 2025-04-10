@@ -2205,7 +2205,7 @@ class GeneratePasskeyView(APIView):
             status='requested',
         )
         user_serializer = UserSerializer(user)
-        exam_serializer = ExamSerializer(exam)
+        exam_serializer = ExamDetailSerializer(exam)
         center_serializer = ExamCenterSerializer(center)
         return Response({"message": "Passkey generated successfully.",
                          "user": user_serializer.data,
