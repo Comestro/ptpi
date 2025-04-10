@@ -12,6 +12,7 @@ from django.conf.urls.static import static
 
 # Initialize router
 router = routers.DefaultRouter()
+router.register(r"self/new/exam", ExamCard, basename="self-new-exam")
 
 # === Admin Routes ===
 router.register(r"admin/teacherqualification", TeacherQualificationViewSet)
@@ -101,7 +102,7 @@ urlpatterns = [
     path("self/deactivate/", DeactivateAccount.as_view(), name="self-deactivate"),
 
     # Passkey Routes
-    path("generate-passkey/<int:user_id>/", GeneratePasskeyView.as_view(), name="generate_passkey"),
+    path("generate-passkey/", GeneratePasskeyView.as_view(), name="generate_passkey"),
     path("verify-passcode/", VerifyPasscodeView.as_view(), name="verify_passcode"),
 
     # Seeder Data Routes

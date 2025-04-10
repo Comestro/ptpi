@@ -579,6 +579,21 @@ class ExamSerializer(serializers.ModelSerializer):
             instance.assigneduser).data if instance.assigneduser else None
         return representation
 
+class ExamDetailSerializer(serializers.ModelSerializer):
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
+    level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
+
+    class Meta:
+        model = Exam
+        fields = ['id', 'name', 'description', 'subject', 'level', 'class_category', 'type', 'status']
+        
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['subject'] = {"id": instance.subject.id, "name": instance.subject.subject_name}
+        representation['level'] = {"id": instance.level.id, "name": instance.level.name, "level_code": instance.level.level_code}
+        representation['class_category'] = {"id": instance.class_category.id, "name": instance.class_category.name}
+        return representation
 
 class TeacherSkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
@@ -852,7 +867,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'last_login', 'is_superuser', 'email', 'username',
             'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter',
-            'is_teacher', 'is_centeruser', 'is_questionuser', 'role'
+            'is_teacher', 'is_centeruser', 'user_code', 'is_questionuser', 'role'
         ]
         read_only_fields = ['email', 'username']
 
