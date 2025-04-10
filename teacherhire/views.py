@@ -1748,7 +1748,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
 
     
     def retrieve(self, request, *args, **kwargs):
-            user = request.user
             exam = self.get_object()
             language = request.query_params.get('language', None)
 
@@ -1895,6 +1894,92 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                     response_data["interview_details"] = f"Congratulations! You are eligible for an interview for {qualified_exam.subject.name} - {qualified_exam.class_category.name}. No interview scheduled yet."
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+class ExamCard(viewsets.ModelViewSet):
+    permissions_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Exam.objects.all()
+    serializer_class = ExamDetailSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+            exam = self.get_object()
+            language = request.query_params.get('language', None)
+
+            questions = list(exam.questions.all())
+            if language:
+                if language not in ['Hindi', 'English']:
+                    return Response({"error": "Invalid language."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            questions = [q for q in questions if q.language == language]
+
+            serializer = self.get_serializer(exam)
+            exam_data = serializer.data
+            exam_data['questions'] = QuestionSerializer(questions, many=True).data
+            return Response(exam_data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def exam(self, request):
+        user = request.user
+        subject_id = request.query_params.get('subject_id')
+        class_category_id = request.query_params.get('class_category_id')
+        level_id = request.query_params.get('level_id')
+
+        if not subject_id or not class_category_id or not level_id:
+            return Response({"error": "Subject, Class Category, and Level are required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            class_category_id = ClassCategory.objects.filter(preference__user=user, pk=class_category_id).first()
+        except ClassCategory.DoesNotExist:
+            return Response({"error": "Class Category is not valid choose your preference class category."}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            subject_id = Subject.objects.filter(preference__user=user, pk=subject_id).first()
+        except Subject.DoesNotExist:
+            return Response({"error": "Subject is not valid choose your preference subject."}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            level = Level.objects.get(pk=level_id)
+        except Level.DoesNotExist:
+            return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        qualified_level_1 = TeacherExamResult.objects.filter(
+            user=user, isqualified=True, exam__subject_id=subject_id,
+            exam__class_category_id=class_category_id, exam__level__level_code=1.0
+        ).exists()
+
+        online_qualified_level_2 = TeacherExamResult.objects.filter(
+            user=user, exam__type='online', isqualified=True,
+            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level__level_code=2.0
+        ).exists()
+
+        offline_qualified_level_2 = TeacherExamResult.objects.filter(
+            user=user, exam__type='offline', isqualified=True,
+            exam__subject_id=subject_id, exam__class_category_id=class_category_id, exam__level__level_code=2.5
+        ).exists()
+
+        if level.level_code == 1.0:
+            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+        elif level.level_code == 2.0:
+            if not qualified_level_1:
+                return Response({"error": "You must qualify Level 1 exam to access Level 2."}, status=status.HTTP_400_BAD_REQUEST)
+            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+        elif level.level_code == 2.5:
+            if not qualified_level_1 or not online_qualified_level_2:
+                return Response({"error": "You must qualify Level 1 and Level 2 online exam to access Level 2 offline."}, status=status.HTTP_400_BAD_REQUEST)
+            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+        else:
+            return Response({"error": "Invalid level."}, status=status.HTTP_400_BAD_REQUEST)
+
+        
+        exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+        user_exams_ids = TeacherExamResult.objects.filter(user=user, isqualified__in=['True','False']).values_list('exam_id', flat=True)
+        unattempted_exams = exam.exclude(id__in=user_exams_ids).order_by('created_at')
+    
+        exam_set = unattempted_exams.first()
+
+        if exam:
+            exam_serializer = ExamDetailSerializer(exam_set).data
+            return Response(exam_serializer, status=status.HTTP_200_OK)
 
 
 class ReportViewSet(viewsets.ModelViewSet):
@@ -2031,32 +2116,6 @@ class GeneratePasskeyView(APIView):
                          },
                         status=status.HTTP_200_OK)
 
-    def get(self, request, user_id=None):
-        exam_id = request.query_params.get('exam_id')
-
-        passkeys = Passkey.objects.all()
-
-        if user_id:
-            passkeys = passkeys.filter(user__id=user_id)
-        if exam_id:
-            passkeys = passkeys.filter(exam__id=exam_id)
-
-        if not passkeys.exists():
-            return Response({"message": "No passkeys found."}, status=status.HTTP_404_NOT_FOUND)
-
-        data = [{
-            "user": passkey.user.id,
-            "exam_name": passkey.exam.name,
-            "subject": passkey.exam.subject.subject_name,
-            "class_category": passkey.exam.class_category.name if passkey.exam.class_category else None,
-            "level": passkey.exam.level.name if passkey.exam.level else None,
-            "level_code": passkey.exam.level.level_code if passkey.exam.level else None,
-            "code": passkey.code,
-            "center": passkey.center.center_name,
-            "status": passkey.status
-        } for passkey in passkeys]
-
-        return Response(data, status=status.HTTP_200_OK)
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
@@ -2289,7 +2348,7 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return ExamCenter.objects.filter(user=user)  
+        return ExamCenter.objects.filter(user=user, status=True)  
     
     @action(detail=False, methods=['get'])
     def teachers(self, request):
