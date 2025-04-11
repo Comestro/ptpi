@@ -1353,18 +1353,6 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid exam ID."},
                 status=status.HTTP_400_BAD_REQUEST
         )
-        existing_result = TeacherExamResult.objects.filter(
-        user=user,
-        exam__subject=exam.subject,
-        exam__class_category=exam.class_category,
-        exam__level=exam.level
-        ).first()
-
-        if existing_result:
-            existing_result.attempt += 1
-            existing_result.save()
-            serializer = self.get_serializer(existing_result)
-            return Response(serializer.data, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -2024,7 +2012,19 @@ class ExamCard(viewsets.ModelViewSet):
         subject_id = request.query_params.get('subject_id')
         class_category_id = request.query_params.get('class_category_id')
         level_id = request.query_params.get('level_id')
-
+        try:
+            user_basic_profile = BasicProfile.objects.get(user=user)
+            user_preference = Preference.objects.filter(user=user).first()
+        except BasicProfile.DoesNotExist:
+            return Response(
+                {"message": "Please complete your basic profile first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Preference.DoesNotExist:
+            return Response(
+                {"message": "Please complete your preference details first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         if not subject_id or not class_category_id or not level_id:
             return Response({"error": "Subject, Class Category, and Level are required."}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -2078,8 +2078,8 @@ class ExamCard(viewsets.ModelViewSet):
     
         exam_set = unattempted_exams.first()
 
-        if exam:
-            exam_serializer = ExamDetailSerializer(exam_set).data
+        if exam_set:
+            exam_serializer = ExamDetailSerializer(exam_set, context={'request':request}).data
             return Response(exam_serializer, status=status.HTTP_200_OK)
 
 
@@ -2159,7 +2159,7 @@ class PasskeyViewSet(viewsets.ModelViewSet):
 
 class GeneratePasskeyView(APIView):
     def post(self, request):
-        user_id = request.data.get('user_id')
+        user_id = self.request.user.id
         exam_id = request.data.get('exam_id')
         center_id = request.data.get('center_id')
 
