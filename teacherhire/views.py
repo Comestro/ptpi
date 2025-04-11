@@ -2079,7 +2079,7 @@ class ExamCard(viewsets.ModelViewSet):
         exam_set = unattempted_exams.first()
 
         if exam_set:
-            exam_serializer = ExamDetailSerializer(exam_set, context={'request':request}).data
+            exam_serializer = ExamDetailSerializer(exam_set).data
             return Response(exam_serializer, status=status.HTTP_200_OK)
 
 
@@ -2218,9 +2218,9 @@ class GeneratePasskeyView(APIView):
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
-        user_id = request.data.get('user_id')
+        user_id = self.request.user.id
         exam_id = request.data.get('exam_id')
-        entered_passcode = request.data.get('passcode')
+        entered_passcode = request.data.get('entered_passcode')
         if not user_id or not exam_id or not entered_passcode:
             return Response(
                 {"error": "Missing required fields: user_id, exam_id, or passcode."},

@@ -583,19 +583,10 @@ class ExamDetailSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
-    passkey = serializers.SerializerMethodField()
 
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'subject', 'level','class_category', 'type', 'status', 'passkey']
-
-    def get_passkey(self, obj):
-        request = self.context.get('request', None)
-        if request and hasattr(request, 'user'):
-            user = request.user
-            passkey_exists = Passkey.objects.filter(user=user, exam=obj).exists()
-            return passkey_exists
-        return None
+        fields = ['id', 'name', 'description', 'subject', 'level','class_category', 'type', 'status']
         
     def to_representation(self, instance):
         representation = super().to_representation(instance)
