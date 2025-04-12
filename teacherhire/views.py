@@ -3052,12 +3052,13 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     def create(self, request):
         user = request.user
-        subject = request.data.get('subject')
-        class_category = request.data.get('class_category')
-        print(subject, class_category)
-        if not subject or not class_category:
-            return Response({"error": "Subject and Class Category are required."}, status=status.HTTP_400_BAD_REQUEST)
-        passkey = Passkey.objects.filter(user=user,exam__subject_id=subject,exam__class_category_id=class_category, exam__type='offline', status='requested').exists()
+        exam_id = request.data.get('exam')
+        try:
+            exam = Exam.objects.get(id=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+      
+        passkey = Passkey.objects.filter(user=user,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__type='offline', status='requested').exists()
         if passkey:
             return Response({"passkey": True})
         else:
