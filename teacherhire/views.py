@@ -3050,7 +3050,6 @@ class CountDataViewSet(viewsets.ViewSet):
 class checkPasskeyViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
-    # @action(detail=False, methods=['post'], url_path='verify')
     def create(self, request):
         user = request.user
         subject = request.data.get('subject')
