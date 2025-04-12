@@ -2079,8 +2079,16 @@ class ExamCard(viewsets.ModelViewSet):
         exam_set = unattempted_exams.first()
 
         if exam_set:
-            exam_serializer = ExamDetailSerializer(exam_set, context={'request':request}).data
+            exam_serializer = ExamDetailSerializer(exam_set).data
             return Response(exam_serializer, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {
+                    "error": "No exams available for the selected subject and class category.",
+                    "message": "Please choose your preferred subject and class category to proceed with the exam."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ReportViewSet(viewsets.ModelViewSet):
@@ -2214,13 +2222,41 @@ class GeneratePasskeyView(APIView):
                          "exam": exam_serializer.data
                          },
                         status=status.HTTP_200_OK)
+    
+    def get(self, request, user_id=None):
+        exam_id = request.query_params.get('exam_id')
+
+        passkeys = Passkey.objects.all()
+
+        if user_id:
+            passkeys = passkeys.filter(user__id=user_id)
+        if exam_id:
+            passkeys = passkeys.filter(exam__id=exam_id)
+
+        if not passkeys.exists():
+            return Response({"message": "No passkeys found."}, status=status.HTTP_404_NOT_FOUND)
+
+        data = [{
+            "user": passkey.user.id,
+            "exam_name": passkey.exam.name,
+            "subject": passkey.exam.subject.subject_name,
+            "class_category": passkey.exam.class_category.name if passkey.exam.class_category else None,
+            "level": passkey.exam.level.name if passkey.exam.level else None,
+            "level_code": passkey.exam.level.level_code if passkey.exam.level else None,
+            "code": passkey.code,
+            "center": passkey.center.center_name,
+            "status": passkey.status
+        } for passkey in passkeys]
+
+        return Response(data, status=status.HTTP_200_OK)
+    
 
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
-        user_id = request.data.get('user_id')
+        user_id = self.request.user.id
         exam_id = request.data.get('exam_id')
-        entered_passcode = request.data.get('passcode')
+        entered_passcode = request.data.get('entered_passcode')
         if not user_id or not exam_id or not entered_passcode:
             return Response(
                 {"error": "Missing required fields: user_id, exam_id, or passcode."},
