@@ -2193,9 +2193,9 @@ class GeneratePasskeyView(APIView):
             return Response({"error": "A passkey has already been generated for this exam."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        level_1_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=1, exam__type="online",
+        level_1_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id,exam__level__level_code=1.0, exam__type="online",
                                                              isqualified=True).exists()
-        level_2_online_qualified = TeacherExamResult.objects.filter(user=user, exam__level_id=2, exam__type="online",
+        level_2_online_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id,exam__level__level_code=2.0, exam__type="online",
                                                                     isqualified=True).exists()
 
         if not (level_1_qualified and level_2_online_qualified):
@@ -2262,21 +2262,15 @@ class VerifyPasscodeView(APIView):
                 {"error": "Missing required fields: user_id, exam_id, or passcode."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        passkey_status = Passkey.objects.filter(user=user_id, exam=exam_id, code=entered_passcode, status=False)
-        if passkey_status.exists():
-            return Response(
-                {"error": "Passcode verification is allowed only if the passcode is approved by the exam center."})
         try:
             passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode)
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
-        passkey_obj.status = False
+        passkey_obj.status = 'fulfilled'
         passkey_obj.save()
         exam = passkey_obj.exam
         exam_serializer = ExamSerializer(exam)
-        if passkey_obj.status == False:
-            passkey_obj.delete()
         # result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
         # if result:
         #     passkey_obj.delete()
@@ -3052,3 +3046,20 @@ class CountDataViewSet(viewsets.ViewSet):
             }
 
         return Response(count)
+    
+class checkPasskeyViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    def create(self, request):
+        user = request.user
+        exam_id = request.data.get('exam')
+        try:
+            exam = Exam.objects.get(id=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+      
+        passkey = Passkey.objects.filter(user=user,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__type='offline', status='requested').exists()
+        if passkey:
+            return Response({"passkey": True})
+        else:
+            return Response({"passkey": False})
