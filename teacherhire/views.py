@@ -2081,6 +2081,14 @@ class ExamCard(viewsets.ModelViewSet):
         if exam_set:
             exam_serializer = ExamDetailSerializer(exam_set).data
             return Response(exam_serializer, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {
+                    "error": "No exams available for the selected subject and class category.",
+                    "message": "Please choose your preferred subject and class category to proceed with the exam."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ReportViewSet(viewsets.ModelViewSet):
