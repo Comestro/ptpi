@@ -2344,7 +2344,6 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
     serializer_class = InterviewSerializer
     lookup_field = 'id'
 
-    
     def create(self, request, *args, **kwargs):
         # Deserialize data
         serializer = self.get_serializer(data=request.data)
@@ -2356,11 +2355,13 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             class_category = serializer.validated_data.get('class_category')
             check_exam_qualified = TeacherExamResult.objects.filter(user=user, exam__subject_id=subject,
                                                                     exam__class_category_id=class_category,
-                                                                    exam__level__name='2nd Level Online', exam__type='online').exists()
+                                                                    exam__level__level_code=2.0, 
+                                                                    exam__type='online').exists()
             if not check_exam_qualified:
-                return Response({"error": "First qualify this classcategory subject exams for Interview "})
+                return Response({"error": "First qualify this classcategory subject level 2 online exams for Interview "})
 
-            pending_interview = Interview.objects.filter(user=user, status='requested').exists()
+            pending_interview = Interview.objects.filter(user=user, subject=subject,
+                                                                    class_category=class_category, status='requested').exists()
             if pending_interview:
                 return Response(
                     {"error": "You already have a pending interview. Please complete it before scheduling another."},
@@ -2380,7 +2381,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
             )
         print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        
     def get_queryset(self):
         user = self.request.user
         return Interview.objects.filter(user=user).exclude(status__in=['fulfilled', 'rejected'])
@@ -3053,12 +3054,13 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
     def create(self, request):
         user = request.user
         exam_id = request.data.get('exam')
+        
         try:
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
       
-        passkey = Passkey.objects.filter(user=user,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__type='offline', status='requested').exists()
+        passkey = Passkey.objects.filter(user=user,exam__id=exam.id,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__level__level_code='2.5',exam__type='offline', status='requested').exists()
         if passkey:
             return Response({"passkey": True})
         else:
