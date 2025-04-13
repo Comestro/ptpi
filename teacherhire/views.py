@@ -2361,7 +2361,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
                 return Response({"error": "First qualify this classcategory subject level 2 online exams for Interview "})
 
             pending_interview = Interview.objects.filter(user=user, subject=subject,
-                                                                    class_category=class_category, status='requested').exists()
+                                                                    class_category=class_category, status__in=['requested', 'scheduled']).exists()
             if pending_interview:
                 return Response(
                     {"error": "You already have a pending interview. Please complete it before scheduling another."},
