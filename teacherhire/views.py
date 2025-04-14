@@ -480,18 +480,51 @@ class TeacherViewSet(viewsets.ModelViewSet):
             teacher_qualifications = [qualification.strip().lower() for qualification in teacher_qualifications]
             
             valid_qualifications = [
-                'Matric', 'Intermediate', 'Bachelor', 'Master', 'PhD',
+                'Matric', 'Intermediate', 'Bachelor', 'Master', 'phd',
                 'post-doctorate', 'professional diploma', 'honorary doctorate'
             ]
             
+            qualification_hierarchy = {
+                'Matric': 1,
+                'Intermediate': 2,
+                'Bachelor': 3,
+                'Master': 4,
+                'phd': 5,
+                'post-doctorate': 6,
+                'professional diploma': 7,
+                'honorary doctorate': 8
+            }
+            
             qualification_query = Q()
+            matched_qualifications = []
+            
+            # Fuzzy match qualifications
             for qualification in teacher_qualifications:
-                
                 best_match = process.extractOne(qualification, valid_qualifications)
-                if best_match and best_match[1] >= 80: 
-                    qualification_query |= Q(teacherqualifications__qualification__name__iexact=best_match[0])
+                if best_match and best_match[1] >= 80:  # Threshold for match confidence
+                    matched_qualifications.append(best_match[0])
                 else:
+                    matched_qualifications.append(qualification)
+            
+            if len(matched_qualifications) == 1:
+                # Single qualification
+                qualification = matched_qualifications[0]
+                if qualification == 'Matric':
+                    # Exact match for Matric
+                    qualification_query = Q(teacherqualifications__qualification__name__iexact='Matric')
+                elif qualification in qualification_hierarchy:
+                    # Include lower levels for other qualifications
+                    max_level = qualification_hierarchy[qualification]
+                    valid_quals = [
+                        q for q, level in qualification_hierarchy.items() if level <= max_level
+                    ]
+                    for valid_q in valid_quals:
+                        qualification_query |= Q(teacherqualifications__qualification__name__iexact=valid_q)
+            else:
+                # Multiple qualifications: Exact matches only
+                for qualification in matched_qualifications:
                     qualification_query |= Q(teacherqualifications__qualification__name__iexact=qualification)
+            
             queryset = queryset.filter(qualification_query)
         filters = {
             'state': self.request.query_params.get('state[]', []),
