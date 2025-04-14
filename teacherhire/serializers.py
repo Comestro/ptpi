@@ -982,7 +982,7 @@ class PasskeySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {"id": instance.user.id, "email": instance.user.email} if instance.user else None
+        representation['user'] = {"id": instance.user.id, "email": instance.user.email, "user_code":instance.user.user_code} if instance.user else None
         representation['exam'] = {"id": instance.exam.id, "name": instance.exam.name}
         representation['center'] = {"id": instance.center.id, "name": instance.center.center_name}
         return representation
@@ -1135,7 +1135,7 @@ class AllRecruiterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'profiles']
+        fields = ['id', 'Fname', 'Lname', 'email', 'user_code' ,'profiles']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1166,7 +1166,7 @@ class AllTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'Fname', 'Lname', 'email', 'is_verified', 'is_active', 'teachersubjects',
+            'id', 'Fname', 'Lname', 'email','user_code', 'is_verified', 'is_active', 'teachersubjects',
             'teachersaddress', 'teacherqualifications', 'total_marks'
         ]
 
@@ -1247,7 +1247,7 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'is_verified', 'profiles']
+        fields = ['id', 'Fname', 'Lname', 'email', 'user_code', 'is_verified', 'profiles']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
