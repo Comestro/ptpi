@@ -45,7 +45,7 @@ def validate_email(value):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'password', 'Fname', 'Lname', 'email', 'is_verified']
+        fields = ['id', 'password', 'Fname', 'Lname', 'email', 'user_code', 'is_verified']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -298,7 +298,7 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.user:
-            # representation['user'] = UserSerializer(instance.user).data
+            representation['user'] = UserSerializer(instance.user).data
             representation['role'] = RoleSerializer(instance.role).data
         return representation
 
@@ -579,6 +579,21 @@ class ExamSerializer(serializers.ModelSerializer):
             instance.assigneduser).data if instance.assigneduser else None
         return representation
 
+class ExamDetailSerializer(serializers.ModelSerializer):
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
+    level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
+
+    class Meta:
+        model = Exam
+        fields = ['id', 'name', 'description', 'subject', 'level','class_category', 'type', 'status']
+        
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['subject'] = {"id": instance.subject.id, "name": instance.subject.subject_name}
+        representation['level'] = {"id": instance.level.id, "name": instance.level.name, "level_code": instance.level.level_code}
+        representation['class_category'] = {"id": instance.class_category.id, "name": instance.class_category.name}
+        return representation
 
 class TeacherSkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
@@ -595,10 +610,10 @@ class TeacherSkillSerializer(serializers.ModelSerializer):
         return representation
 
     def validate(self, attrs):
-        # user = attrs.get('user')
+        user = attrs.get('user')
         skill = attrs.get('skill')
         # This user have skill already exists
-        if TeacherSkill.objects.filter(skill=skill).exists():
+        if TeacherSkill.objects.filter(skill=skill,user=user).exists():
             raise serializers.ValidationError('This user already has this skill.')
         return attrs
 
@@ -681,10 +696,9 @@ class PreferenceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     job_role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True, required=False, )
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False, many=True)
-    prefered_subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
     teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True,
                                                           required=False)
-
+    prefered_subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
     class Meta:
         model = Preference
         fields = [
@@ -692,18 +706,24 @@ class PreferenceSerializer(serializers.ModelSerializer):
             'user',
             'job_role',
             'class_category',
-            'prefered_subject',
             'teacher_job_type',
+            'prefered_subject',
         ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
-        representation['job_role'] = RoleSerializer(instance.job_role.all(), many=True).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(),
-                                                                   many=True).data if instance.class_category else None
-        representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject.all(), many=True).data
-        representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
+
+        user_selected_class_categories = instance.class_category.filter(preference__user=instance.user)
+        filtered_class_categories = []
+        for class_category in user_selected_class_categories:
+            user_selected_subjects = class_category.subjects.filter(preference__user=instance.user)
+            class_category_data = ClassCategorySerializer(class_category).data
+            class_category_data['subjects'] = SubjectSerializer(user_selected_subjects, many=True).data
+            filtered_class_categories.append(class_category_data)
+        representation['class_category'] = filtered_class_categories
+        representation['prefered_subject'] = SubjectSerializer(instance.prefered_subject, many=True).data
+        representation['job_role'] = RoleSerializer(instance.job_role, many=True).data
+        representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type, many=True).data
         return representation
 
 
@@ -852,7 +872,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'last_login', 'is_superuser', 'email', 'username',
             'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter',
-            'is_teacher', 'is_centeruser', 'is_questionuser', 'role'
+            'is_teacher', 'is_centeruser', 'user_code', 'is_questionuser', 'role'
         ]
         read_only_fields = ['email', 'username']
 
@@ -962,13 +982,18 @@ class PasskeySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {"id": instance.user.id, "email": instance.user.email}
+        representation['user'] = {"id": instance.user.id, "email": instance.user.email, "user_code":instance.user.user_code} if instance.user else None
         representation['exam'] = {"id": instance.exam.id, "name": instance.exam.name}
         representation['center'] = {"id": instance.center.id, "name": instance.center.center_name}
         return representation
 
 
 class InterviewSerializer(serializers.ModelSerializer):
+    time = serializers.DateTimeField(
+        required=False,
+        input_formats=['%Y-%m-%d %H:%M:%S'], 
+        format="%Y-%m-%d %H:%M:%S" 
+    )
     class Meta:
         model = Interview
         fields = ['id', 'time', 'link', 'status', 'class_category','level' ,'subject', 'grade','attempt','created_at']  # Exclude 'user' from here
@@ -1088,13 +1113,20 @@ class AssignedQuestionUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AssignedQuestionUser
-        fields = ['id','user', 'subject','class_category', 'status']  # use 'status' in lowercase here
+        fields = ['id','user', 'subject','class_category', 'status']  
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data
+        user_class_categories = instance.class_category.filter(assignedquestionuser__user=instance.user)
+        filtered_class_categories = []
+        for class_category in user_class_categories:
+            user_subjects = class_category.subjects.filter(assignedquestionuser__user=instance.user)
+            class_category_data = ClassCategorySerializer(class_category).data
+            class_category_data['subjects'] = SubjectSerializer(user_subjects, many=True).data
+            filtered_class_categories.append(class_category_data)
+        representation['class_category'] = filtered_class_categories
         return representation
 
 
@@ -1103,7 +1135,7 @@ class AllRecruiterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'profiles']
+        fields = ['id', 'Fname', 'Lname', 'email', 'user_code' ,'profiles']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1134,7 +1166,7 @@ class AllTeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'Fname', 'Lname', 'email', 'is_verified', 'is_active', 'teachersubjects',
+            'id', 'Fname', 'Lname', 'email','user_code', 'is_verified', 'is_active', 'teachersubjects',
             'teachersaddress', 'teacherqualifications', 'total_marks'
         ]
 
@@ -1215,7 +1247,7 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'Fname', 'Lname', 'email', 'is_verified', 'profiles']
+        fields = ['id', 'Fname', 'Lname', 'email', 'user_code', 'is_verified', 'profiles']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

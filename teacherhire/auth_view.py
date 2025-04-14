@@ -99,6 +99,7 @@ class LoginUser(APIView):
             'Fname': user.Fname,
             'email': user.email,
             'role': role,
+            # 'user_code': user.user_code,
             'is_active': user.is_active,
             'message': 'Login successful'
         }, status=status.HTTP_200_OK)

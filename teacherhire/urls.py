@@ -12,6 +12,7 @@ from django.conf.urls.static import static
 
 # Initialize router
 router = routers.DefaultRouter()
+router.register(r"self/new/exam", ExamCard, basename="self-new-exam")
 
 # === Admin Routes ===
 router.register(r"admin/teacherqualification", TeacherQualificationViewSet)
@@ -74,7 +75,8 @@ router.register(r"self/assigneduser", SelfAssignedQuestionUserViewSet, basename=
 # recruiter
 router.register(r"self/hirerequest", RecHireRequestViewSet, basename='self-hire-request')
 router.register(r"self/teacher", SelfViewSet, basename="self-teacher")
-
+router.register(r"self/teacherexamcenter", TeacherExamCenters, basename="self-teacher-examcenter")
+router.register(r"check-passkey", checkPasskeyViewSet, basename="check-passkey")
 # public
 router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="public-classcategory")
 

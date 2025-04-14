@@ -90,7 +90,7 @@ class ReportAdmin(admin.ModelAdmin):
 
 
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ['exam', 'time','display_text','display_image', 'options', 'correct_option','language', 'created_at']
+    list_display = ['exam', 'time','display_text','display_image', 'related_question','options', 'correct_option','language', 'created_at']
     def display_text(self, obj):
         if isinstance(obj.text, dict):
             return obj.text.get("text", "No Text")
@@ -140,9 +140,12 @@ class RecruiterEnquiryForm(admin.ModelAdmin):
 
 @admin.register(AssignedQuestionUser)
 class AssignedQuestionUserAdmin(admin.ModelAdmin):
-    list_display = ['user', 'get_subject']
+    list_display = ['user', 'get_subject', 'get_class_category']
     def get_subject(self, obj):
         return ", ".join([str(subject) for subject in obj.subject.all()])
+    
+    def get_class_category(self, obj):
+        return ", ".join([str(class_category) for class_category in obj.class_category.all()])
     
 @admin.register(HireRequest)
 class HireRequestAdmin(admin.ModelAdmin):
