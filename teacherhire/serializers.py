@@ -45,7 +45,7 @@ def validate_email(value):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'password', 'Fname', 'Lname', 'email', 'is_verified']
+        fields = ['id', 'password', 'Fname', 'Lname', 'email', 'user_code', 'is_verified']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -298,7 +298,7 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         if instance.user:
-            # representation['user'] = UserSerializer(instance.user).data
+            representation['user'] = UserSerializer(instance.user).data
             representation['role'] = RoleSerializer(instance.role).data
         return representation
 
