@@ -440,8 +440,8 @@ def get_pincodes_by_post_office(post_office_name):
 
 
 class TeacherViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsRecruiterUser]
-    authentication_classes = [ExpiringTokenAuthentication]
+    # permission_classes = [IsAuthenticated, IsRecruiterUser]
+    # authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
 
     def get_queryset(self):
@@ -479,28 +479,20 @@ class TeacherViewSet(viewsets.ModelViewSet):
         if teacher_qualifications:
             teacher_qualifications = [qualification.strip().lower() for qualification in teacher_qualifications]
             
-            qualification_hierarchy = {
-                '10th': 1,
-                '12th': 2,
-                'graduation': 3,
-                'post-graduation': 4,
-                'phd': 5,
-                'post-doctorate': 6,
-                'professional diploma': 7,
-                'honorary doctorate': 8
-            }
+            valid_qualifications = [
+                'Matric', 'Intermediate', 'Bachelor', 'Master', 'PhD',
+                'post-doctorate', 'professional diploma', 'honorary doctorate'
+            ]
             
             qualification_query = Q()
             for qualification in teacher_qualifications:
-                if qualification in qualification_hierarchy:
-                    min_level = qualification_hierarchy[qualification]
-                    valid_qualifications = [
-                        q for q, level in qualification_hierarchy.items() if level >= min_level
-                    ]
-                    for valid_q in valid_qualifications:
-                        qualification_query |= Q(teacherqualifications__qualification__name__iexact=valid_q)
+                
+                best_match = process.extractOne(qualification, valid_qualifications)
+                if best_match and best_match[1] >= 80: 
+                    qualification_query |= Q(teacherqualifications__qualification__name__iexact=best_match[0])
+                else:
+                    qualification_query |= Q(teacherqualifications__qualification__name__iexact=qualification)
             queryset = queryset.filter(qualification_query)
-
         filters = {
             'state': self.request.query_params.get('state[]', []),
             'district': self.request.query_params.getlist('district[]', []),
