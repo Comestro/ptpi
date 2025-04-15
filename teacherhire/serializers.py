@@ -320,7 +320,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCategory
-        fields = ['id', 'name', 'subjects']
+        fields = ['id', 'name', 'description', 'subjects']
         depth = 1
 
     def validate_name(self, value):

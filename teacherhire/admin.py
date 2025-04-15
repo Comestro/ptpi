@@ -33,7 +33,7 @@ class ReasonAdmin(admin.ModelAdmin):
 
 @admin.register(ClassCategory)
 class classCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name']
+    list_display = ['name', 'description']
 
 @admin.register(TeacherClassCategory)
 class TeacherClassCategoryAdmin(admin.ModelAdmin):

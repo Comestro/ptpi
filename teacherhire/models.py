@@ -119,6 +119,7 @@ class TeachersAddress(models.Model):
     
 class ClassCategory(models.Model):
     name = models.CharField(max_length=100,unique=True, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return str(self.name)
