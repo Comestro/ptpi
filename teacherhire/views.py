@@ -2988,7 +2988,6 @@ class AllApplyViewSet(viewsets.ModelViewSet):
         if teacher_id:
             return Apply.objects.filter(user=teacher_id)
         return Apply.objects.all()
-    
 
 class CountDataViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]

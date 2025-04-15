@@ -469,6 +469,7 @@ class HireRequest(models.Model):
 
 class RecruiterEnquiryForm(models.Model):
     teachertype = models.CharField(max_length=200, null=True, blank=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     pincode = models.CharField(max_length=6, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
