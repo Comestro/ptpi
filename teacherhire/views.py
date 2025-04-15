@@ -2905,8 +2905,8 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     queryset = RecruiterEnquiryForm.objects.all()
     permission_classes = [permissions.AllowAny] 
 
-    def list(self, request, *args, **kwargs):
-        return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    # def list(self, request, *args, **kwargs):
+    #     return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
