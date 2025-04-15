@@ -2900,6 +2900,7 @@ class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "POST method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
 class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     serializer_class = RecruiterEnquiryFormSerializer
     queryset = RecruiterEnquiryForm.objects.all()
@@ -2909,7 +2910,10 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     #     return Response({"detail": "GET method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        user = self.request.user
+        data = request.data.copy()
+        data['user'] = user.id
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()  
             return Response(serializer.data, status=status.HTTP_201_CREATED)

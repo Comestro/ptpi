@@ -1204,6 +1204,9 @@ class AllTeacherSerializer(serializers.ModelSerializer):
 class HireRequestSerializer(serializers.ModelSerializer):
     teacher_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     recruiter_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True, required=False)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), many=True, required=False)
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
 
     class Meta:
         model = HireRequest
@@ -1214,17 +1217,29 @@ class HireRequestSerializer(serializers.ModelSerializer):
         representation['teacher_id'] = UserSerializer(instance.teacher_id).data
         representation['recruiter_id'] = UserSerializer(instance.recruiter_id).data
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
 
 
 class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), many=True, required=False)
     contact = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     class Meta:
         model = RecruiterEnquiryForm
-        fields = "__all__"
+        fields = ['id', 'user', 'teachertype', 'class_category', 'subject', 'state', 'city','pincode', 'area', 'name',
+                  'email', 'contact']
+
+    def validate(self, value):
+        user = self.context['request'].user
+        if not user or not user.is_authenticated:
+            email = value.get('email', '').strip()
+            if not email:
+                raise serializers.ValidationError({"email": "this field is required"})
+        return value
 
     def validate_contact(self, value):
         if value:
@@ -1238,6 +1253,7 @@ class RecruiterEnquiryFormSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data if instance.user else None
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data
         return representation
