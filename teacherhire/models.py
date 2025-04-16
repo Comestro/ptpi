@@ -433,7 +433,7 @@ class Passkey(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE,null=True, related_name='passkeys')
     center = models.ForeignKey(ExamCenter, on_delete=models.CASCADE,null=True, related_name='passkeys')
     code = models.CharField(max_length=200,null=True,blank=True,unique=True)
-    status = models.CharField(max_length=200,choices=[('requested','requested'),('fulfilled','fulfilled'),('rejected','rejected')], default='requested')
+    status = models.CharField(max_length=200,choices=[('requested','requested'),('isused', 'isused'),('fulfilled','fulfilled'),('rejected','rejected')], default='requested')
     reject_reason = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):

@@ -2213,7 +2213,7 @@ class GeneratePasskeyView(APIView):
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        existing_passkey = Passkey.objects.filter(user=user, exam=exam).first()
+        existing_passkey = Passkey.objects.filter(user=user, exam=exam, status='requested').first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -2279,7 +2279,7 @@ class GeneratePasskeyView(APIView):
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
-        user_id = request.data.get('user_id')
+        user_id = self.request.user.id
         exam_id = request.data.get('exam_id')
         entered_passcode = request.data.get('entered_passcode')
         if not user_id or not exam_id or not entered_passcode:
@@ -2288,17 +2288,14 @@ class VerifyPasscodeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
-            passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode)
+            passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode, status='fulfilled')
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
-        passkey_obj.status = 'fulfilled'
+        passkey_obj.status = 'isused'
         passkey_obj.save()
         exam = passkey_obj.exam
         exam_serializer = ExamSerializer(exam)
-        # result = TeacherExamResult.objects.filter(user=user_id, exam=exam_id).first()
-        # if result:
-        #     passkey_obj.delete()
         return Response(
             {
                 "message": "Passcode verified successfully.",
@@ -3088,7 +3085,7 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
       
-        passkey = Passkey.objects.filter(user=user,exam__id=exam.id,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__level__level_code='2.5',exam__type='offline', status='requested').first()
+        passkey = Passkey.objects.filter(user=user,exam__id=exam.id,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__level__level_code='2.5',exam__type='offline', status='fulfilled').first()
         if passkey and passkey.center:
             center = {
                 "id": passkey.center.id,
