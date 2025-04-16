@@ -2279,7 +2279,7 @@ class GeneratePasskeyView(APIView):
 
 class VerifyPasscodeView(APIView):
     def post(self, request):
-        user_id = self.request.user.id
+        user_id = request.data.get('user_id')
         exam_id = request.data.get('exam_id')
         entered_passcode = request.data.get('entered_passcode')
         if not user_id or not exam_id or not entered_passcode:
