@@ -3085,7 +3085,7 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
         except Exam.DoesNotExist:
             return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
       
-        passkey = Passkey.objects.filter(user=user,exam__id=exam.id,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__level__level_code='2.5',exam__type='offline', status='fulfilled').first()
+        passkey = Passkey.objects.filter(user=user,exam__id=exam.id,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__level__level_code='2.5',exam__type='offline', status__in=['requested','fulfilled']).first()
         if passkey and passkey.center:
             center = {
                 "id": passkey.center.id,
