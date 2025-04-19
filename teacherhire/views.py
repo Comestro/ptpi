@@ -2894,6 +2894,27 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         recruiter_id = self.request.user
         return HireRequest.objects.filter(recruiter_id=recruiter_id)
     
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        status_value = request.data.get("status")
+        reject_reason = request.data.get("reject_reason")
+
+        if status_value not in ['requested', 'fulfilled', 'rejected']:
+            return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
+
+        instance.status = status_value
+        if status_value == "rejected":
+            if not reject_reason:
+                return Response({"error": "Reject reason required when status is rejected"}, status=status.HTTP_400_BAD_REQUEST)
+            instance.reject_reason = reject_reason
+        else:
+            instance.reject_reason = None
+
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    
 class RecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]  
     authentication_classes = [ExpiringTokenAuthentication]
