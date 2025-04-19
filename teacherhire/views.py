@@ -1385,7 +1385,12 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     def get_queryset(self):
-        return TeacherExamResult.objects.filter(user=self.request.user)
+        isqualified = self.request.query_params.get('isqualified', None)
+        level_code = self.request.query_params.get('level_code', None)
+        if isqualified:
+            return TeacherExamResult.objects.filter(user=self.request.user, isqualified=isqualified, exam__level__level_code=level_code)
+        else:
+            return TeacherExamResult.objects.filter(user=self.request.user)
     
 
 class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
