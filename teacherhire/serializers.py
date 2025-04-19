@@ -412,7 +412,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     correct_option = serializers.IntegerField(min_value=1, allow_null=True, required=False)
     class Meta:
         model = Question
-        fields = ['id', 'related_question', 'text', 'options', 'exam', 'solution', 'correct_option', 'language', 'time']
+        fields = ['id', 'related_question', 'text', 'options', 'exam', 'solution', 'correct_option', 'language']
 
     def validate_text(self, value):
         if value is not None and len(value) < 5:
