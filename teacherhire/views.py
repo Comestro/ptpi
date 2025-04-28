@@ -602,7 +602,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
         return None
 
 class RecruiterTeacherSearch(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsRecruiterUser]
+    # permission_classes = [IsAuthenticated, IsRecruiterUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
 
