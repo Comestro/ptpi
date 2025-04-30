@@ -518,17 +518,17 @@ class TeacherViewSet(viewsets.ModelViewSet):
             
             queryset = queryset.filter(qualification_query)
         filters = {
-            'state': self.request.query_params.get('state[]', []),
-            'district': self.request.query_params.getlist('district[]', []),
+            'state': self.request.query_params.get('state', []),
+            'district': self.request.query_params.getlist('district', []),
             'division': self.request.query_params.get('division', []),
-            'pincode': self.request.query_params.getlist('pincode[]', []),
-            'block': self.request.query_params.getlist('block[]', []),
-            'village': self.request.query_params.getlist('village[]', []),
+            'pincode': self.request.query_params.getlist('pincode', []),
+            'block': self.request.query_params.getlist('block', []),
+            'village': self.request.query_params.getlist('village', []),
             'experience': self.request.query_params.get('experience', None),
-            'class_category': self.request.query_params.getlist('class_category[]', []),
-            'subject': self.request.query_params.getlist('subject[]', []),
-            'job_role': self.request.query_params.getlist('job_role[]', []),
-            'teacher_job_type': self.request.query_params.getlist('teacher_job_type[]', []),
+            'class_category': self.request.query_params.getlist('class_category', []),
+            'subject': self.request.query_params.getlist('subject', []),
+            'job_role': self.request.query_params.getlist('job_role', []),
+            'teacher_job_type': self.request.query_params.getlist('teacher_job_type', []),
             'postOffice': self.request.query_params.get('postOffice', None),
         }
 
@@ -600,9 +600,47 @@ class TeacherViewSet(viewsets.ModelViewSet):
                 return Q(teacherexperiences__start_date__gte=start_date_threshold) & Q(
                     teacherexperiences__start_date__lt=end_date_threshold)
         return None
+    
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        
+        if not response.data:
+            filter_messages = []
+            filter_params = {
+                'class_category': 'Class',
+                'subject': 'Subject',
+                'skill[]': 'Skill',
+                'pincode': 'Pincode',
+                'qualification[]': 'Qualification',
+                'state': 'State',
+                'district': 'District',
+                'teacher_job_type[]': 'Job Type'
+            }
+
+            for param, label in filter_params.items():
+                values = request.query_params.getlist(param) or request.query_params.get(param)
+                if values:
+                    if isinstance(values, list):
+                        values_str = ", ".join([v.title() for v in values])
+                    else:
+                        values_str = values.title()
+                    filter_messages.append(f"{label} - {values_str}")
+
+            if filter_messages:
+                message = "No teachers found matching: " + " | ".join(filter_messages)
+            else:
+                message = "No teachers available"
+            
+            return Response(
+                {"detail": message},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return response
+    
 
 class RecruiterTeacherSearch(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated, IsRecruiterUser]
+    permission_classes = [IsAuthenticated, IsRecruiterUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeacherSerializer
 
