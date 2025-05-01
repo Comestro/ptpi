@@ -81,7 +81,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_recruiter = True
-        is_verified = True
+        is_verified = False
 
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
@@ -93,7 +93,7 @@ class RecruiterRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_recruiter=is_recruiter,
-                is_verified=is_verified,
+                # is_verified=is_verified,
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -120,7 +120,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_centeruser = True
-        is_verified = True
+        is_verified = False
 
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
@@ -132,7 +132,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_centeruser=is_centeruser,
-                is_verified=is_verified,
+                # is_verified=is_verified,
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -159,7 +159,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_questionuser = True
-        is_verified = True
+        is_verified = False
 
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
@@ -171,7 +171,7 @@ class QuestionUserSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_questionuser=is_questionuser,
-                is_verified=is_verified
+                # is_verified=is_verified
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
@@ -216,7 +216,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         Fname = validated_data['Fname']
         Lname = validated_data['Lname']
         is_teacher = True
-        is_verified = True
+        is_verified = False
 
         while CustomUser.objects.filter(username=username).exists():
             username = f"{base_username}{random.randint(1000, 9999)}"
@@ -228,7 +228,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_teacher=is_teacher,
-                is_verified=is_verified
+                # is_verified=is_verified
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
