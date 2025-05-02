@@ -82,7 +82,7 @@ class LoginUser(APIView):
                             status=status.HTTP_403_FORBIDDEN)
 
         # if not user.check_password(password):
-            # return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
+        #     return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
         Token.objects.filter(user=user).delete()
         token = Token.objects.create(user=user)
@@ -100,7 +100,7 @@ class LoginUser(APIView):
             'Fname': user.Fname,
             'email': user.email,
             'role': role,
-            # 'user_code': user.user_code,
+            'user_code': user.user_code,
             'is_active': user.is_active,
             'message': 'Login successful'
         }, status=status.HTTP_200_OK)
