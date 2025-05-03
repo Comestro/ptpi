@@ -35,7 +35,6 @@ class RegisterUser(APIView):
                     "centeruser" if user.is_centeruser else \
                         "questionuser" if user.is_questionuser else "user"
 
-        user = serializer.save()
         otp = send_otp_via_email(user.email)
         user.otp = otp
         user.otp_created_at = now()
@@ -81,8 +80,8 @@ class LoginUser(APIView):
             return Response({'message': 'Please verify your account before logging in.'},
                             status=status.HTTP_403_FORBIDDEN)
 
-        # if not user.check_password(password):
-        #     return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
+        if not user.check_password(password):
+            return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
         Token.objects.filter(user=user).delete()
         token = Token.objects.create(user=user)
