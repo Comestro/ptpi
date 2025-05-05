@@ -28,7 +28,6 @@ class RegisterUser(APIView):
             }, status=status.HTTP_409_CONFLICT)
 
         user = serializer.save()
-        token, created = Token.objects.get_or_create(user=user) 
         role = "admin" if user.is_staff else \
             "recruiter" if user.is_recruiter else \
                 "teacher" if user.is_teacher else \
@@ -42,7 +41,6 @@ class RegisterUser(APIView):
         return Response({
             'payload': serializer.data,
             'role': role,
-            'access_token': token.key,
             'message': 'Check your email to verify your account.'
         }, status=status.HTTP_200_OK)
     
@@ -181,9 +179,12 @@ class VerifyOTP(APIView):
             return Response({'error': 'OTP expired', 'message': 'Request a new OTP'},
                             status=status.HTTP_400_BAD_REQUEST)
         user.is_verified = True
+        token, created = Token.objects.get_or_create(user=user) 
         user.save()
         verified_msg(email)
-        return Response({'message': 'Account verified successfully'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Account verified successfully',
+                        'access_token': token.key,
+                         }, status=status.HTTP_200_OK)
 
 
 class ResendOTP(APIView):
