@@ -162,13 +162,15 @@ AUTH_USER_MODEL = 'teacherhire.CustomUser'
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.hostinger.com'  
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True 
-EMAIL_USE_TLS = False
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = 587  # Use 465 for SSL
+EMAIL_USE_TLS = True  # Set to False if using SSL
+EMAIL_USE_SSL = False  # Set to True if using SSL
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
+print(f"EMAIL_USER: {os.environ.get('EMAIL_USER')}")
+print(f"EMAIL_PASS: {os.environ.get('EMAIL_PASS')}")
 # Security settings for production
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust X-Forwarded-Proto header
