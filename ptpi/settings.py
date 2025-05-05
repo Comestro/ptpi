@@ -20,6 +20,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://api.ptpinstitute.com'
     'https://www.ptpinstitute.com',
     'http://ptpinstitute.com',
+    'http://www.ptpinstitute.com',
+    'https://ptpinstitute.com',
 ]
 
 # Configure django-dbbackup settings
