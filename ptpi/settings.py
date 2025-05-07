@@ -174,6 +174,7 @@ EMAIL_USE_TLS = True  # Set to False if using SSL
 EMAIL_USE_SSL = False  # Set to True if using SSL
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_FROM')
 
 # Security settings for production
 if not DEBUG:

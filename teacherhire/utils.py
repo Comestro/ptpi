@@ -3,7 +3,7 @@ import os
 import random
 from django.utils.timezone import now
 from django.template.loader import render_to_string
-from .models import CustomUser,BasicProfile ,TeachersAddress,Preference,JobPreferenceLocation,TeacherQualification
+from .models import BasicProfile ,TeachersAddress,Preference
 
 class Util:
     @staticmethod
