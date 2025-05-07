@@ -201,7 +201,7 @@ class ResendOTP(APIView):
         user.otp=otp
         user.otp_created_at = now()
         user.save(update_fields=['otp', 'otp_created_at'])
-        return Response({'otp': user.otp,'message': 'OTP resent successfully'}, status=status.HTTP_200_OK)
+        return Response({'message': 'OTP resent successfully'}, status=status.HTTP_200_OK)
 
 
 class UserVerify(APIView):
