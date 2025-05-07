@@ -20,26 +20,24 @@ def send_otp_via_email(email):
     subject = "Your Account Verification Email"
     otp = random.randint(100000, 999999)
     
-    # Render the HTML template with context data
     html_message = render_to_string('emails/otp_verification.html', {'otp': otp})
     
-    # Plain text version for email clients that don't support HTML
     message = f"Your OTP is {otp}"
     
     from_email = os.environ.get('EMAIL_FROM')
     send_mail(subject, message, from_email, [email], html_message=html_message)
-    
-    # Removed commented code since it appears to be unused
+    # user_obj = CustomUser.objects.get(email=email)
+    # user_obj.otp = otp
+    # user_obj.otp_created_at = now()
+    # user_obj.save()
     return otp
 
 def verified_msg(email):
     try:
         subject = "🎉 Account Verified Successfully! Welcome to TeacherGotHire!"
         
-        # Render the HTML template 
         html_message = render_to_string('emails/account_verified.html')
         
-        # Plain text version for email clients that don't support HTML
         plain_message = (
             "Yay!! Welcome to TeacherGotHire! 🎉\n\n"
             "We're absolutely thrilled to have you join our growing community of passionate educators. 🌟\n\n"
