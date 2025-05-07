@@ -2,6 +2,7 @@ from django.core.mail import EmailMessage, send_mail
 import os
 import random
 from django.utils.timezone import now
+from django.template.loader import render_to_string
 from .models import CustomUser,BasicProfile ,TeachersAddress,Preference,JobPreferenceLocation,TeacherQualification
 
 class Util:
@@ -16,72 +17,29 @@ class Util:
         email.send()
 
 def send_otp_via_email(email):
-    subject = "your account verification email"
+    subject = "Your Account Verification Email"
     otp = random.randint(100000, 999999)
+    
+    # Render the HTML template with context data
+    html_message = render_to_string('emails/otp_verification.html', {'otp': otp})
+    
+    # Plain text version for email clients that don't support HTML
     message = f"Your OTP is {otp}"
-    html_message = f"""
-        <div style="
-            max-width: 600px; 
-            margin: 20px auto; 
-            padding: 20px; 
-            border-radius: 10px; 
-            background-color: #f9f9f9; 
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
-            text-align: center;
-            font-family: Arial, sans-serif;
-            color: #333;">
-            
-            <h2 style="color: #008080; font-size: 24px; margin-bottom: 10px;">Purnia Private Teacher Institution</h2>
-            
-            <p style="font-size: 16px; margin-bottom: 20px;">
-                Use the code below to complete your verification process.
-            </p>
-            
-            <p style="
-                display: inline-block; 
-                padding: 10px 20px; 
-                font-size: 36px; 
-                font-weight: bold; 
-                color: #ffffff; 
-                background-color: #008080; 
-                border-radius: 8px; 
-                text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);">
-                {otp}
-            </p>
-            
-            <p style="margin-top: 20px; font-size: 14px; color: #555;">
-                This OTP is valid for 10 minutes. Please do not share it with anyone.
-            </p>
-        </div>
-        """
-    from_email=os.environ.get('EMAIL_FROM')
-    send_mail(subject,message,from_email, [email],html_message=html_message)
-    # user_obj = CustomUser.objects.get(email=email)
-    # user_obj.otp = otp
-    # user_obj.otp_created_at = now()
-    # user_obj.save()
+    
+    from_email = os.environ.get('EMAIL_FROM')
+    send_mail(subject, message, from_email, [email], html_message=html_message)
+    
+    # Removed commented code since it appears to be unused
     return otp
 
 def verified_msg(email):
     try:
         subject = "🎉 Account Verified Successfully! Welcome to TeacherGotHire!"
         
-        html_message = (
-            "Congratulations Yay!! Welcome to <strong style='color: #008080;'>TeacherGotHire</strong>! 🎉<br><br>"
-            "We're absolutely thrilled to have you join our growing community of passionate educators. 🌟<br><br>"
-            "<strong style='color: #008080;'>TeacherGotHire</strong> is your gateway to endless opportunities where you can:<br>"
-            "- 🌍 Connect with learners from around the world.<br>"
-            "- 📚 Share your knowledge and expertise.<br>"
-            "- 🚀 Take your teaching career to new heights.<br><br>"
-            "Take your teaching journey to the next level with the tools, resources, and support you need to succeed.<br><br>"
-            "Your journey starts here! Log in to your account and explore features designed to empower you on this exciting path. "
-            "Together, we can make a difference in education.<br><br>"
-            "If you have any questions or need help, our team is always here to assist you.<br><br>"
-            "Welcome aboard, and here's to your success with <strong style='color: #008080;'>TeacherGotHire</strong>! 🥳<br><br>"
-            "Best regards,<br>"
-            "The <strong style='color: #008080;'>TeacherGotHire</strong> Team"
-        )
+        # Render the HTML template 
+        html_message = render_to_string('emails/account_verified.html')
         
+        # Plain text version for email clients that don't support HTML
         plain_message = (
             "Yay!! Welcome to TeacherGotHire! 🎉\n\n"
             "We're absolutely thrilled to have you join our growing community of passionate educators. 🌟\n\n"
@@ -97,6 +55,7 @@ def verified_msg(email):
             "Best regards,\n"
             "The TeacherGotHire Team"
         )
+        
         from_email = os.environ.get('EMAIL_FROM')
         send_mail(
             subject=subject,
