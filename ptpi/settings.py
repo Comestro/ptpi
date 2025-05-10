@@ -183,4 +183,3 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
     CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
 
-#just change for push
