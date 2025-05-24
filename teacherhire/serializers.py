@@ -132,7 +132,7 @@ class CenterUserSerializer(serializers.ModelSerializer):
                 Fname=Fname,
                 Lname=Lname,
                 is_centeruser=is_centeruser,
-                is_verified=is_verified,
+                is_verified=is_verified
             )
         except Exception as e:
             raise ValidationError({'error': str(e)})
