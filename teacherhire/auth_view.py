@@ -75,7 +75,9 @@ class LoginUser(APIView):
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
         if not user.is_verified:
-            return Response({'message': 'Please verify your account before logging in.'},
+            return Response({'message': 'Please verify your account before logging in.',
+                             "is_verified": user.is_verified
+                             },
                             status=status.HTTP_403_FORBIDDEN)
 
         if not user.check_password(password):
