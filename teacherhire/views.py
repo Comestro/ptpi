@@ -1552,7 +1552,7 @@ class BasicProfileViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                return serializer.instance  # Return the newly created profile
+                return serializer.instance  
             # Option 2: Raise an error response if creation fails
             raise Response({"detail": "Profile not found and could not be created."},
                            status=status.HTTP_400_BAD_REQUEST)
