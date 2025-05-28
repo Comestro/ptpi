@@ -492,7 +492,6 @@ class QuestionSerializer(serializers.ModelSerializer):
         instance.solution = validated_data.get('solution', instance.solution)
         instance.options = validated_data.get('options', instance.options) or []
         instance.correct_option = validated_data.get('correct_option', instance.correct_option)
-        instance.time = validated_data.get('time', instance.time)
         instance.exam = validated_data.get('exam', instance.exam)
         instance.language = validated_data.get('language', instance.language)
 
@@ -509,7 +508,6 @@ class QuestionSerializer(serializers.ModelSerializer):
             hindi_related_question.options = [translator.translate(option, src="en", dest="hi").text for option in instance.options] if instance.options else []
             hindi_related_question.correct_option = instance.correct_option
             hindi_related_question.exam = instance.exam
-            hindi_related_question.time = instance.time
             hindi_related_question.save()
         else:
             hindi_related_question = Question.objects.create(
@@ -519,7 +517,6 @@ class QuestionSerializer(serializers.ModelSerializer):
                 options=[translator.translate(option, src="en", dest="hi").text for option in instance.options] if instance.options else [],
                 correct_option=instance.correct_option,
                 exam=instance.exam,
-                time=instance.time,
                 language='Hindi'
             )
 
