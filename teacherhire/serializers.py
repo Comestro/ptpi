@@ -908,7 +908,7 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
         uid = urlsafe_base64_encode(force_bytes(user.id))
         token = PasswordResetTokenGenerator().make_token(user)
 
-        reset_link = f'http://localhost:5173/reset-password/{uid}/{token}'
+        reset_link = f'https://ptpinstitute.com/reset-password/{uid}/{token}'
         print('reset_link', reset_link)
         body = f'Click the following link to reset your password: {reset_link}'
         data = {
