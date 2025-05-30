@@ -924,25 +924,25 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
 
 # forget password serializer for reset password
 class ResetPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
     confirm_password = serializers.CharField(required=True)
 
     class Meta:
-        fields = ['password', 'confirm_password']
+        fields = ['new_password', 'confirm_password']
 
     def validate(self, attrs):
         try:
-            password = attrs.get('password')
+            new_password = attrs.get('new_password')
             confirm_password = attrs.get('confirm_password')
             uid = self.context.get('uid')
             token = self.context.get('token')
-            if password != confirm_password:
+            if new_password != confirm_password:
                 raise serializers.ValidationError({'confirm_password': "Password and Confirm password doesn't match"})
             id = smart_str(urlsafe_base64_decode(uid))
             user = CustomUser.objects.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user, token):
                 raise ValidationError({"error": 'Token is not valid or Expired'})
-            user.set_password(password)
+            user.set_password(new_password)
             user.save()
             return attrs
         except DjangoUnicodeDecodeError as identifier:
