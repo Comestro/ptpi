@@ -1840,10 +1840,9 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         """Admins can delete any exam; assigned users can delete only their own."""
         user = request.user
         instance = get_object_or_404(Exam, id=kwargs.get('pk'))
-
+        exam =  Exam.objects.get(id=instance.id)
         if not user.is_staff and exam.assigneduser.user != user:
             return Response({"error": "You do not have permission to delete this exam."}, status=status.HTTP_403_FORBIDDEN)
-        exam =  Exam.objects.get(id=instance.id)
         questions = exam.questions.all().count()
         if questions == 0:
             instance.delete()
