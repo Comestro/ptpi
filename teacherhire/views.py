@@ -1847,7 +1847,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         if questions == 0:
             instance.delete()
         else:
-            return Response({"error": "This exam cannot be deleted because it is associated with questions. Please delete the associated questions first."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Please delete the associated questions first."}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
