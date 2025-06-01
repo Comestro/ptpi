@@ -121,7 +121,7 @@ urlpatterns = [
     path("read-only-authenticated/", ReadOnlyForAuthenticatedUsers.as_view(), name="read-only-authenticated"),
     path("public/", PublicView.as_view(), name="public"),
 
-    #     # Backup & Restore DB
+    # Backup & Restore DB
     path('backup-db/', BackupDatabaseView.as_view(), name='backup_db'),
     path('restore-db/', RestoreDBView.as_view(), name='restore_db'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
