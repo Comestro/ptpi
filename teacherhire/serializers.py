@@ -1300,3 +1300,16 @@ class ApplySerializer(serializers.ModelSerializer):
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
+
+class TranslatorSerializer(serializers.Serializer):
+    text = serializers.CharField(max_length=100, required=True)
+    source = serializers.CharField(max_length=10, required=True)
+    dest = serializers.CharField(max_length=10, required=True)
+
+    def validate(self, data):
+        text = data.get('text')
+        source = data.get('source')
+        dest = data.get('dest')
+        if not text or not source or not dest:
+            raise serializers.ValidationError("All fields are required: 'text', 'source', and 'destination'.")
+        return data

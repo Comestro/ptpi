@@ -79,7 +79,7 @@ router.register(r"self/teacherexamcenter", TeacherExamCenters, basename="self-te
 router.register(r"check-passkey", checkPasskeyViewSet, basename="check-passkey")
 # public
 router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="public-classcategory")
-
+router.register(r'translator', TranslatorViewset, basename="translator")
 # === Permission-Based Routes ===
 urlpatterns = [
     path("", include(router.urls)),

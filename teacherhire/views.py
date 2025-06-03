@@ -31,6 +31,7 @@ from PIL import Image
 from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import get_object_or_404
+from googletrans import Translator
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterUser]
@@ -1000,9 +1001,11 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
-
         if serializer.is_valid():
             updated_instance = serializer.save()
+            if updated_instance.exam:
+                updated_instance.exam.status = False
+                updated_instance.exam.save()
             english_data = QuestionSerializer(updated_instance).data
             if updated_instance.language == "Hindi":
                 return Response({
@@ -1031,6 +1034,9 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        exam = instance.exam
+        if exam.status == True:
+            return Response({"error": "Cannot delete question from an active exam."}, status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
@@ -3155,3 +3161,24 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
             return Response({"passkey": True, "center": center})
         else:
             return Response({"passkey": False})
+
+class TranslatorViewset(viewsets.ViewSet):
+    def create(self, request):
+        serializer = TranslatorSerializer(data=request.data)
+        if serializer.is_valid():
+            text = serializer.validated_data['text']
+            source = serializer.validated_data['source']
+            dest = serializer.validated_data['dest']
+
+            translator = Translator()
+            try:
+                translated_text = translator.translate(text, src=source, dest=dest)
+                return Response({
+                    'text': text,
+                    'translated': translated_text.text,
+                    'source': source,
+                    'destination': dest
+                })
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
