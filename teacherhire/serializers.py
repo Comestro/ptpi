@@ -537,7 +537,7 @@ class ExamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_marks',
+        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_questions','total_marks',
                   'duration', 'questions', 'type', 'status']
         depth = 1
 
@@ -561,7 +561,7 @@ class ExamSerializer(serializers.ModelSerializer):
             print(admin_user)
             if admin_user:
                 assigneduser, created = AssignedQuestionUser.objects.get_or_create(user=admin_user)
-                validated_data['status'] = True
+                # validated_data['status'] = True
             validated_data['assigneduser'] = assigneduser
         validated_data['name'] = auto_name
         return super().create(validated_data)
@@ -1313,3 +1313,37 @@ class TranslatorSerializer(serializers.Serializer):
         if not text or not source or not dest:
             raise serializers.ValidationError("All fields are required: 'text', 'source', and 'destination'.")
         return data
+
+
+class NewQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = [
+            'id',
+            'exam',
+            'text',
+            'options',
+            'correct_option',
+            'solution',
+            'language',
+            'related_question',
+        ]
+        extra_kwargs = {
+            'related_question': {'required': False, 'allow_null': True}
+        }
+    def validate_text(self, value):
+        if value is not None and len(value) < 5:
+            raise serializers.ValidationError("Text must be at least 5 characters.")
+        if self.instance and self.instance.language == "Hindi":
+            return value
+        question_id = self.instance.id if self.instance else None
+        exam = self.instance.exam if self.instance else self.initial_data.get('exam')
+
+        if Question.objects.filter(text=value, exam=exam).exclude(id=question_id).exists():
+            raise serializers.ValidationError("This question already exists for this exam.")
+        return value
+
+    def validate_options(self, value):
+        if len(value) != len(set(value)):  
+            raise serializers.ValidationError("Options must be unique.")
+        return value

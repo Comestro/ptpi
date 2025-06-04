@@ -1829,12 +1829,20 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
-        """Admins can update any exam; assigned users can update only their own."""
         user = request.user
         exam = get_object_or_404(Exam, id=kwargs.get('pk'))
 
         if not user.is_staff and exam.assigneduser.user != user:
             return Response({"error": "You do not have permission to update this exam."}, status=status.HTTP_403_FORBIDDEN)
+
+        new_status = request.data.get('status')
+        if new_status == True:
+            total_questions = exam.total_questions
+            actual_count = exam.questions.count()  
+            if actual_count < total_questions:
+                return Response({
+                    "error": f"Cannot activate this exam. Total questions required: {total_questions}, current: {actual_count}"
+                }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = ExamSerializer(exam, data=request.data, partial=True)
         if serializer.is_valid():
@@ -3182,3 +3190,140 @@ class TranslatorViewset(viewsets.ViewSet):
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Question.objects.all()
+    serializer_class = NewQuestionSerializer
+
+    def get_permissions(self):
+        return [IsAdminUser()] if self.request.user.is_staff else [IsQuestionUser()]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        exam_id = data.get("exam")
+        questions = data.get("questions")
+
+        if not exam_id or not questions or not isinstance(questions, list):
+            return Response({"error": "Exam and questions array are required"}, status=400)
+
+        if request.user.is_staff: 
+            try:
+                exam = Exam.objects.get(id=exam_id)
+            except Exam.DoesNotExist:
+                return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:  
+            assigned_user = AssignedQuestionUser.objects.filter(user=request.user).first()
+            if not assigned_user:
+                return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
+
+            try:
+                exam = Exam.objects.get(pk=exam_id, assigneduser=assigned_user)
+            except Exam.DoesNotExist:
+                return Response({"error": "Exam not found or you do not have permission."}, 
+                                status=status.HTTP_404_NOT_FOUND)
+
+        created_questions = []
+        errors = []
+        english_instance = None
+
+        for q in questions:
+            q["exam"] = exam.id
+            language = q.get("language", "").lower()
+
+            serializer = self.get_serializer(data=q)
+            if serializer.is_valid():
+                # Save English first without related_question
+                if language == "english":
+                    english_instance = serializer.save()
+                    created_questions.append(QuestionSerializer(english_instance).data)
+
+                # Save Hindi with related_question set
+                elif language == "hindi":
+                    if english_instance:
+                        q["related_question"] = english_instance.id
+                    hindi_serializer = self.get_serializer(data=q)
+                    if hindi_serializer.is_valid():
+                        hindi_instance = hindi_serializer.save()
+                        created_questions.append(QuestionSerializer(hindi_instance).data)
+                    else:
+                        errors.append(hindi_serializer.errors)
+            else:
+                errors.append(serializer.errors)
+
+        if errors:
+            return Response({"errors": errors}, status=400)
+
+        return Response({
+            "message": "Questions saved successfully",
+            "questions": created_questions
+        }, status=201)
+
+
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        base_instance = self.get_object()
+        user = request.user
+
+        # Permissions check
+        if not user.is_staff and base_instance.exam.assigneduser.user != user:
+            return Response({"error": "You do not have permission to update this exam."}, status=status.HTTP_403_FORBIDDEN)
+
+        exam_id = request.data.get("exam")
+        questions = request.data.get("questions", [])
+        if not exam_id or not questions:
+            return Response({"error": "Both 'exam' and 'questions' fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        updated_data = {}
+        errors = {}
+
+        for item in questions:
+            language = item.get("language")
+
+            # Inject exam ID into question
+            item["exam"] = exam_id
+
+            if language == "English":
+                serializer = self.get_serializer(base_instance, data=item, partial=partial)
+                if serializer.is_valid():
+                    english_instance = serializer.save()
+                    updated_data["english_data"] = QuestionSerializer(english_instance).data
+                else:
+                    errors["english_errors"] = serializer.errors
+
+            elif language == "Hindi":
+                try:
+                    hindi_instance = Question.objects.get(related_question=base_instance)
+                except Question.DoesNotExist:
+                    errors["hindi_errors"] = "Hindi question not found"
+                    continue
+
+                serializer = self.get_serializer(hindi_instance, data=item, partial=partial)
+                if serializer.is_valid():
+                    hindi_instance = serializer.save()
+                    updated_data["hindi_data"] = QuestionSerializer(hindi_instance).data
+                else:
+                    errors["hindi_errors"] = serializer.errors
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "message": "Questions updated successfully",
+            **updated_data
+        }, status=status.HTTP_200_OK)
+
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        exam = instance.exam
+        print(exam.status)
+        print(request.user.is_superuser)
+        if exam.status and not request.user.is_superuser:
+            return Response({"error": "Only admin can delete questions from an active exam."}, status=status.HTTP_403_FORBIDDEN)
+
+        instance.delete()
+        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)

@@ -33,6 +33,9 @@ router.register(r"admin/passkey", PasskeyViewSet, basename="passkey")
 router.register(r"admin/interview", InterviewViewSet, basename="interview")
 router.register(r"admin/reason", ReasonViewSet, basename="reason")
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
+
+router.register(r"new/examsetter/question", NewExamSetterQuestionViewSet, basename="new-examsetter-question")
+
 router.register(r"admin/examcenter", ExamCenterViewSets)
 router.register(r"admin/allTeacher", AllTeacherViewSet, basename="allTeacher")
 router.register(r"admin/allRecruiter", AllRecruiterViewSet, basename="allRecruiter")
