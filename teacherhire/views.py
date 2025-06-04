@@ -3238,7 +3238,6 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
                 # Save English first without related_question
                 if language == "english":
                     english_instance = serializer.save()
-                    created_questions.append(QuestionSerializer(english_instance).data)
 
                 # Save Hindi with related_question set
                 elif language == "hindi":
@@ -3247,7 +3246,6 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
                     hindi_serializer = self.get_serializer(data=q)
                     if hindi_serializer.is_valid():
                         hindi_instance = hindi_serializer.save()
-                        created_questions.append(QuestionSerializer(hindi_instance).data)
                     else:
                         errors.append(hindi_serializer.errors)
             else:
@@ -3258,7 +3256,8 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         return Response({
             "message": "Questions saved successfully",
-            "questions": created_questions
+            "english_data": QuestionSerializer(english_instance).data if english_instance else None,
+            "hindi_data": QuestionSerializer(hindi_instance).data if hindi_instance else None
         }, status=201)
 
 
