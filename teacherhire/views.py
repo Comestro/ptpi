@@ -3319,8 +3319,6 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         exam = instance.exam
-        print(exam.status)
-        print(request.user.is_superuser)
         if exam.status and not request.user.is_superuser:
             return Response({"error": "Only admin can delete questions from an active exam."}, status=status.HTTP_403_FORBIDDEN)
 
