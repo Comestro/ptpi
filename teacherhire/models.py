@@ -338,6 +338,7 @@ class Exam(models.Model):
         return str(self.name) 
 
 class Question(models.Model):
+    order = models.PositiveIntegerField()
     related_question = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
     language = models.CharField(
@@ -363,6 +364,12 @@ class Question(models.Model):
 
     def __str__(self):
        return self.text
+    
+    def save(self, *args, **kwargs):
+        if not self.order:
+            last_q = Question.objects.filter(exam=self.exam, language=self.language).count()
+            self.order = last_q + 1
+        super().save(*args, **kwargs)
 
 class TeacherExamResult(models.Model):
     examresult_id = models.AutoField(primary_key=True)
