@@ -3225,7 +3225,6 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
                 return Response({"error": "Exam not found or you do not have permission."}, 
                                 status=status.HTTP_404_NOT_FOUND)
 
-        created_questions = []
         errors = []
         english_instance = None
 
@@ -3324,3 +3323,14 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         instance.delete()
         return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+class QuestionReorderView(APIView):
+    def post(self, request):
+        new_order = request.data.get('order', [])
+        if not isinstance(new_order, list):
+            return Response({'error': 'Invalid order format'}, status=400)
+
+        for idx, q_id in enumerate(new_order, start=1):
+            Question.objects.filter(id=q_id).update(order=idx)
+        return Response({'message': 'Order updated successfully'}, status=200)

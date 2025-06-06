@@ -104,6 +104,7 @@ urlpatterns = [
     path("resend_otp/", ResendOTP.as_view(), name="resend_otp"),
     path("verify_user/", UserVerify.as_view(), name="verify_user"),
     path("self/deactivate/", DeactivateAccount.as_view(), name="self-deactivate"),
+    path('questions/reorder/', QuestionReorderView.as_view(), name='question-reorder'),
 
     # Passkey Routes
     path("generate-passkey/", GeneratePasskeyView.as_view(), name="generate_passkey"),

@@ -359,17 +359,19 @@ class Question(models.Model):
             raise models.ValidationError({
                 'correct_option': f'Correct option must be between 1 and {len(self.options)}.'
             })
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-       return self.text
-    
+        
     def save(self, *args, **kwargs):
         if not self.order:
             last_q = Question.objects.filter(exam=self.exam, language=self.language).count()
             self.order = last_q + 1
         super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+       return self.text
+    
 
 class TeacherExamResult(models.Model):
     examresult_id = models.AutoField(primary_key=True)

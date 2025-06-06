@@ -1320,6 +1320,7 @@ class NewQuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             'id',
+            'order',
             'exam',
             'text',
             'options',
