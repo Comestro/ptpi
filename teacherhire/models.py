@@ -338,7 +338,7 @@ class Exam(models.Model):
         return str(self.name) 
 
 class Question(models.Model):
-    order = models.PositiveIntegerField()
+    order = models.PositiveIntegerField(default=0)
     related_question = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
     language = models.CharField(
