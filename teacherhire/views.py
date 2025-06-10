@@ -1809,7 +1809,7 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         """Admins can create any exam; assigned users are restricted."""
-        user = self.request.user
+        user = request.user
         print(user)
         subject = request.data.get('subject')
         if not user.is_staff:
@@ -2045,7 +2045,7 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                     user=user,
                     subject=qualified_exam.exam.subject,
                     level=qualified_exam.exam.level,
-                    class_category=qualified_exam.exam.class_category
+                                       class_category=qualified_exam.exam.class_category
                 )
 
                 if interview:
@@ -3212,6 +3212,7 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         errors = []
         english_instance = None
+        hindi_instance = None  # Ensure hindi_instance is always defined
 
         for q in questions:
             q["exam"] = exam.id
@@ -3303,17 +3304,24 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         exam = instance.exam
+
         if exam.status and not request.user.is_superuser:
             return Response({"error": "Only admin can delete questions from an active exam."}, status=status.HTTP_403_FORBIDDEN)
-        related_questions = Question.objects.filter(related_question=instance)
+
         try:
-            if related_questions.exists():
-                related_questions.delete()
+            if instance.related_question:
+                related_question = instance.related_question
+                related_question.delete()
                 instance.delete()
-                return Response({"message": "Questions deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-            else:
-                instance.delete()
-                return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+                return Response({"message": "Question and its related question deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+            related_to_instance = Question.objects.filter(related_question=instance).first()
+            if related_to_instance:
+                related_to_instance.delete()
+
+            instance.delete()
+            return Response({"message": "Questions deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3334,11 +3342,13 @@ class QuestionReorderView(APIView):
             question.save()
 
             if question.language.lower() == 'english':
-                related = Question.objects.get(related_question=question)
-                related.order = idx
-                related.save()
+                related = Question.objects.filter(related_question=question).first()
+                if related:
+                    related.order = idx
+                    related.save()
             elif question.language.lower() == 'hindi' and question.related_question:
-                related = Question.objects.get(id=question.related_question.id)
-                related.order = idx
-                related.save()
+                related = Question.objects.filter(id=question.related_question.id).first()
+                if related:
+                    related.order = idx
+                    related.save()
         return Response({'message': 'Order updated successfully'}, status=200)
