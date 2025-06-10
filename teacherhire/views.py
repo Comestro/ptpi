@@ -2191,7 +2191,7 @@ class SelfReportViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def list(self, request, *args, **kwargs):
-        return Response({"error": "GET method is not allowed on this endpoint."},
+        return Response({"error": "GET method not allowed on this endpoint."},
                         status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request):
@@ -2691,8 +2691,10 @@ class AllTeacherViewSet(viewsets.ModelViewSet):
                 if len(name_parts) >= 2:
                     fname, lname = name_parts[0], name_parts[-1]
                     name_query |= Q(Fname__icontains=fname) & Q(Lname__icontains=lname)
-                else:
-                    name_query |= Q(Fname__icontains=name) | Q(Lname__icontains=name)
+                elif len(name_parts) == 1:
+                    fname = name_parts[0]
+                    name_query |= Q(Fname__icontains=fname) | Q(Lname__icontains=fname)
+
             filters &= name_query
 
         # Filter by teacher subjects
@@ -2742,51 +2744,35 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
 
         user = user_serializer.save()
 
-        # Extract and validate class_category
-        class_category_ids = request.data.get("class_category", [])
-        if not isinstance(class_category_ids, list) or not class_category_ids:
+        # Extract exam center data
+        exam_center_data = request.data.get("exam_center")
+        if not exam_center_data:
             return Response({
-                "error": "Class category not provided",
-                "message": "Please provide at least one class category."
+                "error": "Exam center data not provided",
+                "message": "Please include exam center details"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Extract and validate subjects
-        assign_user_subjects = request.data.get("subject", [])
-        if not isinstance(assign_user_subjects, list) or not assign_user_subjects:
+        # Assign only the user ID to the exam center data
+        exam_center_data["user"] = user.id  # Ensure this is an integer, not a dict
+
+        # Validate exam center serializer
+        exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
+        if not exam_center_serializer.is_valid():
             return Response({
-                "error": "Subjects not provided",
-                "message": "Please provide at least one subject."
+                "error": exam_center_serializer.errors,
+                "message": "Exam center creation failed"
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check for already assigned subjects
-        existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
-        already_assigned = set(assign_user_subjects) & set(existing_subjects)
+        # Save the exam center
+        exam_center_serializer.save()
 
-        if already_assigned:
-            return Response({
-                "error": "User is already assigned to some subjects",
-                "message": f"This user is already assigned to subjects with IDs: {list(already_assigned)}"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Create or get AssignedQuestionUser instance
-        assigned_user_subject, created = AssignedQuestionUser.objects.get_or_create(user=user)
-
-        # Assign subjects
-        subjects_to_assign = Subject.objects.filter(id__in=assign_user_subjects)
-        assigned_user_subject.subject.set(subjects_to_assign)
-
-        # Assign class categories
-        class_categories_to_assign = ClassCategory.objects.filter(id__in=class_category_ids)
-        assigned_user_subject.class_category.set(class_categories_to_assign)
-
-        # Serialize and return response
-        assign_user_subject_serializer = AssignedQuestionUserSerializer(assigned_user_subject)
         return Response({
-            "data": assign_user_subject_serializer.data,
-            "message": "User, subjects, and class categories assigned successfully"
+            "user": user_serializer.data,
+            "exam_center": exam_center_serializer.data,
+            "message": "User and Exam Center assigned successfully"
         }, status=status.HTTP_201_CREATED)
-
     
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
 
@@ -2846,7 +2832,6 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        print(instance)
         exam_created_user = Exam.objects.filter(assigneduser=instance).exists()
         if exam_created_user:
             return Response({"error": "This user is assigned to an exam and cannot be deleted."},
@@ -3209,12 +3194,12 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
         if not exam_id or not questions or not isinstance(questions, list):
             return Response({"error": "Exam and questions array are required"}, status=400)
 
-        if request.user.is_staff: 
+        if request.user.is_staff:  # Admin can create questions for any exam
             try:
                 exam = Exam.objects.get(id=exam_id)
             except Exam.DoesNotExist:
                 return Response({"error": "Exam not found"}, status=status.HTTP_404_NOT_FOUND)
-        else:  
+        else:  # Question setter can only create questions for their assigned exam
             assigned_user = AssignedQuestionUser.objects.filter(user=request.user).first()
             if not assigned_user:
                 return Response({"error": "You are not assigned as a question user."}, status=status.HTTP_403_FORBIDDEN)
@@ -3320,9 +3305,17 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
         exam = instance.exam
         if exam.status and not request.user.is_superuser:
             return Response({"error": "Only admin can delete questions from an active exam."}, status=status.HTTP_403_FORBIDDEN)
-
-        instance.delete()
-        return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        related_questions = Question.objects.filter(related_question=instance)
+        try:
+            if related_questions.exists():
+                related_questions.delete()
+                instance.delete()
+                return Response({"message": "Questions deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+            else:
+                instance.delete()
+                return Response({"message": "Question deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class QuestionReorderView(APIView):
@@ -3332,5 +3325,20 @@ class QuestionReorderView(APIView):
             return Response({'error': 'Invalid order format'}, status=400)
 
         for idx, q_id in enumerate(new_order, start=1):
-            Question.objects.filter(id=q_id).update(order=idx)
+            try:
+                question = Question.objects.get(id=q_id)
+            except Question.DoesNotExist:
+                continue  
+
+            question.order = idx
+            question.save()
+
+            if question.language.lower() == 'english':
+                related = Question.objects.get(related_question=question)
+                related.order = idx
+                related.save()
+            elif question.language.lower() == 'hindi' and question.related_question:
+                related = Question.objects.get(id=question.related_question.id)
+                related.order = idx
+                related.save()
         return Response({'message': 'Order updated successfully'}, status=200)

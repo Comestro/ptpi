@@ -551,10 +551,10 @@ class ExamSerializer(serializers.ModelSerializer):
         except Subject.DoesNotExist:
             serializers.ValidationError("Invalid subject")
         # auto generate exam name
-        exam_name = f"{class_category.name}, {subject.subject_name}, {level.name}".strip()
+        exam_name = f"{class_category.name} | {subject.subject_name} | {level.name}".strip()
 
         existing_count = Exam.objects.filter(name__startswith=exam_name).count()
-        auto_name = f"{exam_name} - Set {existing_count + 1}"
+        auto_name = f"{exam_name} | S{existing_count + 1}"
 
         if not assigneduser:
             admin_user = CustomUser.objects.filter(is_staff=True).first()
