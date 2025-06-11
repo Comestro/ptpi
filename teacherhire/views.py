@@ -3332,6 +3332,8 @@ class QuestionReorderView(APIView):
         if not isinstance(new_order, list):
             return Response({'error': 'Invalid order format'}, status=400)
 
+        updated_pairs = [] 
+
         for idx, q_id in enumerate(new_order, start=1):
             try:
                 question = Question.objects.get(id=q_id)
@@ -3343,12 +3345,28 @@ class QuestionReorderView(APIView):
 
             if question.language.lower() == 'english':
                 related = Question.objects.filter(related_question=question).first()
-                if related:
-                    related.order = idx
-                    related.save()
             elif question.language.lower() == 'hindi' and question.related_question:
-                related = Question.objects.filter(id=question.related_question.id).first()
-                if related:
-                    related.order = idx
-                    related.save()
-        return Response({'message': 'Order updated successfully'}, status=200)
+                related = question.related_question
+            else:
+                related = None
+
+            if related:
+                related.order = idx
+                related.save()
+                updated_pairs.append({
+                    "english_id": question.id if question.language.lower() == "english" else related.id,
+                    "hindi_id": related.id if question.language.lower() == "english" else question.id,
+                    "order": idx
+                })
+            else:
+                # Single question without a pair
+                updated_pairs.append({
+                    "english_id": question.id if question.language.lower() == "english" else None,
+                    "hindi_id": question.id if question.language.lower() == "hindi" else None,
+                    "order": idx
+                })
+
+        return Response({
+            'message': 'Order updated successfully',
+            'updated_order': updated_pairs
+        }, status=200)
