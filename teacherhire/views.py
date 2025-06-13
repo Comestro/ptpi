@@ -3327,7 +3327,7 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
 
 class QuestionReorderView(APIView):
-    def post(self, request):
+    def put(self, request):
         new_order = request.data.get('order', [])
         if not isinstance(new_order, list):
             return Response({'error': 'Invalid order format'}, status=400)
