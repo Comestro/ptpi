@@ -361,7 +361,7 @@ class Question(models.Model):
             })
 
     class Meta:
-        ordering = ['order']
+        ordering = ['-created_at']
 
     def save(self, *args, **kwargs):
         if not self.order:
