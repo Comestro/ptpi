@@ -149,8 +149,10 @@ class TeacherQualification(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True,related_name='teacherqualifications')
     qualification = models.ForeignKey(EducationalQualification, on_delete=models.CASCADE, null=True, blank=True)
     institution = models.CharField(max_length=225, null=True, blank=True)
+    board_or_university = models.CharField(max_length=255, null=True, blank=True)
     year_of_passing = models.PositiveIntegerField(null=True, blank=True)
     grade_or_percentage = models.CharField(max_length=50, null=True, blank=True)
+    session = models.CharField(max_length=50, null=True, blank=True)
     subjects = models.JSONField(null=True, blank=True)
 
     def __str__(self):

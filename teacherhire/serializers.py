@@ -629,7 +629,7 @@ class TeacherQualificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherQualification
-        fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage', 'subjects']
+        fields = ['id', 'qualification', 'institution', 'year_of_passing', 'grade_or_percentage','board_or_university','session', 'subjects']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
