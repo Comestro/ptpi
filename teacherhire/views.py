@@ -3209,6 +3209,10 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
             except Exam.DoesNotExist:
                 return Response({"error": "Exam not found or you do not have permission."}, 
                                 status=status.HTTP_404_NOT_FOUND)
+        print(exam.questions.count(), exam.total_questions)
+        if exam.questions.count() >= exam.total_questions:
+            return Response({"error": "Cannot add more questions than the total allowed for this exam."}, 
+                            status=status.HTTP_400_BAD_REQUEST)
 
         errors = []
         english_instance = None
