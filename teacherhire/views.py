@@ -1860,9 +1860,9 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         questions = exam.questions.all().count()
         if questions == 0:
             instance.delete()
+            return Response({"message": "Exam deleted successfully."}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Please delete the associated questions first."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'])
     def count(self, request):
