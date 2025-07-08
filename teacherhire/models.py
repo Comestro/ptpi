@@ -318,6 +318,7 @@ class AssignedQuestionUser(models.Model):
 class Exam(models.Model):
     assigneduser = models.ForeignKey(AssignedQuestionUser, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=255)
+    set_name = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     level = models.ForeignKey(Level, on_delete=models.CASCADE)

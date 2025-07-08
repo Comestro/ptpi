@@ -537,7 +537,7 @@ class ExamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_questions','total_marks',
+        fields = ['id', 'name', 'set_name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_questions','total_marks',
                   'duration', 'questions', 'type', 'status']
         depth = 1
 
