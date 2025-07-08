@@ -3189,6 +3189,7 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data
         exam_id = data.get("exam")
+        order = data.get("order")
         questions = data.get("questions")
 
         if not exam_id or not questions or not isinstance(questions, list):
@@ -3219,6 +3220,7 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         for q in questions:
             q["exam"] = exam.id
+            q['order'] = order 
             language = q.get("language", "").lower()
 
             serializer = self.get_serializer(data=q)

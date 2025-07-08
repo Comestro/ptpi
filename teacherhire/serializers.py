@@ -1316,6 +1316,7 @@ class TranslatorSerializer(serializers.Serializer):
 
 
 class NewQuestionSerializer(serializers.ModelSerializer):
+    order = serializers.IntegerField(required=False, allow_null=True)
     class Meta:
         model = Question
         fields = [
