@@ -3244,8 +3244,8 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         return Response({
             "message": "Questions saved successfully",
-            "english_data": QuestionSerializer(english_instance).data if english_instance else None,
-            "hindi_data": QuestionSerializer(hindi_instance).data if hindi_instance else None
+            "english_data": NewQuestionSerializer(english_instance).data if english_instance else None,
+            "hindi_data": NewQuestionSerializer(hindi_instance).data if hindi_instance else None
         }, status=201)
 
 
