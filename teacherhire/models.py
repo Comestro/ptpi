@@ -332,7 +332,7 @@ class Exam(models.Model):
             ('online','online')
         ],
         default='online')
-    total_questions = models.PositiveIntegerField(default=10)
+    total_questions = models.PositiveIntegerField(default=20)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     status = models.BooleanField(default=False)
