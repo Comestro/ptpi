@@ -2744,32 +2744,43 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
 
         user = user_serializer.save()
 
-        # Extract exam center data
-        exam_center_data = request.data.get("exam_center")
-        if not exam_center_data:
+        # Extract and validate class_category
+        class_category_ids = request.data.get("class_category", [])
+        if not isinstance(class_category_ids, list) or not class_category_ids:
             return Response({
-                "error": "Exam center data not provided",
-                "message": "Please include exam center details"
+                "error": "Class category not provided",
+                "message": "Please provide at least one class category."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Assign only the user ID to the exam center data
-        exam_center_data["user"] = user.id  # Ensure this is an integer, not a dict
-
-        # Validate exam center serializer
-        exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
-        if not exam_center_serializer.is_valid():
+        # Extract and validate subjects
+        assign_user_subjects = request.data.get("subject", [])
+        if not isinstance(assign_user_subjects, list) or not assign_user_subjects:
             return Response({
-                "error": exam_center_serializer.errors,
-                "message": "Exam center creation failed"
+                "error": "Subjects not provided",
+                "message": "Please provide at least one subject."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save the exam center
-        exam_center_serializer.save()
+        existing_subjects = AssignedQuestionUser.objects.filter(user=user).values_list('subject__id', flat=True)
+        already_assigned = set(assign_user_subjects) & set(existing_subjects)
 
+        if already_assigned:
+            return Response({
+                "error": "User is already assigned to some subjects",
+                "message": f"This user is already assigned to subjects with IDs: {list(already_assigned)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        assigned_user_subject, created = AssignedQuestionUser.objects.get_or_create(user=user)
+
+        subjects_to_assign = Subject.objects.filter(id__in=assign_user_subjects)
+        assigned_user_subject.subject.set(subjects_to_assign)
+
+        class_categories_to_assign = ClassCategory.objects.filter(id__in=class_category_ids)
+        assigned_user_subject.class_category.set(class_categories_to_assign)
+
+        assign_user_subject_serializer = AssignedQuestionUserSerializer(assigned_user_subject)
         return Response({
-            "user": user_serializer.data,
-            "exam_center": exam_center_serializer.data,
-            "message": "User and Exam Center assigned successfully"
+            "data": assign_user_subject_serializer.data,
+            "message": "User, subjects, and class categories assigned successfully"
         }, status=status.HTTP_201_CREATED)
     
 
