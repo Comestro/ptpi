@@ -1302,7 +1302,7 @@ class ApplySerializer(serializers.ModelSerializer):
         return representation
 
 class TranslatorSerializer(serializers.Serializer):
-    text = serializers.CharField(max_length=100, required=True)
+    text = serializers.CharField(max_length=1000, required=True)
     source = serializers.CharField(max_length=10, required=True)
     dest = serializers.CharField(max_length=10, required=True)
 
