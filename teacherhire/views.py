@@ -2765,7 +2765,7 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
 
         if already_assigned:
             return Response({
-                "error": "User is already assigned to some subjects",
+                "error": "User is already assigned to same subjects",
                 "message": f"This user is already assigned to subjects with IDs: {list(already_assigned)}"
             }, status=status.HTTP_400_BAD_REQUEST)
 
