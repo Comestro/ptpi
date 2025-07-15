@@ -3296,7 +3296,11 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
             elif language == "Hindi":
                 try:
-                    hindi_instance = Question.objects.get(related_question=base_instance)
+                    print("Base Instance Language:", base_instance.language)
+                    if base_instance.language.lower() == "english":
+                        hindi_instance = Question.objects.get(related_question=base_instance)
+                    else:
+                        hindi_instance = Question.objects.get(id=base_instance.id)
                 except Question.DoesNotExist:
                     errors["hindi_errors"] = "Hindi question not found"
                     continue
