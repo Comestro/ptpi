@@ -3290,13 +3290,19 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(base_instance, data=item, partial=partial)
                 if serializer.is_valid():
                     english_instance = serializer.save()
+                    try:
+                        hindi_instance = Question.objects.get(related_question=base_instance.id)
+                        hindi_instance.correct_option = base_instance.correct_option
+                        hindi_instance.save()
+                        updated_data["hindi_data"] = QuestionSerializer(hindi_instance).data
+                    except Question.DoesNotExist:
+                        errors["hindi_errors"] = None
                     updated_data["english_data"] = QuestionSerializer(english_instance).data
                 else:
                     errors["english_errors"] = serializer.errors
 
             elif language == "Hindi":
                 try:
-                    print("Base Instance Language:", base_instance.language)
                     if base_instance.language.lower() == "english":
                         hindi_instance = Question.objects.get(related_question=base_instance)
                     else:
