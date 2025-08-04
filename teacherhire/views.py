@@ -628,7 +628,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
                     filter_messages.append(f"{label} - {values_str}")
 
             if filter_messages:
-                message = "No teachers found matching: " + " | ".join(filter_messages)
+                message = "आपके चुने हुए विकल्पों के अनुसार यहां पर कोई शिक्षक उपलब्ध नहीं है कृपया दूसरी विकल्पों का चयन करें | According to the options you have selected, no teacher is available here. Please choose other options."
             else:
                 message = "No teachers available"
             
