@@ -13,6 +13,7 @@ import uuid
 from teacherhire.serializers import *
 from teacherhire.utils import send_otp_via_email, verified_msg
 from .authentication import ExpiringTokenAuthentication
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 class RegisterUser(APIView):
     def post(self, request, role=None):
@@ -67,6 +68,13 @@ def generate_refresh_token():
 
 
 class LoginUser(APIView):
+    @extend_schema(
+        request=LoginSerializer,
+        responses={
+            200: OpenApiResponse(description="Login successful"),
+            400: OpenApiResponse(description="Invalid credentials or other errors")
+        }
+    )
     def post(self, request):
         email, password = request.data.get('email'), request.data.get('password')
         try:

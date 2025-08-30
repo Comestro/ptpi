@@ -2785,61 +2785,74 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
     
 
     def update(self, request, *args, **kwargs):
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+            if instance.user:
+                user_data = request.data.get('user', {})
+                user_serializer = QuestionUserSerializer(instance.user, data=user_data, partial=True)
+                if user_serializer.is_valid():
+                    user_serializer.save()
+                else:
+                    return Response({
+                        "error": user_serializer.errors,
+                        "message": "User update failed"
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validate and update status
-        new_status = request.data.get('status')
-        if new_status is None:
-            return Response(
-                {"error": "Status value is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if not isinstance(new_status, bool):
-            return Response(
-                {"error": "Invalid status value. Must be true or false."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        instance.status = new_status
+            # Validate and update status
+            new_status = request.data.get('status')
+            if new_status is None:
+                return Response(
+                    {"error": "Status value is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not isinstance(new_status, bool):
+                return Response(
+                    {"error": "Invalid status value. Must be true or false."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            instance.status = new_status
 
-        # Validate and update subjects
-        new_subjects = request.data.get('subject')
-        if new_subjects is None:
-            return Response(
-                {"error": "Subject field is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if not isinstance(new_subjects, list):
-            return Response(
-                {"error": "Invalid subject format. Must be a list of subject IDs."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # Filter and set the subjects
-        subjects_qs = Subject.objects.filter(id__in=new_subjects)
-        instance.subject.set(subjects_qs)
+            # Validate and update subjects
+            new_subjects = request.data.get('subject')
+            if new_subjects is None:
+                return Response(
+                    {"error": "Subject field is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not isinstance(new_subjects, list):
+                return Response(
+                    {"error": "Invalid subject format. Must be a list of subject IDs."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # Filter and set the subjects
+            subjects_qs = Subject.objects.filter(id__in=new_subjects)
+            instance.subject.set(subjects_qs)
 
-        # Validate and update class categories
-        new_class_categories = request.data.get('class_category')
-        if new_class_categories is None:
-            return Response(
-                {"error": "Class category field is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if not isinstance(new_class_categories, list):
-            return Response(
-                {"error": "Invalid class category format. Must be a list of class category IDs."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # Filter and set the class categories
-        class_categories_qs = ClassCategory.objects.filter(id__in=new_class_categories)
-        instance.class_category.set(class_categories_qs)
+            # Validate and update class categories
+            new_class_categories = request.data.get('class_category')
+            if new_class_categories is None:
+                return Response(
+                    {"error": "Class category field is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not isinstance(new_class_categories, list):
+                return Response(
+                    {"error": "Invalid class category format. Must be a list of class category IDs."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # Filter and set the class categories
+            class_categories_qs = ClassCategory.objects.filter(id__in=new_class_categories)
+            instance.class_category.set(class_categories_qs)
 
-        # Save the updated instance
-        instance.save()
+            # Save the updated instance
+            instance.save()
 
-        return Response({
-            "detail": "Assigned question user updated successfully.",
-            "data": AssignedQuestionUserSerializer(instance).data
-        }, status=status.HTTP_200_OK)
+            return Response({
+                "detail": "Assigned question user updated successfully.",
+                "data": AssignedQuestionUserSerializer(instance).data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

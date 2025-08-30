@@ -26,8 +26,8 @@ def validate_password(value):
 
 # global email validation function to check if the email is already registered
 def validate_email(value):
-    if CustomUser.objects.filter(email=value).exists():
-        existing_user = CustomUser.objects.get(email=value)
+    if CustomUser.objects.filter(email=value).exclude(email=value).exists():
+        existing_user = CustomUser.objects.get(email=value).exclude(id=value)
         if existing_user.is_recruiter:
             role_name = 'recruiter'
         elif existing_user.is_teacher:
