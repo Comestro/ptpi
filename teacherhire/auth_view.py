@@ -16,6 +16,14 @@ from .authentication import ExpiringTokenAuthentication
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 class RegisterUser(APIView):
+    @extend_schema(
+        request=[RecruiterRegisterSerializer, TeacherRegisterSerializer],
+        responses={
+            201: OpenApiResponse(description="User registered successfully"),
+            400: OpenApiResponse(description="Invalid input data")
+        },
+        description="Register a user as recruiter or teacher based on role parameter."
+    )
     def post(self, request, role=None):
         serializer_class = {
             'recruiter': RecruiterRegisterSerializer,
