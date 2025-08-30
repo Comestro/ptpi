@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'dbbackup',
-    'django_extensions'
+    'django_extensions',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +100,13 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'PTPI API',
+    'DESCRIPTION': 'API description',
+    'VERSION': '1.0.0',
 }
 
 # Database configuration
