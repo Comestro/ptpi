@@ -2525,20 +2525,37 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-    def patch(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         try:
             examcenter = ExamCenter.objects.get(id=kwargs['pk'])
         except ExamCenter.DoesNotExist:
             return Response({"error": "ExamCenter not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ExamCenterSerializer(examcenter, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "message": "ExamCenter updated successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user_data = request.data.get("user")
+        exam_center_data = request.data.get("exam_center")
+
+        if user_data and examcenter.user:
+            user_serializer = CenterUserSerializer(examcenter.user, data=user_data, partial=True)
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                return Response({"user_errors": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            exam_center_data["user"] = examcenter.user.id  
+
+        # Update exam center
+        if exam_center_data:
+            exam_center_serializer = ExamCenterSerializer(examcenter, data=exam_center_data, partial=True)
+            if exam_center_serializer.is_valid():
+                exam_center_serializer.save()
+                return Response({
+                    "user": CenterUserSerializer(examcenter.user).data,
+                    "exam_center": exam_center_serializer.data,
+                    "message": "User and Exam Center updated successfully"
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({"exam_center_errors": exam_center_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "Exam center data not provided"}, status=status.HTTP_400_BAD_REQUEST)
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
