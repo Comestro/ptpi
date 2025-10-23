@@ -2131,20 +2131,19 @@ class ExamCard(viewsets.ModelViewSet):
         ).exists()
 
         if level.level_code == 1.0:
-            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code, status=True)
         elif level.level_code == 2.0:
             if not qualified_level_1:
                 return Response({"error": "You must qualify Level 1 exam to access Level 2."}, status=status.HTTP_400_BAD_REQUEST)
-            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code, status=True)
         elif level.level_code == 2.5:
             if not qualified_level_1 or not online_qualified_level_2:
                 return Response({"error": "You must qualify Level 1 and Level 2 online exam to access Level 2 offline."}, status=status.HTTP_400_BAD_REQUEST)
-            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+            exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code, status=True)
         else:
             return Response({"error": "Invalid level."}, status=status.HTTP_400_BAD_REQUEST)
 
-        
-        exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code)
+        exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code, status=True)
         user_exams_ids = TeacherExamResult.objects.filter(user=user, isqualified__in=['True','False']).values_list('exam_id', flat=True)
         unattempted_exams = exam.exclude(id__in=user_exams_ids).order_by('created_at')
     
