@@ -158,7 +158,7 @@ class TeacherQualification(models.Model):
 
     def __str__(self):
         if self.user:
-            return f"{self.user.username} - {self.qualification.name} ({self.year_of_passing})"
+            return f"{self.user.username} - {self.qualification.name} ({self.year_of_passing}) - ({self.stream_or_degree})"
         return f"Unknown User - {self.qualification.name} ({self.year_of_passing}) - {self.stream_or_degree}"
 
 class Role(models.Model):
