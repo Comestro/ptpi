@@ -12,7 +12,7 @@ class Command(BaseCommand):
             CustomUser.objects.create_superuser(
                 email='ptpi854301@gmail.com',
                 username='Manish458',
-                password='adminpassword',
+                password='Purnea@854301',
                 Fname='Manish',
                 Lname='Kumar Gandhi',
                 is_verified=True,
