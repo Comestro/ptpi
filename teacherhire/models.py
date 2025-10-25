@@ -154,6 +154,7 @@ class TeacherQualification(models.Model):
     grade_or_percentage = models.CharField(max_length=50, null=True, blank=True)
     session = models.CharField(max_length=50, null=True, blank=True)
     subjects = models.JSONField(null=True, blank=True)
+    stream_or_degree = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         if self.user:
