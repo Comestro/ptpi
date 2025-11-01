@@ -2152,7 +2152,7 @@ class ExamCard(viewsets.ModelViewSet):
 
         exam = Exam.objects.filter(subject_id=subject_id, class_category_id=class_category_id, level__level_code=level.level_code, status=True)
         user_exams_ids = TeacherExamResult.objects.filter(user=user, isqualified__in=['True','False']).values_list('exam_id', flat=True)
-        unattempted_exams = exam.exclude(id__in=user_exams_ids).order_by('created_at')
+        unattempted_exams = exam.exclude(id__in=user_exams_ids).order_by('?')
     
         exam_set = unattempted_exams.first()
 
