@@ -1437,13 +1437,15 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         user = request.user
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
+        user = self.request.user
+        if user.is_teacher:
+            return JobPreferenceLocation.objects.filter(user=user)
         return JobPreferenceLocation.objects.all()
 
     def destroy(self, request, *args, **kwargs):
