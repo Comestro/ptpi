@@ -3453,29 +3453,17 @@ class ApplyEligibilityView(APIView):
         ).values_list('subject_id', 'class_category_id').distinct()
         print(interview)
 
-        qualified_list = [
-        {
-            'subject_id': subj_id,
-            'subject_name': Subject.objects.filter(id=subj_id).values_list('subject_name', flat=True).first(),
-            'class_category_id': class_cat_id,
-            'class_category_name': ClassCategory.objects.filter(id=class_cat_id).values_list('name', flat=True).first(),
-            "eligible": True
-        }
-        for subj_id, class_cat_id in qualified_offline_exams
-        ]
-
-        interview_list = [
-            {
+        unique_data = set(qualified_offline_exams) | set(interview)
+        qualified_list = []
+        for subj_id, class_cat_id in unique_data:
+            qualified_list.append({
                 'subject_id': subj_id,
                 'subject_name': Subject.objects.filter(id=subj_id).values_list('subject_name', flat=True).first(),
                 'class_category_id': class_cat_id,
                 'class_category_name': ClassCategory.objects.filter(id=class_cat_id).values_list('name', flat=True).first(),
                 "eligible": True
-            }
-            for subj_id, class_cat_id in interview
-        ]
+            })
 
         return Response({
-            "qualified_offline_exams": qualified_list,
-            "interview": interview_list
+            "qualified_list": qualified_list
         })
