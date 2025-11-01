@@ -11,9 +11,10 @@ class EducationalQualificationAdmin(admin.ModelAdmin):
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
     list_display = ['email', 'username', 'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter', 'is_teacher','is_centeruser', 'is_verified', 'otp', 'user_code', 'otp_created_at','date']
+
 @admin.register(TeacherQualification)
 class TeacherQualificationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'qualification','institution','year_of_passing','grade_or_percentage']
+    list_display = ['user', 'qualification','institution','year_of_passing','grade_or_percentage',"stream_or_degree"]
 
 @admin.register(TeacherExperiences)
 class TeacherExperiencesAdmin(admin.ModelAdmin):
