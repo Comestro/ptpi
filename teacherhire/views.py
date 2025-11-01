@@ -1974,7 +1974,6 @@ class SelfExamViewSet(viewsets.ModelViewSet):
                 {"message": "Please choose a valid subject."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         # Check qualification for Level 1 and Level 2 exams
         qualified_level_1 = TeacherExamResult.objects.filter(
             user=user, isqualified=True, exam__subject_id=subject_id,
@@ -2114,7 +2113,15 @@ class ExamCard(viewsets.ModelViewSet):
             level = Level.objects.get(pk=level_id)
         except Level.DoesNotExist:
             return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
-
+        
+        last_attempt = TeacherExamResult.objects.filter(
+            user=user, isqualified=True, exam__subject_id=subject_id,
+            exam__class_category_id=class_category_id, exam__level=level_id
+        ).last()
+        # print("last_attempt", last_attempt.attempt, last_attempt.exam.level.level_code, last_attempt.exam)
+        if last_attempt and last_attempt.attempt>=5:
+            return Response({"error": f"You have reached the maximum number of attempts for this exam level {last_attempt.exam.level.level_code}",}, status=status.HTTP_400_BAD_REQUEST)
+        
         qualified_level_1 = TeacherExamResult.objects.filter(
             user=user, isqualified=True, exam__subject_id=subject_id,
             exam__class_category_id=class_category_id, exam__level__level_code=1.0
@@ -3010,7 +3017,7 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class ApplyViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsTeacherUser]
+    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = ApplySerializer
     queryset = Apply.objects.all()
@@ -3425,3 +3432,50 @@ class QuestionReorderView(APIView):
             'message': 'Order updated successfully',
             'updated_order': updated_pairs
         }, status=200)
+
+
+class ApplyEligibilityView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
+    authentication_classes = [ExpiringTokenAuthentication]
+    
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        qualified_offline_exams = TeacherExamResult.objects.filter(
+            user=user,
+            exam__type='offline',
+            isqualified=True
+        ).values_list('exam__subject_id', 'exam__class_category_id').distinct()
+        print(qualified_offline_exams)
+
+        interview = Interview.objects.filter(
+            user=user,
+            grade__gte=6
+        ).values_list('subject_id', 'class_category_id').distinct()
+        print(interview)
+
+        qualified_list = [
+        {
+            'subject_id': subj_id,
+            'subject_name': Subject.objects.filter(id=subj_id).values_list('subject_name', flat=True).first(),
+            'class_category_id': class_cat_id,
+            'class_category_name': ClassCategory.objects.filter(id=class_cat_id).values_list('name', flat=True).first(),
+            "eligible": True
+        }
+        for subj_id, class_cat_id in qualified_offline_exams
+        ]
+
+        interview_list = [
+            {
+                'subject_id': subj_id,
+                'subject_name': Subject.objects.filter(id=subj_id).values_list('subject_name', flat=True).first(),
+                'class_category_id': class_cat_id,
+                'class_category_name': ClassCategory.objects.filter(id=class_cat_id).values_list('name', flat=True).first(),
+                "eligible": True
+            }
+            for subj_id, class_cat_id in interview
+        ]
+
+        return Response({
+            "qualified_offline_exams": qualified_list,
+            "interview": interview_list
+        })

@@ -451,9 +451,9 @@ class Passkey(models.Model):
     def __str__(self):
         return str(self.user.username)
     
-
 def get_default_level():
     return Level.objects.get_or_create(name='2nd Level Online')[0]   
+
 class Interview(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
