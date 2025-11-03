@@ -1087,6 +1087,15 @@ class ExamCenterSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
         return representation
+    
+class TeacherExamCenterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExamCenter
+        fields = ['id', 'center_name', 'pincode', 'state', 'city', 'area', 'status']
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        return representation
 
 
 class TeacherReportSerializer(serializers.ModelSerializer):

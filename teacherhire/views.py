@@ -2560,7 +2560,14 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             return Response({"error": "Exam center data not provided"}, status=status.HTTP_400_BAD_REQUEST)
 
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        user = request.user
+        queryset = self.get_queryset()
+        
+        if user.is_staff:
+            serializer = self.get_serializer(queryset, many=True)
+        elif user.is_teacher:
+            serializer = TeacherExamCenterSerializer(queryset, many=True)
+        return Response(serializer.data)
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
