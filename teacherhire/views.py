@@ -2086,13 +2086,7 @@ class ExamCard(viewsets.ModelViewSet):
         class_category_id = request.query_params.get('class_category_id')
         level_id = request.query_params.get('level_id')
         try:
-            user_basic_profile = BasicProfile.objects.get(user=user)
             user_preference = Preference.objects.filter(user=user).first()
-        except BasicProfile.DoesNotExist:
-            return Response(
-                {"message": "Please complete your basic profile first."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
         except Preference.DoesNotExist:
             return Response(
                 {"message": "Please complete your preference details first."},
