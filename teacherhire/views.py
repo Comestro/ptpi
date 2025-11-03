@@ -2262,7 +2262,7 @@ class GeneratePasskeyView(APIView):
         except Exam.DoesNotExist:
             return Response({"error": "Exam with this ID does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        existing_passkey = Passkey.objects.filter(user=user, exam=exam, status='requested').first()
+        existing_passkey = Passkey.objects.filter(user=user, status='requested').first()
         if existing_passkey:
             return Response({"error": "A passkey has already been generated for this exam."},
                             status=status.HTTP_400_BAD_REQUEST)
