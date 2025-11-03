@@ -2115,7 +2115,7 @@ class ExamCard(viewsets.ModelViewSet):
             exam__class_category_id=class_category_id, exam__level=level_id
         ).last()
         # print("last_attempt", last_attempt.attempt, last_attempt.exam.level.level_code, last_attempt.exam)
-        if last_attempt and last_attempt.attempt>=1:
+        if last_attempt and last_attempt.attempt>=5:
             return Response({"error": f"You have reached the maximum number of attempts for this exam level {last_attempt.exam.level.level_code}",}, status=status.HTTP_400_BAD_REQUEST)
         
         qualified_level_1 = TeacherExamResult.objects.filter(
