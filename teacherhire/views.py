@@ -3467,3 +3467,79 @@ class ApplyEligibilityView(APIView):
         return Response({
             "qualified_list": qualified_list
         })
+
+
+class NewTeacherViewSet(viewsets.ModelViewSet):
+    serializer_class = TeacherSerializer
+
+    def get_queryset(self):
+        return CustomUser.objects.filter(is_teacher=True, is_staff=False)
+
+    
+
+class TeacherFilterAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False)
+        filters = Q()
+
+        # Address filters (support multiple values)
+        for field in ['state', 'district', 'division', 'pincode', 'block', 'village', 'postOffice']:
+            values = request.query_params.getlist(field)
+            if values:
+                field_name = f'teachersaddress__{field.lower()}__iexact'
+                q = Q()
+                for value in values:
+                    q |= Q(**{field_name: value})
+                filters &= q
+
+        # Experience filter (years)
+        experience = request.query_params.get('experience')
+        if experience:
+            try:
+                years = int(experience)
+                queryset = queryset.annotate(
+                    total_exp=models.Sum(
+                        models.F('teacherexperiences__end_date__year') - models.F('teacherexperiences__start_date__year')
+                    )
+                ).filter(total_exp__gte=years)
+            except ValueError:
+                pass
+
+        # Preference table filters (support multiple values)
+        pref_filters = [
+            ('class_category', 'preferences__class_category__name__iexact'),
+            ('subject', 'preferences__prefered_subject__subject_name__iexact'),
+            ('job_role', 'preferences__job_role__jobrole_name__iexact'),
+            ('teacher_job_type', 'preferences__teacher_job_type__teacher_job_name__iexact'),
+        ]
+        for param, db_field in pref_filters:
+            values = request.query_params.getlist(param)
+            if values:
+                q = Q()
+                for value in values:
+                    q |= Q(**{db_field: value})
+                filters &= q
+
+        # Qualification filter (multiple)
+        qualifications = request.query_params.getlist('qualification')
+        if qualifications:
+            q = Q()
+            for qualification in qualifications:
+                q |= Q(teacherqualifications__qualification__name__iexact=qualification)
+            filters &= q
+
+        # Skill filter (multiple)
+        skills = request.query_params.getlist('skill')
+        if skills:
+            q = Q()
+            for skill in skills:
+                q |= Q(teacherskill__skill__name__iexact=skill)
+            filters &= q
+
+        # Apply all filters
+        queryset = queryset.filter(filters).distinct()
+
+        serializer = TeacherSerializer(queryset, many=True)
+        return Response(serializer.data)
