@@ -3200,10 +3200,7 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
             }
         else:
             center = None
-        if passkey:
-            return Response({"passkey": True, "center": center, "status": passkey.status})
-        else:
-            return Response({"passkey": False, "center": None, "status": passkey.status if passkey else None})
+        return Response({"passkey": 'True' if passkey else 'False', "center": center, "status": passkey.status})
 
 class TranslatorViewset(viewsets.ViewSet):
     def create(self, request):

@@ -843,7 +843,7 @@ class BasicProfileSerializer(serializers.ModelSerializer):
         return representation
 
     def validate_phone_number(self, value):
-        if value:
+        if value is not None:
             cleaned_value = re.sub(r'[^0-9]', '', value)
             if len(cleaned_value) != 10:
                 raise serializers.ValidationError("Phone number must be exactly 10 digits.")
@@ -853,6 +853,8 @@ class BasicProfileSerializer(serializers.ModelSerializer):
         return value
 
     def validate_date_of_birth(self, value):
+        if value is None:
+            return value
         if value > date.today():
             raise serializers.ValidationError("Date of birth cannot be in the future.")
         age = (date.today() - value).days // 365
