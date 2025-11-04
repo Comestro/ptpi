@@ -3469,13 +3469,7 @@ class ApplyEligibilityView(APIView):
         })
 
 
-class NewTeacherViewSet(viewsets.ModelViewSet):
-    serializer_class = TeacherSerializer
 
-    def get_queryset(self):
-        return CustomUser.objects.filter(is_teacher=True, is_staff=False)
-
-    
 
 class TeacherFilterAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -3484,9 +3478,12 @@ class TeacherFilterAPIView(APIView):
         queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False)
         filters = Q()
 
-        # Address filters (support multiple values)
+        def clean_values(values):
+            return [v for v in values if v and str(v).strip()]
+
+        # Address filters (support multiple values, ignore empty/null)
         for field in ['state', 'district', 'division', 'pincode', 'block', 'village', 'postOffice']:
-            values = request.query_params.getlist(field)
+            values = clean_values(request.query_params.getlist(field))
             if values:
                 field_name = f'teachersaddress__{field.lower()}__iexact'
                 q = Q()
@@ -3494,20 +3491,21 @@ class TeacherFilterAPIView(APIView):
                     q |= Q(**{field_name: value})
                 filters &= q
 
-        # Experience filter (years)
-        experience = request.query_params.get('experience')
-        if experience:
-            try:
-                years = int(experience)
-                queryset = queryset.annotate(
-                    total_exp=models.Sum(
-                        models.F('teacherexperiences__end_date__year') - models.F('teacherexperiences__start_date__year')
-                    )
-                ).filter(total_exp__gte=years)
-            except ValueError:
-                pass
+        # Experience years range filter
+        exp_min = request.query_params.get('experience_years[min]')
+        exp_max = request.query_params.get('experience_years[max]')
+        if exp_min or exp_max:
+            queryset = queryset.annotate(
+                total_exp=models.Sum(
+                    models.F('teacherexperiences__end_date__year') - models.F('teacherexperiences__start_date__year')
+                )
+            )
+            if exp_min and exp_min.strip():
+                queryset = queryset.filter(total_exp__gte=int(exp_min))
+            if exp_max and exp_max.strip():
+                queryset = queryset.filter(total_exp__lte=int(exp_max))
 
-        # Preference table filters (support multiple values)
+        # Preference table filters (support multiple values, ignore empty/null)
         pref_filters = [
             ('class_category', 'preferences__class_category__name__iexact'),
             ('subject', 'preferences__prefered_subject__subject_name__iexact'),
@@ -3515,31 +3513,43 @@ class TeacherFilterAPIView(APIView):
             ('teacher_job_type', 'preferences__teacher_job_type__teacher_job_name__iexact'),
         ]
         for param, db_field in pref_filters:
-            values = request.query_params.getlist(param)
+            values = clean_values(request.query_params.getlist(param))
             if values:
                 q = Q()
                 for value in values:
                     q |= Q(**{db_field: value})
                 filters &= q
 
-        # Qualification filter (multiple)
-        qualifications = request.query_params.getlist('qualification')
+        # Qualification filter (multiple, ignore empty/null)
+        qualifications = clean_values(request.query_params.getlist('qualification'))
         if qualifications:
             q = Q()
             for qualification in qualifications:
                 q |= Q(teacherqualifications__qualification__name__iexact=qualification)
             filters &= q
 
-        # Skill filter (multiple)
-        skills = request.query_params.getlist('skill')
+        # Skill filter (multiple, ignore empty/null)
+        skills = clean_values(request.query_params.getlist('skill'))
         if skills:
             q = Q()
             for skill in skills:
                 q |= Q(teacherskill__skill__name__iexact=skill)
             filters &= q
 
-        # Apply all filters
+        # Apply all filters except total_marks
         queryset = queryset.filter(filters).distinct()
+
+        # Total marks range filter (on related Exam objects)
+        marks_min = request.query_params.get('total_marks[min]')
+        marks_max = request.query_params.get('total_marks[max]')
+        if marks_min or marks_max:
+            # Filter teachers who have exams in the given marks range
+            exam_filter = Q()
+            if marks_min and marks_min.strip():
+                exam_filter &= Q(teacherexamresult__exam__total_marks__gte=int(marks_min))
+            if marks_max and marks_max.strip():
+                exam_filter &= Q(teacherexamresult__exam__total_marks__lte=int(marks_max))
+            queryset = queryset.filter(exam_filter).distinct()
 
         serializer = TeacherSerializer(queryset, many=True)
         return Response(serializer.data)
