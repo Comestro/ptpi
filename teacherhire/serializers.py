@@ -1014,6 +1014,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
     preferences = PreferenceSerializer(many=True, required=False)
     total_marks = serializers.SerializerMethodField()
+    jobpreferencelocation = JobPreferenceLocationSerializer(many=True, required=False)
 
     class Meta:
         model = CustomUser
@@ -1021,7 +1022,7 @@ class TeacherSerializer(serializers.ModelSerializer):
             'id', 'Fname', 'Lname', 'email', 'profiles',
             'teacherskill', 'teachersaddress',
             'teacherexperiences', 'teacherqualifications',
-            'preferences', 'total_marks'
+            'preferences', 'total_marks', 'jobpreferencelocation'
         ]
 
     def get_total_marks(self, instance):
@@ -1074,6 +1075,16 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'prefered_subject': preference.get('prefered_subject'),
                     'teacher_job_type': preference.get('teacher_job_type'),
                 } for preference in representation['preferences']
+            ]
+
+        if 'jobpreferencelocation' in representation:
+            representation['jobpreferencelocation'] = [
+                {
+                    'state': location.get('state'),
+                    'city': location.get('city'),
+                    'sub_division': location.get('sub_division'),
+                    'area': location.get('area'),
+                } for location in representation['jobpreferencelocation']
             ]
 
         return representation

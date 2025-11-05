@@ -3481,11 +3481,33 @@ class TeacherFilterAPIView(APIView):
         def clean_values(values):
             return [v for v in values if v and str(v).strip()]
 
-        # Address filters (support multiple values, ignore empty/null)
-        for field in ['state', 'district', 'division', 'pincode', 'block', 'village', 'postOffice']:
+        # Gender filter
+        gender = request.query_params.getlist('gender')
+        gender = clean_values(gender)
+        if gender:
+            filters &= Q(profiles__gender__iexact=gender[0]) if len(gender) == 1 else Q(profiles__gender__in=gender)
+
+        # Religion filter
+        religion = request.query_params.getlist('religion')
+        religion = clean_values(religion)
+        if religion:
+            filters &= Q(profiles__religion__iexact=religion[0]) if len(religion) == 1 else Q(profiles__religion__in=religion)
+
+        marital_status = clean_values(request.query_params.getlist('marital_status'))
+        if marital_status:
+            filters &= Q(profiles__marital_status__iexact=marital_status[0]) if len(marital_status) == 1 else Q(profiles__marital_status__in=marital_status)
+
+        # Language filter
+        language = clean_values(request.query_params.getlist('language'))
+        if language:
+            filters &= Q(profiles__language__iexact=language[0]) if len(language) == 1 else Q(profiles__language__in=language)
+            
+        # JobPreferenceLocation address filters (support multiple values, ignore empty/null)
+        jp_fields = ['state', 'city', 'sub_division', 'post_office', 'area', 'pincode']
+        for field in jp_fields:
             values = clean_values(request.query_params.getlist(field))
             if values:
-                field_name = f'teachersaddress__{field.lower()}__iexact'
+                field_name = f'jobpreferencelocation__{field}__iexact'
                 q = Q()
                 for value in values:
                     q |= Q(**{field_name: value})
@@ -3543,7 +3565,6 @@ class TeacherFilterAPIView(APIView):
         marks_min = request.query_params.get('total_marks[min]')
         marks_max = request.query_params.get('total_marks[max]')
         if marks_min or marks_max:
-            # Filter teachers who have exams in the given marks range
             exam_filter = Q()
             if marks_min and marks_min.strip():
                 exam_filter &= Q(teacherexamresult__exam__total_marks__gte=int(marks_min))

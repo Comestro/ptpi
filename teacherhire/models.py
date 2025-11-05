@@ -507,7 +507,7 @@ class Apply(models.Model):
         return self.user.username
     
 class JobPreferenceLocation(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1)  
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1, related_name='jobpreferencelocation')  
     state = models.CharField(max_length=200, null=True, blank=True)
     city = models.CharField(max_length=200, null=True, blank=True)
     sub_division = models.CharField(max_length=200, null=True, blank=True)
