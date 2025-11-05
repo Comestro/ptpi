@@ -861,6 +861,18 @@ class BasicProfileSerializer(serializers.ModelSerializer):
         if age < 18:
             raise serializers.ValidationError("You must be at least 18 years old.")
         return value
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+        # Build full URL for profile_picture
+        if representation.get('profile_picture'):
+            if request:
+                representation['profile_picture'] = request.build_absolute_uri(representation['profile_picture'])
+            else:
+                representation['profile_picture'] = f"/media/{representation['profile_picture']}"
+        representation['user'] = UserSerializer(instance.user).data
+        return representation
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -1084,6 +1096,9 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'city': location.get('city'),
                     'sub_division': location.get('sub_division'),
                     'area': location.get('area'),
+                    'pincode': location.get('pincode'),
+                    'block': location.get('block'),
+                    'post_office': location.get('post_office'),
                 } for location in representation['jobpreferencelocation']
             ]
 

@@ -3475,7 +3475,7 @@ class TeacherFilterAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False)
+        queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False, apply__status=True).distinct()
         filters = Q()
 
         def clean_values(values):
@@ -3501,7 +3501,7 @@ class TeacherFilterAPIView(APIView):
         language = clean_values(request.query_params.getlist('language'))
         if language:
             filters &= Q(profiles__language__iexact=language[0]) if len(language) == 1 else Q(profiles__language__in=language)
-            
+
         # JobPreferenceLocation address filters (support multiple values, ignore empty/null)
         jp_fields = ['state', 'city', 'sub_division', 'post_office', 'area', 'pincode']
         for field in jp_fields:
@@ -3572,5 +3572,6 @@ class TeacherFilterAPIView(APIView):
                 exam_filter &= Q(teacherexamresult__exam__total_marks__lte=int(marks_max))
             queryset = queryset.filter(exam_filter).distinct()
 
-        serializer = TeacherSerializer(queryset, many=True)
+        serializer = TeacherSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
+    

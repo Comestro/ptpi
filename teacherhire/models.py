@@ -496,7 +496,7 @@ class RecruiterEnquiryForm(models.Model):
     contact = models.PositiveIntegerField(null=True, blank=True)
 
 class Apply(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='apply')
     class_category = models.ManyToManyField(ClassCategory)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
     subject = models.ManyToManyField(Subject)
