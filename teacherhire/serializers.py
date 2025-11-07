@@ -1092,12 +1092,29 @@ class InterviewSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = Interview
-        fields = ['id', 'time', 'link', 'status', 'class_category','level' ,'subject', 'grade','attempt','created_at']  # Exclude 'user' from here
+        fields = ['id', 'time', 'link', 'status', 'class_category','level' ,'subject', 'grade','attempt','created_at']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category).data
+        profile = getattr(instance.user, 'profiles', None)
+        profile_picture = None
+        request = self.context.get('request')
+        if profile and profile.profile_picture:
+            url = profile.profile_picture.url
+            profile_picture = request.build_absolute_uri(url) if request else url
+
+        representation['user'] = {
+            "id": instance.user.id,
+            "Fname": instance.user.Fname,
+            "Lname": instance.user.Lname,
+            "email": instance.user.email,
+            "profile_picture": profile_picture
+        }
+        representation['class_category'] = {
+            "id": instance.class_category.id,
+            "name": instance.class_category.name,
+            "description": instance.class_category.description
+        } if instance.class_category else None
         representation['subject'] = SubjectSerializer(instance.subject).data
         representation['level'] = LevelSerializer(instance.level).data
         return representation
@@ -1111,6 +1128,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
     preferences = PreferenceSerializer(many=True, required=False)
     total_marks = serializers.SerializerMethodField()
+    total_attempt = serializers.SerializerMethodField()
     jobpreferencelocation = JobPreferenceLocationSerializer(many=True, required=False)
 
     class Meta:
@@ -1119,12 +1137,17 @@ class TeacherSerializer(serializers.ModelSerializer):
             'id', 'Fname', 'Lname', 'email', 'profiles',
             'teacherskill', 'teachersaddress',
             'teacherexperiences', 'teacherqualifications',
-            'preferences', 'total_marks', 'jobpreferencelocation'
+            'preferences', 'total_marks', 'jobpreferencelocation', 'total_attempt'
         ]
 
     def get_total_marks(self, instance):
         last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
         return last_result.correct_answer if last_result else 0
+
+    def get_total_attempt(self, instance):
+        attempts = TeacherExamResult.objects.filter(user=instance)
+        total_attempt = sum(attempt.attempt for attempt in attempts if attempt.attempt is not None)
+        return total_attempt
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1144,6 +1167,8 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'year_of_passing': qualification.get('year_of_passing', ''),
                     'grade_or_percentage': qualification.get('grade_or_percentage', ''),
                     'stream_or_degree': qualification.get('stream_or_degree', ''),
+                    'session': qualification.get('session', ''),
+                    'subjects': qualification.get('subjects', ''),
                 }
                 for qualification in
                 representation['teacherqualifications']
@@ -1181,7 +1206,6 @@ class TeacherSerializer(serializers.ModelSerializer):
                 {
                     'job_role': preference.get('job_role'),
                     'class_category': preference.get('class_category'),
-                    'prefered_subject': preference.get('prefered_subject'),
                     'teacher_job_type': preference.get('teacher_job_type'),
                 } for preference in representation['preferences']
             ]

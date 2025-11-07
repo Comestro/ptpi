@@ -14,7 +14,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherQualification)
 class TeacherQualificationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'qualification','institution','year_of_passing','grade_or_percentage',"stream_or_degree"]
+    list_display = ['user', 'qualification','institution','year_of_passing','grade_or_percentage',"stream_or_degree",'session','subjects']
 
 @admin.register(TeacherExperiences)
 class TeacherExperiencesAdmin(admin.ModelAdmin):
