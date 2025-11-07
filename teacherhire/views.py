@@ -1786,13 +1786,19 @@ class CheckoutView(APIView):
     #             })
 
     #     return Response(levels, status=status.HTTP_200_OK)
+from rest_framework.pagination import PageNumberPagination
 
+class ExamPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100
 
 class ExamSetterViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Exam.objects.all()
     serializer_class = ExamSerializer
+    pagination_class = ExamPagination
 
     def get_permissions(self):
         """Apply different permissions based on user type."""
@@ -1897,6 +1903,11 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
                 exams = exams.filter(level=level)
             except Level.DoesNotExist:
                 return Response({"error": "Level not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        page = self.paginate_queryset(exams)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = ExamSerializer(exams, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
