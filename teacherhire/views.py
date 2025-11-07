@@ -1802,12 +1802,10 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsAuthenticated, IsQuestionUser]
         return super().get_permissions()
 
-    def get_queryset(self):
-        """Admins see all exams, assigned users see only their exams."""
-        user = self.request.user
-        if user.is_staff:
-            return Exam.objects.all().order_by('-created_at')
-        return Exam.objects.filter(assigneduser__user=user)
+    def get_serializer_class(self):
+        if self.action in ['list']:
+            return ExamSetterSerializer
+        return ExamSerializer
 
     def create(self, request):
         """Admins can create any exam; assigned users are restricted."""

@@ -575,6 +575,35 @@ class ExamSerializer(serializers.ModelSerializer):
         representation['assigneduser'] = AssignedQuestionUserSerializer(
             instance.assigneduser).data if instance.assigneduser else None
         return representation
+    
+class ExamSetterSerializer(serializers.ModelSerializer):
+    assigneduser_name = serializers.SerializerMethodField()
+    class_category = serializers.SerializerMethodField()
+    subject = serializers.SerializerMethodField()
+    level = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Exam
+        fields = [
+            'id', 'name', 'set_name', 'description', 'assigneduser_name',
+            'class_category', 'subject', 'level',
+            'total_questions', 'total_marks', 'duration', 'type', 'status'
+        ]
+
+    def get_assigneduser_name(self, obj):
+        if obj.assigneduser and obj.assigneduser.user:
+            return f"{obj.assigneduser.user.Fname} {obj.assigneduser.user.Lname}"
+        return None
+
+    def get_class_category(self, obj):
+        return obj.class_category.name if obj.class_category else None
+
+    def get_subject(self, obj):
+        return obj.subject.subject_name if obj.subject else None
+
+    def get_level(self, obj):
+        return obj.level.name if obj.level else None
+
 
 class ExamDetailSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
