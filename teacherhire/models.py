@@ -118,7 +118,7 @@ class TeachersAddress(models.Model):
         return not missing_fields, missing_fields
     
 class ClassCategory(models.Model):
-    name = models.CharField(max_length=100,unique=True, null=True, blank=True)
+    name = models.CharField(max_length=100,unique=True)
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -126,7 +126,7 @@ class ClassCategory(models.Model):
     
 class Subject(models.Model):
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE, related_name='subjects')
-    subject_name = models.CharField(max_length=100, null=True, blank=True)
+    subject_name = models.CharField(max_length=100)
     subject_description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -139,7 +139,7 @@ class Reason(models.Model):
         return self.issue_type
 
 class EducationalQualification(models.Model):
-    name = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -162,7 +162,7 @@ class TeacherQualification(models.Model):
         return f"Unknown User - {self.qualification.name} ({self.year_of_passing}) - {self.stream_or_degree}"
 
 class Role(models.Model):
-    jobrole_name = models.CharField(max_length=400, null=True, blank=True)
+    jobrole_name = models.CharField(max_length=400)
 
     def __str__(self):
         return self.jobrole_name
@@ -180,14 +180,14 @@ class TeacherExperiences(models.Model):
         return self.user.username
 
 class Skill(models.Model):
-    name = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
     
 class Level(models.Model):
-    name = models.CharField(max_length=100, null=True, blank=True)
+    name = models.CharField(max_length=100)
     level_code = models.FloatField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=2000, null=True, blank=True)
 
