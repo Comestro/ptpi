@@ -315,24 +315,52 @@ class SubjectSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A subject with this name already exists in this class category.")
         return data
 
-
-
 class ClassCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCategory
         fields = ['id', 'name', 'description', 'subjects']
         depth = 1
 
+    # ✅ OVERRIDE is_valid() → FORCE your format
+    def is_valid(self, raise_exception=False):
+        valid = super().is_valid(raise_exception=False)
+
+        if not valid:
+            errors = []
+            for field, msgs in self.errors.items():
+                for msg in msgs:
+                    errors.append({
+                        "code": "invalid",
+                        "detail": str(msg),
+                        "attr": field
+                    })
+
+            formatted = {
+                "status": "error",
+                "type": "validation_error",
+                "errors": errors
+            }
+
+            if raise_exception:
+                # DRF throws this EXACT dict as response
+                raise serializers.ValidationError(formatted)
+
+            self._errors = formatted
+            return False
+
+        return True
+
     def validate_name(self, value):
         class_category_id = self.instance.id if self.instance else None
         if ClassCategory.objects.filter(name=value).exclude(id=class_category_id).exists():
-            raise serializers.ValidationError("A class category with this name already exists.")
+            raise serializers.ValidationError({"name": "A class category with this name already exists."})
         return value
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['subjects'] = SubjectSerializer(instance.subjects.all(), many=True).data
         return representation
+
 
 
 class ReasonSerializer(serializers.ModelSerializer):
@@ -648,6 +676,34 @@ class EducationalQualificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationalQualification
         fields = ['id', 'name', 'description']
+
+    def is_valid(self, raise_exception=False):
+        valid = super().is_valid(raise_exception=False)
+
+        if not valid:
+            errors = []
+            # DRF -> {field: [messages]} ko convert karenge
+            for field, messages in self.errors.items():
+                for msg in messages:
+                    errors.append({
+                        "code": "invalid",
+                        "detail": str(msg),
+                        "attr": field
+                    })
+
+            formatted = {
+                "status": "error",
+                "type": "validation_error",
+                "errors": errors
+            }
+
+            if raise_exception:
+                raise serializers.ValidationError(formatted)
+
+            self._errors = formatted
+            return False
+
+        return True
 
 
 class TeacherQualificationSerializer(serializers.ModelSerializer):
