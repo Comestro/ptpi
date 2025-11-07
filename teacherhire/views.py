@@ -679,8 +679,7 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
     queryset = ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
 
-    def create(self, request):
-        return create_object(ClassCategorySerializer, request.data, ClassCategory)
+    
 
     @action(detail=False, methods=['get'])
     def count(self, request):
