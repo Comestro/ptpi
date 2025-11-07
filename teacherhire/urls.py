@@ -92,6 +92,7 @@ urlpatterns = [
     path("checklevel/", CheckoutView.as_view(), name="checkout-level"),
 
     path('self/apply-eligibility/', ApplyEligibilityView.as_view(), name='apply-eligibility'),
+    path('teacher/<int:teacher_id>/', TeacherDetailAPIView.as_view(), name='teacher-detail'),
     # Authentication Routes
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
     path('verify-account/<str:token>/', VerifyLinkView.as_view(), name='verify-account'),

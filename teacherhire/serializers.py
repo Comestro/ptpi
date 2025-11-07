@@ -1053,13 +1053,25 @@ class TeacherSerializer(serializers.ModelSerializer):
             ]
         if 'teacherqualifications' in representation:
             representation['teacherqualifications'] = [
-                {'qualification': qualification.get('qualification')} for qualification in
+                {
+                    'qualification': qualification.get('qualification'),
+                    'institution': qualification.get('institution', ''),
+                    'year_of_passing': qualification.get('year_of_passing', ''),
+                    'grade_or_percentage': qualification.get('grade_or_percentage', ''),
+                    'stream_or_degree': qualification.get('stream_or_degree', ''),
+                }
+                for qualification in
                 representation['teacherqualifications']
             ]
         if 'teacherexperiences' in representation:
             representation['teacherexperiences'] = [
-                {'start_date': experience.get('start_date'), 'end_date': experience.get('end_date'),
-                 'achievements': experience.get('achievements')}
+                { 
+                    'role': experience.get('role'),
+                    'institution': experience.get('institution', ''),
+                    'start_date': experience.get('start_date', ''),
+                    'end_date': experience.get('end_date', ''),
+                    'achievements': experience.get('achievements', '')
+                }
                 for experience in representation['teacherexperiences']
             ]
         if 'profiles' in representation and representation['profiles'] is not None:
@@ -1386,3 +1398,50 @@ class NewQuestionSerializer(serializers.ModelSerializer):
         if len(value) != len(set(value)):  
             raise serializers.ValidationError("Options must be unique.")
         return value
+
+
+class TeacherFilterSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
+    phone_number = serializers.SerializerMethodField()
+    current_address = serializers.SerializerMethodField()
+    last_experience = serializers.SerializerMethodField()
+    last_education = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'Fname', 'Lname', 'email', 'profile_picture', 'phone_number',
+            'current_address', 'last_experience', 'last_education'
+        ]
+
+    def get_profile_picture(self, obj):
+        profile = getattr(obj, 'profiles', None)
+        request = self.context.get('request')
+        if profile and profile.profile_picture:
+            url = profile.profile_picture.url
+            if request:
+                return request.build_absolute_uri(url)
+            return url
+        return None
+
+    def get_phone_number(self, obj):
+        profile = getattr(obj, 'profiles', None)
+        return profile.phone_number if profile else None
+
+    def get_current_address(self, obj):
+        address = obj.teachersaddress.filter(address_type='current').first()
+        if address:
+            return TeachersAddressSerializer(address).data
+        return None
+
+    def get_last_experience(self, obj):
+        exp = obj.teacherexperiences.order_by('-end_date', '-start_date').first()
+        if exp:
+            return TeacherExperiencesSerializer(exp).data
+        return None
+
+    def get_last_education(self, obj):
+        edu = obj.teacherqualifications.order_by('-year_of_passing').first()
+        if edu:
+            return TeacherQualificationSerializer(edu).data
+        return None

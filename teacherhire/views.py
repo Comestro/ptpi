@@ -3572,6 +3572,17 @@ class TeacherFilterAPIView(APIView):
                 exam_filter &= Q(teacherexamresult__exam__total_marks__lte=int(marks_max))
             queryset = queryset.filter(exam_filter).distinct()
 
-        serializer = TeacherSerializer(queryset, many=True, context={'request': request})
+        serializer = TeacherFilterSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
     
+
+class TeacherDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, teacher_id):
+        try:
+            teacher = CustomUser.objects.get(id=teacher_id, is_teacher=True)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Teacher not found."}, status=404)
+        serializer = TeacherSerializer(teacher, context={'request': request})
+        return Response(serializer.data, status=200)
