@@ -321,39 +321,10 @@ class ClassCategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'subjects']
         depth = 1
 
-    # ✅ OVERRIDE is_valid() → FORCE your format
-    def is_valid(self, raise_exception=False):
-        valid = super().is_valid(raise_exception=False)
-
-        if not valid:
-            errors = []
-            for field, msgs in self.errors.items():
-                for msg in msgs:
-                    errors.append({
-                        "code": "invalid",
-                        "detail": str(msg),
-                        "attr": field
-                    })
-
-            formatted = {
-                "status": "error",
-                "type": "validation_error",
-                "errors": errors
-            }
-
-            if raise_exception:
-                # DRF throws this EXACT dict as response
-                raise serializers.ValidationError(formatted)
-
-            self._errors = formatted
-            return False
-
-        return True
-
     def validate_name(self, value):
         class_category_id = self.instance.id if self.instance else None
         if ClassCategory.objects.filter(name=value).exclude(id=class_category_id).exists():
-            raise serializers.ValidationError({"name": "A class category with this name already exists."})
+            raise serializers.ValidationError("A class category with this name already exists.")
         return value
 
     def to_representation(self, instance):
