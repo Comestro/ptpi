@@ -388,7 +388,7 @@ class LevelSerializer(serializers.ModelSerializer):
 
 
 class SkillSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=20, required=False, allow_null=True)
+    name = serializers.CharField(max_length=20, required=True, allow_null=True)
 
     class Meta:
         model = Skill
