@@ -1810,6 +1810,20 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
             return ExamSetterSerializer
         return ExamSerializer
 
+    def get_queryset(self):
+        """Admins see all exams; assigned users see only their own."""
+        user = self.request.user
+        print("User in get_queryset:", user)
+        if user.is_staff:
+            exams = Exam.objects.all()
+            print("Exams for admin:", exams)
+        else:
+            assigned_user = AssignedQuestionUser.objects.get(user=user)
+            exams = Exam.objects.filter(assigneduser=assigned_user)
+        print("Exams for user:", exams)
+
+        return exams.order_by('-created_at')
+
     def create(self, request):
         """Admins can create any exam; assigned users are restricted."""
         user = request.user
@@ -3050,7 +3064,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Check if the application already exists
+        # # Check if the application already exists
         apply_instance = Apply.objects.filter(
             user=user,
             subject__id__in=subject_ids,
@@ -3058,12 +3072,18 @@ class ApplyViewSet(viewsets.ModelViewSet):
         ).first()
 
         if apply_instance:
-            apply_instance.status = not apply_instance.status
-            apply_instance.save()
             return Response(
-                {"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data},
-                status=status.HTTP_200_OK
+                {"error": "You have already applied for this subject and class category."},
+                status=status.HTTP_400_BAD_REQUEST
             )
+
+        # if apply_instance:
+        #     apply_instance.status = not apply_instance.status
+        #     apply_instance.save()
+        #     return Response(
+        #         {"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data},
+        #         status=status.HTTP_200_OK
+        #     )
 
         data["user"] = user.id
 
@@ -3073,6 +3093,14 @@ class ApplyViewSet(viewsets.ModelViewSet):
             apply_instance = serializer.save(user=user)
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
@@ -3477,7 +3505,6 @@ class ApplyEligibilityView(APIView):
 
 
 class TeacherFilterAPIView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False, apply__status=True).distinct()

@@ -1315,11 +1315,21 @@ class ApplySerializer(serializers.ModelSerializer):
         model = Apply
         fields = "__all__"
 
-    def to_representation(self, instance):
+    def to_representation(self, instance):        
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(),
-                                                                   many=True).data if instance.class_category else None
+        applied_subject = instance.subject.values_list('id', flat=True)
+        filter_subject = []
+        for cc in instance.class_category.all():
+            cc_data = {
+                'id': cc.id,
+                'name': cc.name,
+                'description': cc.description
+            }
+            cc_subjects = cc.subjects.filter(id__in=applied_subject)
+            cc_data['subjects'] = [{'id': sub.id, 'name': sub.subject_name} for sub in cc_subjects]
+            filter_subject.append(cc_data)
+        representation['class_category'] = filter_subject if instance.class_category else None
         representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
@@ -1381,8 +1391,8 @@ class TeacherSerializer(serializers.ModelSerializer):
     teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
     preferences = PreferenceSerializer(many=True, required=False)
     total_marks = serializers.SerializerMethodField()
-    total_attempt = serializers.SerializerMethodField()
     jobpreferencelocation = JobPreferenceLocationSerializer(many=True, required=False)
+    apply = ApplySerializer(many=True, required=False)
 
     class Meta:
         model = CustomUser
@@ -1390,17 +1400,12 @@ class TeacherSerializer(serializers.ModelSerializer):
             'id', 'Fname', 'Lname', 'email', 'profiles',
             'teacherskill', 'teachersaddress',
             'teacherexperiences', 'teacherqualifications',
-            'preferences', 'total_marks', 'jobpreferencelocation', 'total_attempt'
+            'preferences', 'total_marks', 'jobpreferencelocation', 'apply'
         ]
 
     def get_total_marks(self, instance):
         last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
         return last_result.correct_answer if last_result else 0
-
-    def get_total_attempt(self, instance):
-        attempts = TeacherExamResult.objects.filter(user=instance)
-        total_attempt = sum(attempt.attempt for attempt in attempts if attempt.attempt is not None)
-        return total_attempt
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1475,7 +1480,25 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'post_office': location.get('post_office'),
                 } for location in representation['jobpreferencelocation']
             ]
-
+        if 'apply' in representation:
+            applies = []
+            for appl in representation['apply']:
+                status = appl.get('status')
+                if isinstance(status, str):
+                    status_bool = status.strip().lower() in ('true', '1', 'yes')
+                else:
+                    status_bool = bool(status)
+                if status_bool:
+                    applies.append({
+                        'class_category': appl.get('class_category'),
+                        'teacher_job_type': appl.get('teacher_job_type'),
+                        'salary_expectation': appl.get('salary_expectation'),
+                        'salary_type': appl.get('salary_type'),
+                    })
+            if applies:
+                representation['apply'] = applies
+            else:
+                representation.pop('apply', None)
         return representation
 
 

@@ -314,7 +314,7 @@ class AssignedQuestionUser(models.Model):
     status = models.BooleanField(default=True)
 
     def __str__(self):
-        return str(self.user.id) if self.user else "Unassigned User"
+        return str(self.id) if self.user else "Unassigned User"
 
 class Exam(models.Model):
     assigneduser = models.ForeignKey(AssignedQuestionUser, on_delete=models.CASCADE, null=True, blank=True)
@@ -500,6 +500,8 @@ class Apply(models.Model):
     class_category = models.ManyToManyField(ClassCategory)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
     subject = models.ManyToManyField(Subject)
+    salary_expectation = models.CharField(max_length=200, null=True, blank=True)
+    salary_type = models.CharField(max_length=200, null=True, blank=True, choices=[('monthly','monthly'),('hourly','hourly')])
     status = models.BooleanField(default=True)
     date = models.DateTimeField(auto_now_add=True)
 
