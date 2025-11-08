@@ -333,13 +333,13 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherSkillSerializer
     lookup_field = 'id'
 
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        return create_auth_data(
-            serializer_class=self.get_serializer_class(),
-            request_data=data,
-            user=request.user,
-            model_class=TeacherSkill)
+    def create_object(serializer_class, request_data, model_class):
+        serializer = serializer_class(data=request_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
@@ -1337,7 +1337,7 @@ class SingleTeacherClassCategory(viewsets.ModelViewSet):
             return Response({"detail": "SingleTeacher class category already exists. "},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
