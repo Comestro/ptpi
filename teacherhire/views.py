@@ -32,6 +32,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import get_object_or_404
 from googletrans import Translator
+from rest_framework.exceptions import NotFound, ValidationError as DRFValidationError
+
 
 class RecruiterView(APIView):
     permission_classes = [IsRecruiterUser]
@@ -66,7 +68,7 @@ def create_auth_data(serializer_class, request_data, model_class, user, *args, *
             status=status.HTTP_401_UNAUTHORIZED
         )
     serializer = serializer_class(data=request_data)
-    if serializer.is_valid():
+    if serializer.is_valid(raise_exception=True):
         serializer.save(user=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -146,11 +148,11 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
 
         # Serialize and validate data
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
@@ -335,7 +337,7 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
 
     def create_object(serializer_class, request_data, model_class):
         serializer = serializer_class(data=request_data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -795,49 +797,40 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
         try:
             year_of_passing = int(data.get('year_of_passing'))
         except (ValueError, TypeError):
-            return Response({"error": "Please Enter a valid year."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not qualification or not year_of_passing:
-            return Response(
-                {"error": "Qualification and year_of_passing are required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
+                raise DRFValidationError({"year_of_passing": ["Please enter a valid year."]})
+        
+        if not qualification or not data.get('year_of_passing'):
+            errors = {}
+            if not qualification:
+                errors["qualification"] = ["This field is required."]
+            if not data.get('year_of_passing'):
+                errors["year_of_passing"] = ["This field is required."]
+            raise DRFValidationError(errors)
+        
         if not EducationalQualification.objects.filter(name=qualification).exists():
-            return Response(
-                {"error": f"Qualification '{qualification}' does not exist."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+          raise DRFValidationError({"qualification": [f"Qualification '{qualification}' does not exist."]})
+        
 
         if TeacherQualification.objects.filter(
-                user=request.user,
-                qualification__name=qualification,
-                year_of_passing=year_of_passing
+              user=request.user,
+               qualification__name=qualification,
+               year_of_passing=year_of_passing
         ).exists():
-            return Response(
-                {
-                    "error": f"A record with qualification '{qualification}' and year of passing '{year_of_passing}' already exists."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+           raise DRFValidationError({
+               "non_field_errors": [f"A record with qualification '{qualification}' and year of passing '{year_of_passing}' already exists."]
+          })
 
         user_qua = TeacherQualification.objects.filter(user=request.user)
 
         if qualification == "inter":
             matric = user_qua.filter(qualification__name="matric").first()
             if matric and (year_of_passing - matric.year_of_passing < 2):
-                return Response(
-                    {"error": "There must be at least a 2-year gap between matric and inter."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+               raise DRFValidationError({"non_field_errors": ["There must be at least a 2-year gap between matric and inter."]})  
 
         if qualification == "graduation":
             inter_record = user_qua.filter(qualification__name="inter").first()
             if inter_record and (year_of_passing - inter_record.year_of_passing < 3):
-                return Response(
-                    {"error": "There must be at least a 3-year gap between inter and graduation."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
+                raise DRFValidationError({"non_field_errors": ["There must be at least a 3-year gap between inter and graduation."]})
         return create_auth_data(
             serializer_class=self.get_serializer_class(),
             request_data=data,
