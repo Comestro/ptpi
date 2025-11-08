@@ -3035,22 +3035,14 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 {"error": "You must have at least one job preference location before applying."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Validate subjects and class categories
-        subject_ids = data.get('subject', [])
-        class_category_ids = data.get('class_category', [])
-
-        if not subject_ids or not class_category_ids:
-            return Response(
-                {"error": "Subject and Class Category are required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        subject_id = data.get('subject')
+        class_category_id = data.get('class_category')
 
         # # Check if the application already exists
         apply_instance = Apply.objects.filter(
             user=user,
-            subject__id__in=subject_ids,
-            class_category__id__in=class_category_ids,
+            subject__id=subject_id,
+            class_category__id=class_category_id,
         ).first()
 
         if apply_instance:
@@ -3058,14 +3050,6 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 {"error": "You have already applied for this subject and class category."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # if apply_instance:
-        #     apply_instance.status = not apply_instance.status
-        #     apply_instance.save()
-        #     return Response(
-        #         {"message": "Status updated successfully", "data": ApplySerializer(apply_instance).data},
-        #         status=status.HTTP_200_OK
-        #     )
 
         data["user"] = user.id
 

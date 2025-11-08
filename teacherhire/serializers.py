@@ -1306,32 +1306,38 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
 
 
 class ApplySerializer(serializers.ModelSerializer):
-    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False, many=True)
-    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
-    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True,
-                                                          required=False)
+    class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
+    teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True, required=False)
 
     class Meta:
         model = Apply
-        fields = "__all__"
+        fields = '__all__'
 
-    def to_representation(self, instance):        
+    def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
-        applied_subject = instance.subject.values_list('id', flat=True)
-        filter_subject = []
-        for cc in instance.class_category.all():
+        representation['user'] = UserSerializer(instance.user).data if instance.user else None
+
+        if instance.class_category:
+            cc = instance.class_category
             cc_data = {
                 'id': cc.id,
                 'name': cc.name,
                 'description': cc.description
             }
-            cc_subjects = cc.subjects.filter(id__in=applied_subject)
-            cc_data['subjects'] = [{'id': sub.id, 'name': sub.subject_name} for sub in cc_subjects]
-            filter_subject.append(cc_data)
-        representation['class_category'] = filter_subject if instance.class_category else None
-        representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
+            if instance.subject and instance.subject.class_category_id == cc.id:
+                cc_data['subjects'] = [{
+                    'id': instance.subject.id,
+                    'name': instance.subject.subject_name
+                }]
+            else:
+                cc_data['subjects'] = []
+            representation['class_category'] = cc_data
+        else:
+            representation['class_category'] = None
+
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
+        if 'subject' in representation:
+            del representation['subject']
         return representation
 
 class TranslatorSerializer(serializers.Serializer):

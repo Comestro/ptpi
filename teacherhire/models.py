@@ -497,9 +497,9 @@ class RecruiterEnquiryForm(models.Model):
 
 class Apply(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='apply')
-    class_category = models.ManyToManyField(ClassCategory)
+    class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     teacher_job_type = models.ManyToManyField(TeacherJobType)
-    subject = models.ManyToManyField(Subject)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     salary_expectation = models.CharField(max_length=200, null=True, blank=True)
     salary_type = models.CharField(max_length=200, null=True, blank=True, choices=[('monthly','monthly'),('hourly','hourly')])
     status = models.BooleanField(default=True)
