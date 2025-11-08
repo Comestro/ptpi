@@ -1091,112 +1091,6 @@ class InterviewSerializer(serializers.ModelSerializer):
         return representation
 
 
-class TeacherSerializer(serializers.ModelSerializer):
-    teacherskill = TeacherSkillSerializer(many=True, required=False)
-    profiles = BasicProfileSerializer(required=False)
-    teachersaddress = TeachersAddressSerializer(many=True, required=False)
-    teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
-    teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
-    preferences = PreferenceSerializer(many=True, required=False)
-    total_marks = serializers.SerializerMethodField()
-    total_attempt = serializers.SerializerMethodField()
-    jobpreferencelocation = JobPreferenceLocationSerializer(many=True, required=False)
-
-    class Meta:
-        model = CustomUser
-        fields = [
-            'id', 'Fname', 'Lname', 'email', 'profiles',
-            'teacherskill', 'teachersaddress',
-            'teacherexperiences', 'teacherqualifications',
-            'preferences', 'total_marks', 'jobpreferencelocation', 'total_attempt'
-        ]
-
-    def get_total_marks(self, instance):
-        last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
-        return last_result.correct_answer if last_result else 0
-
-    def get_total_attempt(self, instance):
-        attempts = TeacherExamResult.objects.filter(user=instance)
-        total_attempt = sum(attempt.attempt for attempt in attempts if attempt.attempt is not None)
-        return total_attempt
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-
-        if 'total_marks' not in representation:
-            representation['total_marks'] = self.get_total_marks(instance)
-
-        if 'teacherskill' in representation:
-            representation['teacherskill'] = [
-                {'skill': skill.get('skill')} for skill in representation['teacherskill']
-            ]
-        if 'teacherqualifications' in representation:
-            representation['teacherqualifications'] = [
-                {
-                    'qualification': qualification.get('qualification'),
-                    'institution': qualification.get('institution', ''),
-                    'year_of_passing': qualification.get('year_of_passing', ''),
-                    'grade_or_percentage': qualification.get('grade_or_percentage', ''),
-                    'stream_or_degree': qualification.get('stream_or_degree', ''),
-                    'session': qualification.get('session', ''),
-                    'subjects': qualification.get('subjects', ''),
-                }
-                for qualification in
-                representation['teacherqualifications']
-            ]
-        if 'teacherexperiences' in representation:
-            representation['teacherexperiences'] = [
-                { 
-                    'role': experience.get('role'),
-                    'institution': experience.get('institution', ''),
-                    'start_date': experience.get('start_date', ''),
-                    'end_date': experience.get('end_date', ''),
-                    'achievements': experience.get('achievements', '')
-                }
-                for experience in representation['teacherexperiences']
-            ]
-        if 'profiles' in representation and representation['profiles'] is not None:
-            profile_data = representation['profiles']
-            profile_filtered = {
-                'bio': profile_data.get('bio', ''),
-                'phone_number': profile_data.get('phone_number', None),
-                'religion': profile_data.get('religion', None),
-                'profile_picture': profile_data.get('profile_picture', None),
-                'date_of_birth': profile_data.get('date_of_birth', None),
-                'marital_status': profile_data.get('marital_status', None),
-                'gender': profile_data.get('gender', None),
-                'language': profile_data.get('language', None),
-            }
-            if any(value is not None for value in profile_filtered.values()):
-                representation['profiles'] = profile_filtered
-            else:
-                del representation['profiles']
-
-        if 'preferences' in representation:
-            representation['preferences'] = [
-                {
-                    'job_role': preference.get('job_role'),
-                    'class_category': preference.get('class_category'),
-                    'teacher_job_type': preference.get('teacher_job_type'),
-                } for preference in representation['preferences']
-            ]
-
-        if 'jobpreferencelocation' in representation:
-            representation['jobpreferencelocation'] = [
-                {
-                    'state': location.get('state'),
-                    'city': location.get('city'),
-                    'sub_division': location.get('sub_division'),
-                    'area': location.get('area'),
-                    'pincode': location.get('pincode'),
-                    'block': location.get('block'),
-                    'post_office': location.get('post_office'),
-                } for location in representation['jobpreferencelocation']
-            ]
-
-        return representation
-
-
 class ExamCenterSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     class Meta:
@@ -1342,8 +1236,8 @@ class HireRequestSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['teacher_id'] = UserSerializer(instance.teacher_id).data
         representation['recruiter_id'] = UserSerializer(instance.recruiter_id).data
-        representation['subject'] = SubjectSerializer(instance.subject.all(), many=True).data
-        representation['class_category'] = ClassCategorySerializer(instance.class_category.all(), many=True).data
+        representation['subject'] = [{'id': subj.id, 'name': subj.subject_name} for subj in instance.subject.all()]
+        representation['class_category'] = [{'id': cc.id, 'name': cc.name} for cc in instance.class_category.all()]
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
         return representation
 
@@ -1478,6 +1372,164 @@ class NewQuestionSerializer(serializers.ModelSerializer):
         if len(value) != len(set(value)):  
             raise serializers.ValidationError("Options must be unique.")
         return value
+    
+class TeacherSerializer(serializers.ModelSerializer):
+    teacherskill = TeacherSkillSerializer(many=True, required=False)
+    profiles = BasicProfileSerializer(required=False)
+    teachersaddress = TeachersAddressSerializer(many=True, required=False)
+    teacherexperiences = TeacherExperiencesSerializer(many=True, required=False)
+    teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
+    preferences = PreferenceSerializer(many=True, required=False)
+    total_marks = serializers.SerializerMethodField()
+    total_attempt = serializers.SerializerMethodField()
+    jobpreferencelocation = JobPreferenceLocationSerializer(many=True, required=False)
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'Fname', 'Lname', 'email', 'profiles',
+            'teacherskill', 'teachersaddress',
+            'teacherexperiences', 'teacherqualifications',
+            'preferences', 'total_marks', 'jobpreferencelocation', 'total_attempt'
+        ]
+
+    def get_total_marks(self, instance):
+        last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
+        return last_result.correct_answer if last_result else 0
+
+    def get_total_attempt(self, instance):
+        attempts = TeacherExamResult.objects.filter(user=instance)
+        total_attempt = sum(attempt.attempt for attempt in attempts if attempt.attempt is not None)
+        return total_attempt
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        if 'total_marks' not in representation:
+            representation['total_marks'] = self.get_total_marks(instance)
+
+        if 'teacherskill' in representation:
+            representation['teacherskill'] = [
+                {'skill': skill.get('skill')} for skill in representation['teacherskill']
+            ]
+        if 'teacherqualifications' in representation:
+            representation['teacherqualifications'] = [
+                {
+                    'qualification': qualification.get('qualification'),
+                    'institution': qualification.get('institution', ''),
+                    'year_of_passing': qualification.get('year_of_passing', ''),
+                    'grade_or_percentage': qualification.get('grade_or_percentage', ''),
+                    'stream_or_degree': qualification.get('stream_or_degree', ''),
+                    'session': qualification.get('session', ''),
+                    'subjects': qualification.get('subjects', ''),
+                }
+                for qualification in
+                representation['teacherqualifications']
+            ]
+        if 'teacherexperiences' in representation:
+            representation['teacherexperiences'] = [
+                { 
+                    'role': experience.get('role'),
+                    'institution': experience.get('institution', ''),
+                    'start_date': experience.get('start_date', ''),
+                    'end_date': experience.get('end_date', ''),
+                    'achievements': experience.get('achievements', '')
+                }
+                for experience in representation['teacherexperiences']
+            ]
+        if 'profiles' in representation and representation['profiles'] is not None:
+            profile_data = representation['profiles']
+            profile_filtered = {
+                'bio': profile_data.get('bio', ''),
+                'phone_number': profile_data.get('phone_number', None),
+                'religion': profile_data.get('religion', None),
+                'profile_picture': profile_data.get('profile_picture', None),
+                'date_of_birth': profile_data.get('date_of_birth', None),
+                'marital_status': profile_data.get('marital_status', None),
+                'gender': profile_data.get('gender', None),
+                'language': profile_data.get('language', None),
+            }
+            if any(value is not None for value in profile_filtered.values()):
+                representation['profiles'] = profile_filtered
+            else:
+                del representation['profiles']
+
+        if 'preferences' in representation:
+            representation['preferences'] = [
+                {
+                    'job_role': preference.get('job_role'),
+                    'class_category': preference.get('class_category'),
+                    'teacher_job_type': preference.get('teacher_job_type'),
+                } for preference in representation['preferences']
+            ]
+
+        if 'jobpreferencelocation' in representation:
+            representation['jobpreferencelocation'] = [
+                {
+                    'state': location.get('state'),
+                    'city': location.get('city'),
+                    'sub_division': location.get('sub_division'),
+                    'area': location.get('area'),
+                    'pincode': location.get('pincode'),
+                    'block': location.get('block'),
+                    'post_office': location.get('post_office'),
+                } for location in representation['jobpreferencelocation']
+            ]
+
+        return representation
+
+
+class TeacherAttempterializer(serializers.ModelSerializer):
+    exam = serializers.PrimaryKeyRelatedField(queryset=Exam.objects.all(), required=False)
+    total_question = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TeacherExamResult
+        fields = ['examresult_id', 'exam', 'correct_answer', 'is_unanswered', 'incorrect_answer','language',
+                  'total_question', 'isqualified', 'calculate_percentage', 'created_at','attempt', 'has_exam_attempt']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.exam:
+            representation['exam'] = {
+                "id": instance.exam.id,
+                "name": instance.exam.name,
+                "level_id": instance.exam.level.id,
+                "level_name": instance.exam.level.name,
+                "level_code": instance.exam.level.level_code,
+                "subject_id": instance.exam.subject.id,
+                "subject_name": instance.exam.subject.subject_name,
+                "class_category_id": instance.exam.class_category.id,
+                "class_category_name": instance.exam.class_category.name,
+            }
+
+            interviews = Interview.objects.filter(
+                user=instance.user,
+                level=instance.exam.level,
+                subject=instance.exam.subject,
+                class_category=instance.exam.class_category,
+                created_at__gte=instance.created_at  
+            ).exclude(grade__isnull=True).order_by('-created_at')
+
+            representation['interviews'] = [
+                {
+                    "id": interview.id,
+                    "time": interview.time,
+                    "link": interview.link,
+                    "status": interview.status,
+                    'attempt': interview.attempt,
+                    "grade": interview.grade if interview.grade is not None else "N/A",
+                    "created_at": interview.created_at
+                } for interview in interviews
+            ] if interviews.exists() else []
+
+        return representation
+
+    def get_total_question(self, obj):
+        correct = obj.correct_answer if obj.correct_answer is not None else 0
+        unanswered = obj.is_unanswered if obj.is_unanswered is not None else 0
+        incorrect = obj.incorrect_answer if obj.incorrect_answer is not None else 0
+        return correct + unanswered + incorrect
 
 
 class TeacherFilterSerializer(serializers.ModelSerializer):

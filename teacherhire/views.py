@@ -3590,4 +3590,6 @@ class TeacherDetailAPIView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "Teacher not found."}, status=404)
         serializer = TeacherSerializer(teacher, context={'request': request})
-        return Response(serializer.data, status=200)
+        exam_results_qs = TeacherExamResult.objects.filter(user=teacher)
+        exam_results = TeacherAttempterializer(exam_results_qs, many=True, context={'request': request}).data
+        return Response({"teacher": serializer.data, "attempts": exam_results}, status=200)
