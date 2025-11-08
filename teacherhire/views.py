@@ -1581,10 +1581,11 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['user'] = request.user.id
 
-        if CustomUser.objects.filter(username=request.user.username).exists():
-            return Response({"detail": "Customuser already exists."}, status=status.HTTP_400_BAD_REQUEST)
+        # if CustomUser.objects.filter(username=request.user.username).exists():
+        #     return Response({"detail": "Customuser already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=data)
+        
         if serializer.is_valid():
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -2520,18 +2521,6 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             "message": "User and Exam Center created successfully"
         }, status=status.HTTP_201_CREATED)
     
-
-    # def update(self, request, *args, **kwargs):
-    #     instance = self.get_object()  
-    #     serializer = ExamCenterSerializer(instance, data=request.data, partial=True)
-
-    #     if serializer.is_valid():
-    #         data = serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
     def update(self, request, *args, **kwargs):
         try:
             examcenter = ExamCenter.objects.get(id=kwargs['pk'])
