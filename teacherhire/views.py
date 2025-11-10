@@ -2431,7 +2431,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
         # Deserialize data
         serializer = self.get_serializer(data=request.data)
 
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             user = request.user
             time = serializer.validated_data.get('time')
             subject = serializer.validated_data.get('subject')
@@ -2627,7 +2627,7 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
                     return Response({"error": "You can only update the 'status' field."},
                                     status=status.HTTP_400_BAD_REQUEST)
                 serializer = PasskeySerializer(passkey_instance, data=request.data, partial=True)
-                if serializer.is_valid():
+                if serializer.is_valid(raise_exception=True):
                     serializer.save()
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -3014,7 +3014,7 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['user'] = user.id
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()  
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -3054,7 +3054,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
         # Save the new application
         serializer = ApplySerializer(data=data, context={"request": request})
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             apply_instance = serializer.save(user=user)
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
 
