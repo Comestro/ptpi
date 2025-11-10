@@ -1315,29 +1315,10 @@ class ApplySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data if instance.user else None
-
-        if instance.class_category:
-            cc = instance.class_category
-            cc_data = {
-                'id': cc.id,
-                'name': cc.name,
-                'description': cc.description
-            }
-            if instance.subject and instance.subject.class_category_id == cc.id:
-                cc_data['subjects'] = [{
-                    'id': instance.subject.id,
-                    'name': instance.subject.subject_name
-                }]
-            else:
-                cc_data['subjects'] = []
-            representation['class_category'] = cc_data
-        else:
-            representation['class_category'] = None
-
+        representation['user'] = {'id': instance.user.id, 'Fname': instance.user.Fname, 'Lname': instance.user.Lname }
+        representation['class_category'] = {'id': instance.class_category.id, 'name': instance.class_category.name} if instance.class_category else None
+        representation['subject'] = {'id': instance.subject.id, 'name': instance.subject.subject_name} if instance.subject else None
         representation['teacher_job_type'] = TeacherJobTypeSerializer(instance.teacher_job_type.all(), many=True).data
-        if 'subject' in representation:
-            del representation['subject']
         return representation
 
 class TranslatorSerializer(serializers.Serializer):

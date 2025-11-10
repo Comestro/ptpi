@@ -3045,11 +3045,11 @@ class ApplyViewSet(viewsets.ModelViewSet):
             class_category__id=class_category_id,
         ).first()
 
-        if apply_instance:
-            return Response(
-                {"error": "You have already applied for this subject and class category."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # if apply_instance:
+        #     return Response(
+        #         {"error": "You have already applied for this subject and class category."},
+        #         status=status.HTTP_400_BAD_REQUEST
+        #     )
 
         data["user"] = user.id
 
