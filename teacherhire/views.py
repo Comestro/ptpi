@@ -1130,14 +1130,13 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         data['user'] = request.user.id
 
         if Preference.objects.filter(user=request.user).exists():
-            return Response({"detail": "Preference already exists."}, status=status.HTTP_400_BAD_REQUEST)
+            raise DRFValidationError({"preference": "Preference already exists."})
 
         if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
             data['teacher_job_type'] = [data['teacher_job_type']]
 
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
-
+        if serializer.is_valid(raise_exception=True):
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -1165,9 +1164,10 @@ class PreferenceViewSet(viewsets.ModelViewSet):
                 has_exam_attempt=True
         ).filter(Q(exam__subject_id__in=removed_subjects) | Q(
             exam__class_category_id__in=removed_class_categories)).exists():
-            return Response({
-                "message": "You cannot remove an attempted subject or class category, only add new ones."
-            }, status=status.HTTP_400_BAD_REQUEST)
+
+            raise DRFValidationError({
+                "teacherexamresult": "You cannot remove an attempted subject or class category, only add new ones."
+            })
 
         if profile:
             return self.update_auth_data(
@@ -1213,7 +1213,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def create_auth_data(self, serializer_class, request_data, user, model_class):
         """Handle creating preference data."""
         serializer = serializer_class(data=request_data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save(user=user)  # Assign the user to the new preference object
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1252,8 +1252,8 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['user'] = request.user.id
         serializer = self.get_serializer(datRa=data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
+        if serializer.is_valid(raise_exception=True):
+            self.save(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
