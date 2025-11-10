@@ -2197,7 +2197,6 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
 class SelfReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2206,31 +2205,31 @@ class SelfReportViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def list(self, request, *args, **kwargs):
-        return Response({"error": "GET method not allowed on this endpoint."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        raise MethodNotAllowed("GET", detail="GET method not allowed on this endpoint.")
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         user = request.user
         question_id = request.data.get('question')
+
         try:
             question = Question.objects.get(id=question_id)
         except Question.DoesNotExist:
-            return Response({"error": "Question not found."}, status=status.HTTP_400_BAD_REQUEST)
-        if Report.objects.filter(user=user, question=question).exists():
-            return Response({"error": "You have already submitted a report for this question."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        data = request.data.copy()
+            raise ValidationError({"question": ["Question not found."]})
 
+        if Report.objects.filter(user=user, question=question).exists():
+            raise ValidationError({
+                "question": ["You have already submitted a report for this question."]
+            })
+
+        data = request.data.copy()
         if 'issue_type' in data and isinstance(data['issue_type'], str):
             data['issue_type'] = [data['issue_type']]
-
         data['user'] = user.id
-        serializer = self.serializer_class(data=data)
-        if serializer.is_valid():
-            serializer.save(user=user, question=question)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=user, question=question)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class PasskeyViewSet(viewsets.ModelViewSet):
