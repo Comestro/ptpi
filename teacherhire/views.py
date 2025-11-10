@@ -123,42 +123,47 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeachersAddressSerializer
     queryset = TeachersAddress.objects.all().select_related('user')
-
+    
     def create(self, request, *args, **kwargs):
         print("Request data:", request.data)
         data = request.data.copy()
+
+        if "data" in data and isinstance(data["data"], (dict, str)):
+            import json
+            try:
+                nested = data["data"]
+                if isinstance(nested, str):
+                    nested = json.loads(nested)
+                data.update(nested)
+            except Exception:
+                pass
+
         address_type = data.get('address_type')
 
-        # Validate the `address_type`
         if not address_type or address_type not in ['current', 'permanent']:
-            return Response(
-                {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({
+                "address_type": ["Invalid or missing 'address_type'. Expected 'current' or 'permanent'."]
+            })
 
-        # Check if the address already exists for the user
         if TeachersAddress.objects.filter(address_type=address_type, user=request.user).exists():
-            return Response(
-                {"detail": f"{address_type.capitalize()} address already exists for this user."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({
+                "address_type": [f"{address_type.capitalize()} address already exists for this user."]
+            })
 
-        # Associate the address with the authenticated user
         data['user'] = request.user.id
 
-        # Serialize and validate data
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        address_type = data.get('address_type')  # Get the address type from the request data
+        address_type = data.get('address_type')  
 
-        # Ensure address_type is provided and is valid
         if not address_type or address_type not in ['current', 'permanent']:
             return Response(
                 {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
@@ -1251,7 +1256,7 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        serializer = self.get_serializer(datRa=data)
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid(raise_exception=True):
             self.save(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -1292,7 +1297,6 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
             return Response({"detail": "TeacherSubject deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except TeacherSubject.DoesNotExist:
             return Response({"detail": "TeacherSubject not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 class TeacherClassCategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
