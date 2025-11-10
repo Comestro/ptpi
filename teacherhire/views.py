@@ -123,42 +123,47 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = TeachersAddressSerializer
     queryset = TeachersAddress.objects.all().select_related('user')
-
+    
     def create(self, request, *args, **kwargs):
         print("Request data:", request.data)
         data = request.data.copy()
+
+        if "data" in data and isinstance(data["data"], (dict, str)):
+            import json
+            try:
+                nested = data["data"]
+                if isinstance(nested, str):
+                    nested = json.loads(nested)
+                data.update(nested)
+            except Exception:
+                pass
+
         address_type = data.get('address_type')
 
-        # Validate the `address_type`
         if not address_type or address_type not in ['current', 'permanent']:
-            return Response(
-                {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({
+                "address_type": ["Invalid or missing 'address_type'. Expected 'current' or 'permanent'."]
+            })
 
-        # Check if the address already exists for the user
         if TeachersAddress.objects.filter(address_type=address_type, user=request.user).exists():
-            return Response(
-                {"detail": f"{address_type.capitalize()} address already exists for this user."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({
+                "address_type": [f"{address_type.capitalize()} address already exists for this user."]
+            })
 
-        # Associate the address with the authenticated user
         data['user'] = request.user.id
 
-        # Serialize and validate data
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         
 
     def put(self, request, *args, **kwargs):
         data = request.data.copy()
-        address_type = data.get('address_type')  # Get the address type from the request data
+        address_type = data.get('address_type')  
 
-        # Ensure address_type is provided and is valid
         if not address_type or address_type not in ['current', 'permanent']:
             return Response(
                 {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
@@ -1130,14 +1135,13 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         data['user'] = request.user.id
 
         if Preference.objects.filter(user=request.user).exists():
-            return Response({"detail": "Preference already exists."}, status=status.HTTP_400_BAD_REQUEST)
+            raise DRFValidationError({"preference": "Preference already exists."})
 
         if 'teacher_job_type' in data and isinstance(data['teacher_job_type'], str):
             data['teacher_job_type'] = [data['teacher_job_type']]
 
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
-
+        if serializer.is_valid(raise_exception=True):
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -1165,9 +1169,10 @@ class PreferenceViewSet(viewsets.ModelViewSet):
                 has_exam_attempt=True
         ).filter(Q(exam__subject_id__in=removed_subjects) | Q(
             exam__class_category_id__in=removed_class_categories)).exists():
-            return Response({
-                "message": "You cannot remove an attempted subject or class category, only add new ones."
-            }, status=status.HTTP_400_BAD_REQUEST)
+
+            raise DRFValidationError({
+                "teacherexamresult": "You cannot remove an attempted subject or class category, only add new ones."
+            })
 
         if profile:
             return self.update_auth_data(
@@ -1213,7 +1218,7 @@ class PreferenceViewSet(viewsets.ModelViewSet):
     def create_auth_data(self, serializer_class, request_data, user, model_class):
         """Handle creating preference data."""
         serializer = serializer_class(data=request_data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save(user=user)  # Assign the user to the new preference object
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1251,9 +1256,9 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         data['user'] = request.user.id
-        serializer = self.get_serializer(datRa=data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            self.save(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1292,7 +1297,6 @@ class SingleTeacherSubjectViewSet(viewsets.ModelViewSet):
             return Response({"detail": "TeacherSubject deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except TeacherSubject.DoesNotExist:
             return Response({"detail": "TeacherSubject not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 class TeacherClassCategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -2197,7 +2201,6 @@ class ReportViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response({"message": "Report deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-
 class SelfReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     authentication_classes = [ExpiringTokenAuthentication]
@@ -2206,31 +2209,31 @@ class SelfReportViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def list(self, request, *args, **kwargs):
-        return Response({"error": "GET method not allowed on this endpoint."},
-                        status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        raise MethodNotAllowed("GET", detail="GET method not allowed on this endpoint.")
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         user = request.user
         question_id = request.data.get('question')
+
         try:
             question = Question.objects.get(id=question_id)
         except Question.DoesNotExist:
-            return Response({"error": "Question not found."}, status=status.HTTP_400_BAD_REQUEST)
-        if Report.objects.filter(user=user, question=question).exists():
-            return Response({"error": "You have already submitted a report for this question."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        data = request.data.copy()
+            raise ValidationError({"question": ["Question not found."]})
 
+        if Report.objects.filter(user=user, question=question).exists():
+            raise ValidationError({
+                "question": ["You have already submitted a report for this question."]
+            })
+
+        data = request.data.copy()
         if 'issue_type' in data and isinstance(data['issue_type'], str):
             data['issue_type'] = [data['issue_type']]
-
         data['user'] = user.id
-        serializer = self.serializer_class(data=data)
-        if serializer.is_valid():
-            serializer.save(user=user, question=question)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=user, question=question)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class PasskeyViewSet(viewsets.ModelViewSet):
@@ -2432,7 +2435,7 @@ class SelfInterviewViewSet(viewsets.ModelViewSet):
         # Deserialize data
         serializer = self.get_serializer(data=request.data)
 
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             user = request.user
             time = serializer.validated_data.get('time')
             subject = serializer.validated_data.get('subject')
@@ -2628,7 +2631,7 @@ class SelfExamCenterViewSets(viewsets.ModelViewSet):
                     return Response({"error": "You can only update the 'status' field."},
                                     status=status.HTTP_400_BAD_REQUEST)
                 serializer = PasskeySerializer(passkey_instance, data=request.data, partial=True)
-                if serializer.is_valid():
+                if serializer.is_valid(raise_exception=True):
                     serializer.save()
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2963,7 +2966,7 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         data['recruiter_id'] = recruiter_id
         data['status'] = "requested"
         serializer = HireRequestSerializer(data=data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -3015,7 +3018,7 @@ class SelfRecruiterEnquiryFormViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['user'] = user.id
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()  
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -3055,7 +3058,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
         # Save the new application
         serializer = ApplySerializer(data=data, context={"request": request})
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             apply_instance = serializer.save(user=user)
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
 
@@ -3185,7 +3188,7 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
         try:
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
-            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"exam": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
       
         passkey = Passkey.objects.filter(user=user,exam__id=exam.id,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__level__level_code='2.5',exam__type='offline', status__in=['requested','fulfilled']).first()
         if passkey and passkey.center:
