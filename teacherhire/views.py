@@ -2962,7 +2962,7 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         data['recruiter_id'] = recruiter_id
         data['status'] = "requested"
         serializer = HireRequestSerializer(data=data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -3184,7 +3184,7 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
         try:
             exam = Exam.objects.get(id=exam_id)
         except Exam.DoesNotExist:
-            return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"exam": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
       
         passkey = Passkey.objects.filter(user=user,exam__id=exam.id,exam__subject_id=exam.subject.id,exam__class_category_id=exam.class_category.id, exam__level__level_code='2.5',exam__type='offline', status__in=['requested','fulfilled']).first()
         if passkey and passkey.center:
