@@ -33,7 +33,6 @@ hstspreload==2025.1.1
 httpcore==0.9.1
 httpx==0.13.3
 hyperframe==5.2.0
-idna==3.10
 imagekitio==4.1.0
 inflection==0.5.1
 jsonschema==4.24.0
