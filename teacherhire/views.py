@@ -2488,40 +2488,28 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
     queryset = ExamCenter.objects.all()
     serializer_class = ExamCenterSerializer
 
+   
     def create(self, request, *args, **kwargs):
         user_data = request.data.get("user")
+        # require user data
+        if not user_data:
+            raise DRFValidationError({"user": ["User data is required."]})
 
-        # Validate user serializer
         user_serializer = CenterUserSerializer(data=user_data)
-        if not user_serializer.is_valid():
-            return Response({
-                "error": user_serializer.errors,
-                "message": "User creation failed"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Save the user and get the instance
+        user_serializer.is_valid(raise_exception=True)
         user = user_serializer.save()
 
         # Extract exam center data
         exam_center_data = request.data.get("exam_center")
         if not exam_center_data:
-            return Response({
-                "error": "Exam center data not provided",
-                "message": "Please include exam center details"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            raise DRFValidationError({"exam_center": ["Exam center data not provided."]})
 
         # Assign only the user ID to the exam center data
-        exam_center_data["user"] = user.id  # Ensure this is an integer, not a dict
+        exam_center_data["user"] = user.id
 
-        # Validate exam center serializer
+        # Validate exam center serializer (raise -> custom handler formats)
         exam_center_serializer = ExamCenterSerializer(data=exam_center_data)
-        if not exam_center_serializer.is_valid():
-            return Response({
-                "error": exam_center_serializer.errors,
-                "message": "Exam center creation failed"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Save the exam center
+        exam_center_serializer.is_valid(raise_exception=True)
         exam_center_serializer.save()
 
         return Response({
@@ -2529,6 +2517,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             "exam_center": exam_center_serializer.data,
             "message": "User and Exam Center created successfully"
         }, status=status.HTTP_201_CREATED)
+
     
     def update(self, request, *args, **kwargs):
         try:
@@ -2541,7 +2530,7 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
 
         if user_data and examcenter.user:
             user_serializer = CenterUserSerializer(examcenter.user, data=user_data, partial=True)
-            if user_serializer.is_valid():
+            if user_serializer.is_valid(raise_exception=True):
                 user_serializer.save()
             else:
                 return Response({"user_errors": user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
