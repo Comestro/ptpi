@@ -2,6 +2,8 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 # Load environment variables from .env file
 load_dotenv()
@@ -41,6 +43,7 @@ ALLOWED_HOSTS = [
 
 # Application definition
 INSTALLED_APPS = [
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -193,3 +196,43 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
     CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
 
+
+UNFOLD = {
+    "SITE_TITLE": "PTPI Admin Login",
+    "SITE_HEADER": "PTPI Admin Panel",
+    "SITE_SUBHEADER": "PTPI Admin Panel",
+    "SITE_DROPDOWN": [
+        {
+            "icon": "diamond",
+            "title": "PTPI Institute",
+            "link": "https://ptpinstitute.com",
+        },
+        # ...
+    ],
+    #  "SIDEBAR": {
+    #     "show_search": False,  # Search in applications and models names
+    #     "command_search": False,  # Replace the sidebar search with the command search
+    #     "show_all_applications": False,  # Dropdown with all applications and models
+    #     "navigation": [
+    #         {
+    #             "title": _("Navigation"),
+    #             "separator": True,  # Top border
+    #             "collapsible": True,  # Collapsible group of links
+    #             "items": [
+    #                 {
+    #                     "title": _("Dashboard"),
+    #                     "icon": "dashboard",  # Supported icon set: https://fonts.google.com/icons
+    #                     "link": reverse_lazy("admin:index"),
+    #                     "badge": "sample_app.badge_callback",
+    #                     "permission": lambda request: request.user.is_superuser,
+    #                 },
+    #                 {
+    #                     "title": _("Users"),
+    #                     "icon": "people",
+    #                     # "link": reverse_lazy("admin:auth_user_changelist"),
+    #                 },
+    #             ],
+    #         },
+    #     ],
+    # },
+}

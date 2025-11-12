@@ -1811,16 +1811,13 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Admins see all exams; assigned users see only their own."""
         user = self.request.user
-        print("User in get_queryset:", user)
         if user.is_staff:
             exams = Exam.objects.all()
-            print("Exams for admin:", exams)
         else:
             assigned_user = AssignedQuestionUser.objects.get(user=user)
             exams = Exam.objects.filter(assigneduser=assigned_user)
-        print("Exams for user:", exams)
 
-        return exams.order_by('-created_at')
+        return exams.order_by('level__level_code', 'created_at')
 
     def create(self, request):
         """Admins can create any exam; assigned users are restricted."""
