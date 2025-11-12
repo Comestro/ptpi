@@ -1104,8 +1104,7 @@ class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
 
-    def create(self, request):
-        return create_object(RoleSerializer, request.data, Role)
+    
 
     @action(detail=False, methods=['get'])
     def count(self, request):
