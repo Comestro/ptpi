@@ -43,7 +43,7 @@ ALLOWED_HOSTS = [
 
 # Application definition
 INSTALLED_APPS = [
-    # 'unfold',
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -197,18 +197,18 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
 
 
-# UNFOLD = {
-#     "SITE_TITLE": "PTPI Admin Login",
-#     "SITE_HEADER": "PTPI Admin Panel",
-#     "SITE_SUBHEADER": "PTPI Admin Panel",
-#     "SITE_DROPDOWN": [
-#         {
-#             "icon": "diamond",
-#             "title": "PTPI Institute",
-#             "link": "https://ptpinstitute.com",
-#         },
-#         # ...
-#     ],
+UNFOLD = {
+    "SITE_TITLE": "PTPI Admin Login",
+    "SITE_HEADER": "PTPI Admin Panel",
+    "SITE_SUBHEADER": "PTPI Admin Panel",
+    "SITE_DROPDOWN": [
+        {
+            "icon": "diamond",
+            "title": "PTPI Institute",
+            "link": "https://ptpinstitute.com",
+        },
+        # ...
+    ],
     #  "SIDEBAR": {
     #     "show_search": False,  # Search in applications and models names
     #     "command_search": False,  # Replace the sidebar search with the command search
@@ -235,4 +235,4 @@ if not DEBUG:
     #         },
     #     ],
     # },
-# }
+}
