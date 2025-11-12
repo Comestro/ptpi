@@ -19,7 +19,6 @@ django-js-asset==3.1.2
 django-redis==6.0.0
 django-seed==0.3.1
 django-storages==1.14.4
-django-unfold==0.71.0
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
 drf-spectacular==0.28.0
@@ -34,7 +33,7 @@ hstspreload==2025.1.1
 httpcore==0.9.1
 httpx==0.13.3
 hyperframe==5.2.0
-idna==3.10
+idna==2.10
 imagekitio==4.1.0
 inflection==0.5.1
 jsonschema==4.24.0
