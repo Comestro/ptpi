@@ -31,27 +31,44 @@ class RegisterUser(APIView):
         }.get(role, TeacherRegisterSerializer)
 
         serializer = serializer_class(data=request.data)
+
         if not serializer.is_valid():
+            errors = []
+            for field, messages in serializer.errors.items():
+                for message in messages:
+                    errors.append({
+                        "code": "invalid",
+                        "detail": str(message),
+                        "attr": field
+                    })
+
             return Response({
-                'error': serializer.errors, 
-            }, status=status.HTTP_409_CONFLICT)
+                "status": "error",
+                "type": "validation_error",
+                "errors": errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         user = serializer.save()
-        role = "admin" if user.is_staff else \
-            "recruiter" if user.is_recruiter else \
-                "teacher" if user.is_teacher else \
-                    "centeruser" if user.is_centeruser else \
-                        "questionuser" if user.is_questionuser else "user"
+
+        role = (
+            "admin" if user.is_staff else
+            "recruiter" if user.is_recruiter else
+            "teacher" if user.is_teacher else
+            "centeruser" if user.is_centeruser else
+            "questionuser" if user.is_questionuser else
+            "user"
+        )
 
         otp = send_otp_via_email(user.email)
         user.otp = otp
         user.otp_created_at = now()
         user.save(update_fields=['otp', 'otp_created_at'])
+
         return Response({
-            'payload': serializer.data,
-            'role': role,
-            'message': 'Check your email to verify your account.'
-        }, status=status.HTTP_200_OK)
+            "payload": serializer.data,
+            "role": role,
+            "message": "Check your email to verify your account."
+        }, status=status.HTTP_201_CREATED)
     
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
