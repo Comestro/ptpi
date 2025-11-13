@@ -205,9 +205,7 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified', 'is_active']
-        extra_kwargs = {
-            'email': {'validators': [validate_email]},
-        }
+        
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -233,7 +231,6 @@ class TeacherRegisterSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
-
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=100)
