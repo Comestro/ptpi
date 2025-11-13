@@ -1477,6 +1477,7 @@ class TeacherSerializer(serializers.ModelSerializer):
                 if status_bool:
                     applies.append({
                         'class_category': appl.get('class_category'),
+                        'subject': appl.get('subject'),
                         'teacher_job_type': appl.get('teacher_job_type'),
                         'salary_expectation': appl.get('salary_expectation'),
                         'salary_type': appl.get('salary_type'),

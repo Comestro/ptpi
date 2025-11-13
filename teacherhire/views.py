@@ -3185,9 +3185,15 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
                 "city": passkey.center.city,
                 "area": passkey.center.area
             }
+            return Response({"passkey": True if passkey else False, "center": center, "status": passkey.status})
         else:
             center = None
-        return Response({"passkey": True if passkey else False, "center": center, "status": passkey.status})
+            return Response({
+                "message": "No valid passkey found.",
+                "passkey": False, 
+                "center": center, 
+                "status": None
+                }, status=status.HTTP_400_BAD_REQUEST)
 
 class TranslatorViewset(viewsets.ViewSet):
     def create(self, request):
