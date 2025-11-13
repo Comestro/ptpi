@@ -536,7 +536,7 @@ class ExamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exam
-        fields = ['id', 'name', 'set_name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_questions','total_marks',
+        fields = ['id', 'name', 'set_name', 'description', 'assigneduser', 'subject', 'level', 'class_category', 'total_questions','count_question', 'total_marks',
                   'duration', 'questions', 'type', 'status']
         depth = 1
 
@@ -586,7 +586,7 @@ class ExamSetterSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'set_name', 'description', 'assigneduser_name',
             'class_category', 'subject', 'level',
-            'total_questions', 'total_marks', 'duration', 'type', 'status'
+            'total_questions','count_question', 'total_marks', 'duration', 'type', 'status'
         ]
 
     def get_assigneduser_name(self, obj):
@@ -602,8 +602,7 @@ class ExamSetterSerializer(serializers.ModelSerializer):
 
     def get_level(self, obj):
         return obj.level.name if obj.level else None
-
-
+    
 class ExamDetailSerializer(serializers.ModelSerializer):
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=True)
     level = serializers.PrimaryKeyRelatedField(queryset=Level.objects.all(), required=True)

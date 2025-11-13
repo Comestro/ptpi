@@ -338,6 +338,14 @@ class Exam(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     status = models.BooleanField(default=False)
 
+    @property
+    def count_question(self):
+        qs = self.questions.all()
+        return {
+            "original_questions": qs.filter(related_question__isnull=True).count(),
+            "related_questions": qs.filter(related_question__isnull=False).count(),
+        }
+
     def __str__(self):
         return str(self.name) 
 
