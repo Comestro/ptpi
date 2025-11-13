@@ -1794,6 +1794,12 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
     serializer_class = ExamSerializer
     pagination_class = ExamPagination
 
+    def paginate_queryset(self, queryset):
+        user = self.request.user
+        if user.is_staff:
+            return super().paginate_queryset(queryset)
+        return None
+
     def get_permissions(self):
         """Apply different permissions based on user type."""
         if self.request.user.is_staff:
@@ -3185,12 +3191,13 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
                 "city": passkey.center.city,
                 "area": passkey.center.area
             }
-            return Response({"passkey": True if passkey else False, "center": center, "status": passkey.status})
+            return Response({"passkey": True, "center": center, "status": passkey.status }, status=status.HTTP_200_OK)
         else:
             center = None
             return Response({
                 "message": "No valid passkey found.",
                 "passkey": False, 
+                "status": False,
                 }, status=status.HTTP_400_BAD_REQUEST)
 
 class TranslatorViewset(viewsets.ViewSet):
