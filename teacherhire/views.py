@@ -3191,8 +3191,6 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
             return Response({
                 "message": "No valid passkey found.",
                 "passkey": False, 
-                "center": center, 
-                "status": None
                 }, status=status.HTTP_400_BAD_REQUEST)
 
 class TranslatorViewset(viewsets.ViewSet):
