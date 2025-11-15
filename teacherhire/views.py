@@ -2347,15 +2347,15 @@ class GeneratePasskeyView(APIView):
 class VerifyPasscodeView(APIView):
     def post(self, request):
         user_id = self.request.user.id
-        exam_id = request.data.get('exam_id')
+        # exam_id = request.data.get('exam_id')
         entered_passcode = request.data.get('entered_passcode')
-        if not user_id or not exam_id or not entered_passcode:
+        if not user_id or not entered_passcode:
             return Response(
                 {"error": "Missing required fields: user_id, exam_id, or passcode."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
-            passkey_obj = Passkey.objects.get(user_id=user_id, exam_id=exam_id, code=entered_passcode, status='fulfilled')
+            passkey_obj = Passkey.objects.get(user_id=user_id, code=entered_passcode, status='fulfilled')
         except Passkey.DoesNotExist:
             return Response({"error": "Invalid passcode or exam."}, status=status.HTTP_400_BAD_REQUEST)
 
