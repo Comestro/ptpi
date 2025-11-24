@@ -104,10 +104,10 @@ class LoginUser(APIView):
             })
 
         if not user.is_verified:
-            raise ValidationError({
-                "is_verified": ["Please verify your account before logging in."],
-                "verified": user.is_verified
-            })
+            return Response({
+                "message": "Please verify your account before logging in.",
+                "is_verified": user.is_verified
+            }, status=status.HTTP_200_OK)
 
         if not user.check_password(password):
             raise ValidationError({
