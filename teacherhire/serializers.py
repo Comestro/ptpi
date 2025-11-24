@@ -25,21 +25,23 @@ def validate_password(value):
 
 
 # global email validation function to check if the email is already registered
-def validate_email(value):
-    if CustomUser.objects.filter(email=value).exclude(email=value).exists():
-        existing_user = CustomUser.objects.get(email=value).exclude(id=value)
-        if existing_user.is_recruiter:
-            role_name = 'recruiter'
-        elif existing_user.is_teacher:
-            role_name = 'teacher'
-        elif existing_user.is_centeruser:
-            role_name = 'centeruser'
-        elif existing_user.is_questionuser:
-            role_name = 'questionuser'
-        else:
-            role_name = 'candidate'
-        raise ValidationError(f"This email has been already registered as a {role_name}.")
-    return value
+class EmailValidationMixin:
+    def validate_email(self, value):
+        user_qs = CustomUser.objects.filter(email=value)
+        if user_qs.exists():
+            user = user_qs.first()
+            if user.is_recruiter:
+                role_name = 'recruiter'
+            elif user.is_teacher:
+                role_name = 'teacher'
+            elif user.is_centeruser:
+                role_name = 'centeruser'
+            elif user.is_questionuser:
+                role_name = 'questionuser'
+            else:
+                role_name = 'candidate'
+            raise ValidationError(f"This email has been already registered as a {role_name}.")
+        return value
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -62,17 +64,18 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 # Recruiter register serializer
-class RecruiterRegisterSerializer(serializers.ModelSerializer):
+class RecruiterRegisterSerializer(EmailValidationMixin,serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_recruiter', 'is_verified', 'is_active']
-        extra_kwargs = {
-            'email': {'validators': [validate_email]},
-        }
+
+    def validate_email(self, value):
+        return super().validate_email(value)
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -105,13 +108,14 @@ class CenterUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified', 'is_active']
-        extra_kwargs = {
-            'email': {'validators': [validate_email]},
-        }
+        # extra_kwargs = {
+        #     'email': {'validators': [validate_email]},
+        # }
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -140,17 +144,21 @@ class CenterUserSerializer(serializers.ModelSerializer):
 
 
 # Assigned Question user register serializer
-class QuestionUserSerializer(serializers.ModelSerializer):
+class QuestionUserSerializer(EmailValidationMixin, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified', 'is_active']
-        extra_kwargs = {
-            'email': {'validators': [validate_email]},
-        }
+        # extra_kwargs = {
+        #     'email': {'validators': [validate_email]},
+        # }
+
+    def validate_email(self, value):
+        return super().validate_email(value)
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -197,15 +205,18 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 # Teacher register serializer
-class TeacherRegisterSerializer(serializers.ModelSerializer):
+class TeacherRegisterSerializer(EmailValidationMixin, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     Fname = serializers.CharField(required=True)
     Lname = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_verified', 'is_active']
-        
+
+    def validate_email(self, value):
+        return super().validate_email(value)
 
     def create(self, validated_data):
         email = validated_data['email']
