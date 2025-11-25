@@ -3188,6 +3188,8 @@ class checkPasskeyViewSet(viewsets.ModelViewSet):
             center = {
                 "id": passkey.center.id,
                 "name": passkey.center.center_name,
+                "phone": passkey.center.phone,
+                "alt_phone": passkey.center.alt_phone,
                 "pincode": passkey.center.pincode,
                 "state": passkey.center.state,
                 "city": passkey.center.city,
