@@ -298,6 +298,8 @@ class TeacherClassCategory(models.Model):
 class ExamCenter(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     center_name = models.CharField(max_length=200, null=True, blank=True)
+    phone = models.CharField(max_length=15)
+    alt_phone = models.CharField(max_length=15, null=True, blank=True)
     pincode = models.CharField(max_length=6, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)

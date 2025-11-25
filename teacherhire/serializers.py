@@ -1102,7 +1102,7 @@ class ExamCenterSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     class Meta:
         model = ExamCenter
-        fields = ['id', 'center_name', 'pincode', 'state', 'city', 'area', 'status', 'user']
+        fields = ['id', 'center_name','phone', 'alt_phone', 'pincode', 'state', 'city', 'area', 'status', 'user']
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
