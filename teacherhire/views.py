@@ -2384,7 +2384,11 @@ class InterviewViewSet(viewsets.ModelViewSet):
         return Response({"Count": count})
 
     def create(self, request, *args, **kwargs):
-        return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def send_interview_link(self, interview, recipient_email):
         subject = f"Your Interview for {interview.subject} {interview.class_category} has been scheduled!"

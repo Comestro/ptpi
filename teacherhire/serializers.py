@@ -1063,14 +1063,29 @@ class PasskeySerializer(serializers.ModelSerializer):
 
 
 class InterviewSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
     time = serializers.DateTimeField(
         required=False,
         input_formats=['%Y-%m-%d %H:%M:%S'], 
         format="%Y-%m-%d %H:%M:%S" 
     )
+
+    def validate(self, attrs):
+            user = self.context['request'].user if 'request' in self.context else attrs.get('user')
+            subject = attrs.get('subject')
+            class_category = attrs.get('class_category')
+            # Only check if all required fields are present
+            if user and subject and class_category:
+                exists = Interview.objects.filter(user=user, subject=subject, class_category=class_category).exists()
+                if exists:
+                    raise ValidationError({
+                        'error': 'An interview for this user, subject, and class category already exists.'
+                    })
+            return attrs
+    
     class Meta:
         model = Interview
-        fields = ['id', 'time', 'link', 'status', 'class_category','level' ,'subject', 'grade','attempt','created_at']
+        fields = ['id','user', 'time', 'link', 'status', 'class_category','level' ,'subject', 'grade','attempt','created_at']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

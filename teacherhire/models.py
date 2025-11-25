@@ -260,7 +260,7 @@ class BasicProfile(models.Model):
         blank=True,
         null=True
     )
-    language = models.CharField(max_length=100, blank=True, null=True)
+    language = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
