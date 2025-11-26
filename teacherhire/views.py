@@ -3490,7 +3490,7 @@ class TeacherFilterAPIView(APIView):
             filters &= Q(profiles__language__iexact=language[0]) if len(language) == 1 else Q(profiles__language__in=language)
 
         # JobPreferenceLocation address filters (support multiple values, ignore empty/null)
-        jp_fields = ['state', 'district', 'city', 'sub_division', 'post_office', 'area', 'pincode']
+        jp_fields = ['state', 'city', 'sub_division', 'post_office', 'area', 'pincode']
         for field in jp_fields:
             values = clean_values(request.query_params.getlist(field))
             if values:
@@ -3587,15 +3587,24 @@ class QualifiedLevel2UsersViewSet(viewsets.ReadOnlyModelViewSet):
         # Get all qualified results for level 2 online/offline
         qs = TeacherExamResult.objects.filter(
             isqualified=True,
-            exam__level__level_code__in=[2.0, 2.5]
-        ).select_related('user', 'exam__subject', 'exam__class_category')
+            exam__level__level_code__in=[2.0]
+        ).distinct().select_related('user', 'exam__subject', 'exam__class_category')
+        
 
-        # Use values to get distinct (user, subject, class_category) combinations
-        distinct_keys = set()
-        distinct_results = []
-        for result in qs:
-            key = (result.user_id, result.exam.subject_id, result.exam.class_category_id)
-            if key not in distinct_keys:
-                distinct_keys.add(key)
-                distinct_results.append(result)
-        return distinct_results
+
+# def get_queryset(self):
+#         # Get all qualified results for level 2 online/offline
+#         qs = TeacherExamResult.objects.filter(
+#             isqualified=True,
+#             exam__level__level_code__in=[2.0, 2.5]
+#         ).select_related('user', 'exam__subject', 'exam__class_category')
+
+#         # Use values to get distinct (user, subject, class_category) combinations
+#         distinct_keys = set()
+#         distinct_results = []
+#         for result in qs:
+#             key = (result.user_id, result.exam.subject_id, result.exam.class_category_id)
+#             if key not in distinct_keys:
+#                 distinct_keys.add(key)
+#                 distinct_results.append(result)
+        # return distinct_results
