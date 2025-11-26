@@ -13,6 +13,7 @@ from rest_framework import status
 from googletrans import Translator
 from rest_framework.validators import UniqueValidator
 from rest_framework.response import Response
+from rest_framework.fields import CurrentUserDefault
 
 
 # global password validation function
@@ -628,7 +629,7 @@ class ExamDetailSerializer(serializers.ModelSerializer):
         return representation
 
 class TeacherSkillSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False, default=CurrentUserDefault())
     skill = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), required=False)
 
     class Meta:
@@ -640,14 +641,6 @@ class TeacherSkillSerializer(serializers.ModelSerializer):
         # representation['user'] = UserSerializer(instance.user).data
         representation['skill'] = SkillSerializer(instance.skill).data
         return representation
-
-    def validate(self, attrs):
-        user = attrs.get('user')
-        skill = attrs.get('skill')
-        # This user have skill already exists
-        if TeacherSkill.objects.filter(skill=skill,user=user).exists():
-            raise serializers.ValidationError('This user already has this skill.')
-        return attrs
 
 
 class EducationalQualificationSerializer(serializers.ModelSerializer):

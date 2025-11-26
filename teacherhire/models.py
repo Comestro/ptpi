@@ -200,6 +200,9 @@ class TeacherSkill(models.Model):
 
     def __str__(self):
         return f"{self.user.Fname} {self.user.Lname} - {self.skill.name}"
+    
+    class Meta:
+        unique_together = ('user', 'skill')
 
     
 class TeacherJobType(models.Model):
