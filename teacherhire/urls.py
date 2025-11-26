@@ -83,6 +83,7 @@ router.register(r"check-passkey", checkPasskeyViewSet, basename="check-passkey")
 # public
 router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="public-classcategory")
 router.register(r'translator', TranslatorViewset, basename="translator")
+router.register(r"qualified-level2-users", QualifiedLevel2UsersViewSet, basename="qualified-level2-users")
 # === Permission-Based Routes ===
 urlpatterns = [
     path("", include(router.urls)),

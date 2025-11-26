@@ -3594,3 +3594,27 @@ class TeacherDetailAPIView(APIView):
         exam_results_qs = TeacherExamResult.objects.filter(user=teacher)
         exam_results = TeacherAttempterializer(exam_results_qs, many=True, context={'request': request}).data
         return Response({"teacher": serializer.data, "attempts": exam_results}, status=200)
+    
+
+# level 2 online and offline qualified users viewset
+class QualifiedLevel2UsersViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = QualifiedUserExamSerializer
+
+    def get_queryset(self):
+        # Get all qualified results for level 2 online/offline
+        qs = TeacherExamResult.objects.filter(
+            isqualified=True,
+            exam__level__level_code__in=[2.0, 2.5]
+        ).select_related('user', 'exam__subject', 'exam__class_category')
+
+        # Use values to get distinct (user, subject, class_category) combinations
+        distinct_keys = set()
+        distinct_results = []
+        for result in qs:
+            key = (result.user_id, result.exam.subject_id, result.exam.class_category_id)
+            if key not in distinct_keys:
+                distinct_keys.add(key)
+                distinct_results.append(result)
+        return distinct_results

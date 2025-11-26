@@ -1611,3 +1611,34 @@ class TeacherFilterSerializer(serializers.ModelSerializer):
         if edu:
             return TeacherQualificationSerializer(edu).data
         return None
+    
+
+class QualifiedUserExamSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    subject = serializers.SerializerMethodField()
+    class_category = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TeacherExamResult
+        fields = ['user', 'subject', 'class_category', 'isqualified']
+
+    def get_user(self, obj):
+        return {
+            "id": obj.user.id,
+            "Fname": obj.user.Fname,
+            "Lname": obj.user.Lname,
+            "email": obj.user.email,
+            "user_code": obj.user.user_code
+        }
+
+    def get_subject(self, obj):
+        return {
+            "id": obj.exam.subject.id,
+            "name": obj.exam.subject.subject_name
+        } if obj.exam and obj.exam.subject else None
+
+    def get_class_category(self, obj):
+        return {
+            "id": obj.exam.class_category.id,
+            "name": obj.exam.class_category.name
+        } if obj.exam and obj.exam.class_category else None
