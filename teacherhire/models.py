@@ -508,7 +508,7 @@ class RecruiterEnquiryForm(models.Model):
 class Apply(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='apply')
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
-    teacher_job_type = models.ManyToManyField(TeacherJobType)
+    teacher_job_type = models.ForeignKey(TeacherJobType, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     salary_expectation = models.CharField(max_length=200, null=True, blank=True)
     salary_type = models.CharField(max_length=200, null=True, blank=True, choices=[('monthly','monthly'),('hourly','hourly')])
@@ -517,6 +517,9 @@ class Apply(models.Model):
 
     def __str__(self):
         return self.user.username
+    
+    class Meta:
+        unique_together = ('user', 'class_category', 'teacher_job_type', 'subject')
     
 class JobPreferenceLocation(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1, related_name='jobpreferencelocation')  

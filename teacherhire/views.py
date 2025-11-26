@@ -3028,36 +3028,17 @@ class ApplyViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data.copy()
         user = request.user
-        
         if not JobPreferenceLocation.objects.filter(user=user).exists():
             return Response(
                 {"error": "You must have at least one job preference location before applying."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        subject_id = data.get('subject')
-        class_category_id = data.get('class_category')
-
-        # # Check if the application already exists
-        apply_instance = Apply.objects.filter(
-            user=user,
-            subject__id=subject_id,
-            class_category__id=class_category_id,
-        ).first()
-
-        if apply_instance:
-            return Response(
-                {"error": "You have already applied for this subject and class category."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         data["user"] = user.id
-
         # Save the new application
         serializer = ApplySerializer(data=data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             apply_instance = serializer.save(user=user)
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def update(self, request, *args, **kwargs):

@@ -162,7 +162,4 @@ class HireRequestAdmin(admin.ModelAdmin):
 
 @admin.register(Apply)
 class ApplyAdmin(admin.ModelAdmin):
-    list_display = ['user','subject','class_category','get_teacher_job_type','status','date']
-
-    def get_teacher_job_type(self, obj):
-        return ", ".join([str(job_type) for job_type in obj.teacher_job_type.all()])   
+    list_display = ['user','subject','class_category','teacher_job_type','status','date']
