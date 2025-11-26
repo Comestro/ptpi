@@ -3490,7 +3490,7 @@ class TeacherFilterAPIView(APIView):
             filters &= Q(profiles__language__iexact=language[0]) if len(language) == 1 else Q(profiles__language__in=language)
 
         # JobPreferenceLocation address filters (support multiple values, ignore empty/null)
-        jp_fields = ['state', 'city', 'sub_division', 'post_office', 'area', 'pincode']
+        jp_fields = ['state', 'district', 'city', 'sub_division', 'post_office', 'area', 'pincode']
         for field in jp_fields:
             values = clean_values(request.query_params.getlist(field))
             if values:

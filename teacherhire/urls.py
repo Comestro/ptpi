@@ -33,6 +33,7 @@ router.register(r"admin/passkey", PasskeyViewSet, basename="passkey")
 router.register(r"admin/interview", InterviewViewSet, basename="interview")
 router.register(r"admin/reason", ReasonViewSet, basename="reason")
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
+router.register(r"admin/qualified-level2-users", QualifiedLevel2UsersViewSet, basename="qualified-level2-users")
 
 router.register(r"new/examsetter/question", NewExamSetterQuestionViewSet, basename="new-examsetter-question")
 
@@ -83,7 +84,6 @@ router.register(r"check-passkey", checkPasskeyViewSet, basename="check-passkey")
 # public
 router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="public-classcategory")
 router.register(r'translator', TranslatorViewset, basename="translator")
-router.register(r"qualified-level2-users", QualifiedLevel2UsersViewSet, basename="qualified-level2-users")
 # === Permission-Based Routes ===
 urlpatterns = [
     path("", include(router.urls)),
