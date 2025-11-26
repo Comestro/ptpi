@@ -878,7 +878,8 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
     def validate_area(self, value):
         user = self.context['request'].user
         job_preference_location_id = self.instance.id if self.instance else None
-        if JobPreferenceLocation.objects.filter(user=user, area=value).exclude(id=job_preference_location_id).exists():
+        exist_area = JobPreferenceLocation.objects.filter(user=user, area=value).exclude(id=job_preference_location_id).exists()
+        if exist_area and value is not None:
             raise serializers.ValidationError("This area name already exists.")
         return value
     
