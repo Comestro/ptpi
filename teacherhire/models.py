@@ -213,10 +213,8 @@ class TeacherJobType(models.Model):
 
 class Preference(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='preferences')
-    job_role = models.ManyToManyField(Role)
     class_category = models.ManyToManyField(ClassCategory)
     prefered_subject = models.ManyToManyField(Subject)
-    teacher_job_type = models.ManyToManyField(TeacherJobType)
 
     def __str__(self):
         return self.user.username
@@ -230,6 +228,7 @@ class Preference(models.Model):
         }
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields
+
 class TeacherSubject(models.Model):	
    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,related_name='teachersubjects')	
    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
@@ -514,7 +513,7 @@ class Apply(models.Model):
     teacher_job_type = models.ForeignKey(TeacherJobType, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     salary_expectation = models.CharField(max_length=200, null=True, blank=True)
-    salary_type = models.CharField(max_length=200, null=True, blank=True, choices=[('monthly','monthly'),('hourly','hourly')])
+    salary_type = models.CharField(max_length=200, null=True, blank=True, choices=[('monthly','monthly'),('hourly','hourly'),('daily','daily')])
     status = models.BooleanField(default=True)
     date = models.DateTimeField(auto_now_add=True)
 
