@@ -3592,8 +3592,24 @@ class TeacherDetailAPIView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "Teacher not found."}, status=404)
         serializer = TeacherSerializer(teacher, context={'request': request})
-        exam_results_qs = TeacherExamResult.objects.filter(user=teacher)
-        exam_results = TeacherAttempterializer(exam_results_qs, many=True, context={'request': request}).data
+
+        # Get all qualified results for this teacher, ordered by highest marks first
+        exam_results_qs = TeacherExamResult.objects.filter(
+            user=teacher, isqualified=True
+        ).order_by(
+            'exam__subject_id', 'exam__class_category_id', 'exam__level_id', '-correct_answer', '-created_at'
+        )
+
+        # Only keep the highest marks for each (subject, class_category, level)
+        seen = set()
+        highest_results = []
+        for result in exam_results_qs:
+            key = (result.exam.subject_id, result.exam.class_category_id, result.exam.level_id)
+            if key not in seen:
+                seen.add(key)
+                highest_results.append(result)
+
+        exam_results = TeacherAttempterializer(highest_results, many=True, context={'request': request}).data
         return Response({"teacher": serializer.data, "attempts": exam_results}, status=200)
     
 

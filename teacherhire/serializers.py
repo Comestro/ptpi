@@ -1399,9 +1399,36 @@ class TeacherSerializer(serializers.ModelSerializer):
             'preferences', 'total_marks', 'jobpreferencelocation', 'apply'
         ]
 
+    def get_fields(self):
+        fields = super().get_fields()
+        user = self.context.get('request').user if self.context.get('request') else None
+        # Only admin can see jobpreferencelocation, preferences, teachersaddress
+        if user and not user.is_staff:
+            fields.pop('jobpreferencelocation', None)
+            fields.pop('preferences', None)
+            fields.pop('teachersaddress', None)
+        return fields
+
     def get_total_marks(self, instance):
         last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
         return last_result.correct_answer if last_result else 0
+
+    def mask_email(self, email):
+        # Mask email: show first 2 chars, then ***@domain
+        if not email or '@' not in email:
+            return email
+        name, domain = email.split('@', 1)
+        if len(name) <= 2:
+            masked = name + "***@" + domain
+        else:
+            masked = name[:2] + "***@" + domain
+        return masked
+
+    def mask_phone(self, phone):
+        # Mask phone: show first 4 digits, then ****, then last 2 digits
+        if not phone or len(phone) < 6:
+            return phone
+        return f"{phone[:4]}****{phone[-2:]}"
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -1438,8 +1465,17 @@ class TeacherSerializer(serializers.ModelSerializer):
                 }
                 for experience in representation['teacherexperiences']
             ]
+        user = self.context.get('request').user if self.context.get('request') else None
+
+        # Mask email for non-admins
+        if user and not user.is_staff and 'email' in representation and representation['email']:
+            representation['email'] = self.mask_email(representation['email'])
+
+        # Mask phone number for non-admins in profiles
         if 'profiles' in representation and representation['profiles'] is not None:
             profile_data = representation['profiles']
+            if user and not user.is_staff and profile_data.get('phone_number'):
+                profile_data['phone_number'] = self.mask_phone(profile_data['phone_number'])
             profile_filtered = {
                 'bio': profile_data.get('bio', ''),
                 'phone_number': profile_data.get('phone_number', None),
@@ -1454,6 +1490,7 @@ class TeacherSerializer(serializers.ModelSerializer):
                 representation['profiles'] = profile_filtered
             else:
                 del representation['profiles']
+
 
         if 'preferences' in representation:
             representation['preferences'] = [
