@@ -3462,6 +3462,26 @@ class ApplyEligibilityView(APIView):
 class TeacherFilterAPIView(APIView):
 
     def get(self, request):
+        # Get required parameters
+        class_category = request.query_params.getlist('class_category')
+        subject = request.query_params.getlist('subject')
+        state = request.query_params.getlist('state')
+
+        missing = []
+        if not class_category or not any(class_category):
+            missing.append('class_category')
+        if not subject or not any(subject):
+            missing.append('subject')
+        if not state or not any(state):
+            missing.append('state')
+
+        if missing:
+            return Response({
+                "detail": "These parameters are required.",
+                "missing": missing,
+                "message": "Please provide class_category, subject, and state to filter teachers."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         queryset = CustomUser.objects.filter(is_teacher=True, is_staff=False, apply__status=True).distinct()
         filters = Q()
 
@@ -3516,10 +3536,10 @@ class TeacherFilterAPIView(APIView):
 
         # Preference table filters (support multiple values, ignore empty/null)
         pref_filters = [
-            ('class_category', 'preferences__class_category__name__iexact'),
-            ('subject', 'preferences__prefered_subject__subject_name__iexact'),
-            ('job_role', 'preferences__job_role__jobrole_name__iexact'),
-            ('teacher_job_type', 'preferences__teacher_job_type__teacher_job_name__iexact'),
+            ('class_category', 'apply__class_category__name__iexact'),
+            ('subject', 'apply__subject__subject_name__iexact'),
+            # ('job_role', 'preferences__job_role__jobrole_name__iexact'),
+            ('teacher_job_type', 'apply__teacher_job_type__teacher_job_name__iexact'),
         ]
         for param, db_field in pref_filters:
             values = clean_values(request.query_params.getlist(param))
