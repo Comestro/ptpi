@@ -1631,11 +1631,15 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 
 
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
+    # permission_classes = [IsAuthenticated, IsAdminOrTeacher]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
 
+    def get_permissions(self):
+        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            return [IsAdminOrTeacher()]
+        return []
 
 class ProfilecompletedView(APIView):
     permission_classes = [IsAuthenticated]
