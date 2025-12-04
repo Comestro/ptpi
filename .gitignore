@@ -16,4 +16,5 @@ ptpi/__pycache__
 /venv
 /env
 /static/
+/staticfiles/
 /media
