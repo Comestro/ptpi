@@ -160,12 +160,14 @@ class PasswordResetRequest(APIView):
             return Response({'msg': 'Password reset link sent. Check your email.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ResetPasswordView(APIView):
     def post(self, request, uid, token):
         serializer = ResetPasswordSerializer(data=request.data, context={'uid': uid, 'token': token})
         if serializer.is_valid():
             return Response({"msg": "Password reset successful."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class VerifyEmailView(APIView):
     def post(self, request):
@@ -183,6 +185,7 @@ class VerifyEmailView(APIView):
         send_mail("Verify Your Account ",f"Click the link to verify your account: {verify_link}",settings.EMAIL_HOST_USER,[email])
         print(verify_link)
         return Response({"message": "Verification link sent to your email."},status=status.HTTP_200_OK)
+
 
 class VerifyLinkView(APIView):
     def get(self, request, token):
@@ -202,6 +205,7 @@ class VerifyLinkView(APIView):
         },
         status=status.HTTP_200_OK
         )
+
 
 class VerifyOTP(APIView):
     def post(self, request):
@@ -243,6 +247,7 @@ class VerifyOTP(APIView):
             "data": {"access_token": token.key}
         }, status=status.HTTP_200_OK)
     
+
 class ResendOTP(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -283,6 +288,7 @@ class UserVerify(APIView):
             "Last name": user.Lname,
             "message": 'User is verified'
         }, status=status.HTTP_200_OK)
+
 
 class DeactivateAccount(APIView):
     permission_classes = [IsAuthenticated]
