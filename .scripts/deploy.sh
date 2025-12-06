@@ -18,7 +18,7 @@ echo "Serving Static Files..."
 python manage.py collectstatic --noinput
 
 # Restart services after collecting static files
-sudo systemctl restart gunicorn-euni
+sudo systemctl restart gunicorn
 sudo systemctl restart nginx
 
 echo "Running Database migration"
