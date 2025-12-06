@@ -17,6 +17,10 @@ pip install -r requirements.txt --no-input
 echo "Serving Static Files..."
 python manage.py collectstatic --noinput
 
+# Restart services after collecting static files
+sudo systemctl restart gunicorn-euni
+sudo systemctl restart nginx
+
 echo "Running Database migration"
 python manage.py makemigrations
 python manage.py migrate
