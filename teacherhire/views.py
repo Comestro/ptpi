@@ -3461,7 +3461,6 @@ class ApplyEligibilityView(APIView):
         })
 
 
-
 # Teacher Filter API View
 class TeacherFilterAPIView(APIView):
 
