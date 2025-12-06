@@ -3522,7 +3522,8 @@ class TeacherFilterAPIView(APIView):
                 q = Q()
                 for value in values:
                     q |= Q(**{field_name: value})
-                filters &= q
+                    print(f"Filtering {field_name} with value: {value}")
+                filters |= q
 
         # Experience years range filter
         exp_min = request.query_params.get('experience_years[min]')
