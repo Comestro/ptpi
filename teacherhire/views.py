@@ -3587,6 +3587,7 @@ class TeacherFilterAPIView(APIView):
         return Response(serializer.data)
     
 
+# API for teacher all details and their highest qualified exam attempts
 class TeacherDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
