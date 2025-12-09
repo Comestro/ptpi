@@ -14,12 +14,12 @@ echo "Virtual env 'venv' Activated !"
 echo "Installing Dependencies..."
 pip install -r requirements.txt --no-input
 
-echo "Serving Static Files..."
-python manage.py collectstatic --noinput
-
 echo "Running Database migration"
 python manage.py makemigrations
 python manage.py migrate
+
+echo "Serving Static Files..."
+python manage.py collectstatic --noinput
 
 # Restart services after collecting static files
 echo "Restarting Gunicorn and Nginx..."
