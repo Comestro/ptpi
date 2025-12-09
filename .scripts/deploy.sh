@@ -17,15 +17,15 @@ pip install -r requirements.txt --no-input
 echo "Serving Static Files..."
 python manage.py collectstatic --noinput
 
+echo "Running Database migration"
+python manage.py makemigrations
+python manage.py migrate
+
 # Restart services after collecting static files
 echo "Restarting Gunicorn and Nginx..."
 sudo systemctl restart gunicorn
 sudo systemctl restart nginx
 echo "Services restarted!"
-
-echo "Running Database migration"
-python manage.py makemigrations
-python manage.py migrate
 
 # Deactivate Virtual Env
 deactivate
