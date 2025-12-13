@@ -3032,16 +3032,32 @@ class ApplyViewSet(viewsets.ModelViewSet):
     def create(self, request):
         data = request.data.copy()
         user = request.user
-        if not JobPreferenceLocation.objects.filter(user=user).exists():
+        
+        # Extract preferred_locations if present
+        preferred_locations = data.pop('preferred_locations', [])
+        
+        # If no inline locations provided, enforce existing check
+        if not preferred_locations and not JobPreferenceLocation.objects.filter(user=user).exists():
             return Response(
                 {"error": "You must have at least one job preference location before applying."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         data["user"] = user.id
         # Save the new application
         serializer = ApplySerializer(data=data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
             apply_instance = serializer.save(user=user)
+            
+            # Save preferred locations if provided
+            if preferred_locations:
+                for loc_data in preferred_locations:
+                    JobPreferenceLocation.objects.create(
+                        user=user,
+                        apply=apply_instance,
+                        **loc_data
+                    )
+            
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

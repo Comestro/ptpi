@@ -1317,6 +1317,7 @@ class AllBasicProfileSerializer(serializers.ModelSerializer):
 class ApplySerializer(serializers.ModelSerializer):
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), required=False)
     teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), required=False)
+    preferred_locations = JobPreferenceLocationSerializer(many=True, required=False)
 
     class Meta:
         model = Apply
@@ -1328,6 +1329,11 @@ class ApplySerializer(serializers.ModelSerializer):
         representation['class_category'] = {'id': instance.class_category.id, 'name': instance.class_category.name} if instance.class_category else None
         representation['subject'] = {'id': instance.subject.id, 'name': instance.subject.subject_name} if instance.subject else None
         representation['teacher_job_type'] = {'id': instance.teacher_job_type.id, 'teacher_job_name': instance.teacher_job_type.teacher_job_name} if instance.teacher_job_type else None
+        
+        # Add preferred locations to representation
+        if hasattr(instance, 'preferred_locations'):
+             representation['preferred_locations'] = JobPreferenceLocationSerializer(instance.preferred_locations.all(), many=True).data
+             
         return representation
 
 class TranslatorSerializer(serializers.Serializer):
