@@ -524,6 +524,7 @@ class Apply(models.Model):
         unique_together = ('user', 'class_category', 'teacher_job_type', 'subject')
     
 class JobPreferenceLocation(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, default=1, related_name='jobpreferencelocation')
     apply = models.ForeignKey(Apply, on_delete=models.CASCADE, related_name='preferred_locations', null=True, blank=True)
     state = models.CharField(max_length=200, null=True, blank=True)
     district = models.CharField(max_length=200, null=True, blank=True)
