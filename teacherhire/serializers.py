@@ -1336,6 +1336,63 @@ class ApplySerializer(serializers.ModelSerializer):
              
         return representation
 
+    def update(self, instance, validated_data):
+        # Handle nested preferred_locations explicitly
+        preferred_locations_data = validated_data.pop('preferred_locations', None)
+
+        # Update simple fields
+        instance.class_category = validated_data.get('class_category', instance.class_category)
+        instance.teacher_job_type = validated_data.get('teacher_job_type', instance.teacher_job_type)
+        instance.subject = validated_data.get('subject', instance.subject)
+        instance.salary_expectation = validated_data.get('salary_expectation', instance.salary_expectation)
+        instance.salary_type = validated_data.get('salary_type', instance.salary_type)
+        instance.status = validated_data.get('status', instance.status)
+        instance.save()
+
+        # Sync preferred locations if provided
+        if preferred_locations_data is not None:
+            user = instance.user
+            existing_qs = instance.preferred_locations.all()
+            existing_by_id = {pl.id: pl for pl in existing_qs}
+
+            # Track IDs present in payload
+            payload_ids = set()
+
+            for item in preferred_locations_data:
+                pl_id = item.get('id') if isinstance(item, dict) else None
+                attrs = item if isinstance(item, dict) else {}
+
+                if pl_id and pl_id in existing_by_id:
+                    # Update existing record
+                    pl = existing_by_id[pl_id]
+                    payload_ids.add(pl_id)
+                    for field in ['state','district','city','sub_division','block','post_office','area','pincode']:
+                        if field in attrs:
+                            setattr(pl, field, attrs.get(field))
+                    pl.save()
+                else:
+                    # Create new preferred location
+                    create_kwargs = {
+                        'user': user,
+                        'apply': instance,
+                        'state': attrs.get('state'),
+                        'district': attrs.get('district'),
+                        'city': attrs.get('city'),
+                        'sub_division': attrs.get('sub_division'),
+                        'block': attrs.get('block'),
+                        'post_office': attrs.get('post_office'),
+                        'area': attrs.get('area'),
+                        'pincode': attrs.get('pincode'),
+                    }
+                    JobPreferenceLocation.objects.create(**create_kwargs)
+
+            # Delete records not present in payload (full replacement semantics)
+            to_delete = [pl for pl_id, pl in existing_by_id.items() if pl_id not in payload_ids]
+            for pl in to_delete:
+                pl.delete()
+
+        return instance
+
 class TranslatorSerializer(serializers.Serializer):
     text = serializers.CharField(max_length=1000, required=True)
     source = serializers.CharField(max_length=10, required=True)
