@@ -3605,7 +3605,7 @@ class TeacherFilterAPIView(APIView):
 
 # API for teacher all details and their highest qualified exam attempts
 class TeacherDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def get(self, request, teacher_id):
         try:
@@ -3615,7 +3615,7 @@ class TeacherDetailAPIView(APIView):
         serializer = TeacherSerializer(teacher, context={'request': request})
 
         # For recruiters (non-admin), return only interview details
-        if not request.user.is_staff:
+        if not request.user.is_authenticated or not request.user.is_staff:
             # Get all interviews with grades for this teacher
             interviews = Interview.objects.filter(
                 user=teacher
