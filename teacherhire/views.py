@@ -3614,7 +3614,17 @@ class TeacherDetailAPIView(APIView):
             return Response({"error": "Teacher not found."}, status=404)
         serializer = TeacherSerializer(teacher, context={'request': request})
 
-        # Get all qualified results for this teacher, ordered by highest marks first
+        # For recruiters (non-admin), return only interview details
+        if not request.user.is_staff:
+            # Get all interviews with grades for this teacher
+            interviews = Interview.objects.filter(
+                user=teacher
+            ).exclude(grade__isnull=True).order_by('-created_at')
+            
+            interview_data = InterviewSerializer(interviews, many=True, context={'request': request}).data
+            return Response({"teacher": serializer.data, "attempts": interview_data}, status=200)
+        
+        # For admin, return exam attempt details
         exam_results_qs = TeacherExamResult.objects.filter(
             user=teacher, isqualified=True
         ).order_by(
