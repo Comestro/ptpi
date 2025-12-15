@@ -386,10 +386,18 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
 
 
 class SubjectViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
-    authentication_classes = [ExpiringTokenAuthentication]
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return []
+        return [IsAuthenticated(), IsAdminOrTeacher()]
+
+    def get_authenticators(self):
+        if self.request.method == 'GET':
+            return []
+        return [ExpiringTokenAuthentication()]
 
     @action(detail=False, methods=['get'])
     def count(self, request):
