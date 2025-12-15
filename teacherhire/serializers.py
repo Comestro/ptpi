@@ -1469,7 +1469,6 @@ class TeacherSerializer(serializers.ModelSerializer):
         if user and not user.is_staff:
             fields.pop('jobpreferencelocation', None)
             fields.pop('preferences', None)
-            fields.pop('teachersaddress', None)
         return fields
 
     def get_total_marks(self, instance):
@@ -1576,6 +1575,28 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'post_office': location.get('post_office'),
                 } for location in representation['jobpreferencelocation']
             ]
+
+        # Map teachersaddress into current and permanent addresses with full details
+        if 'teachersaddress' in representation:
+            address_map = {'current_address': None, 'permanent_address': None}
+            for addr in representation['teachersaddress'] or []:
+                addr_payload = {
+                    'id': addr.get('id'),
+                    'address_type': addr.get('address_type'),
+                    'state': addr.get('state'),
+                    'division': addr.get('division'),
+                    'district': addr.get('district'),
+                    'postoffice': addr.get('postoffice'),
+                    'block': addr.get('block'),
+                    'village': addr.get('village'),
+                    'area': addr.get('area'),
+                    'pincode': addr.get('pincode'),
+                }
+                if addr.get('address_type') == 'current':
+                    address_map['current_address'] = addr_payload
+                elif addr.get('address_type') == 'permanent':
+                    address_map['permanent_address'] = addr_payload
+            representation['teachersaddress'] = address_map
         if 'apply' in representation:
             applies = []
             for appl in representation['apply']:
