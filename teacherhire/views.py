@@ -3489,6 +3489,25 @@ class ApplyEligibilityView(APIView):
 class TeacherFilterAPIView(APIView):
 
     def get(self, request):
+        user = request.user if request.user.is_authenticated else None
+
+        # Admin: return all teachers (or users) who have attempted any exam, with their exam progress.
+        if user and user.is_staff:
+            teachers_qs = CustomUser.objects.filter(teacherexamresult__isnull=False).distinct()
+
+            results = []
+            for teacher in teachers_qs:
+                teacher_data = TeacherSerializer(teacher, context={'request': request}).data
+                attempts_qs = TeacherExamResult.objects.filter(user=teacher).order_by('-created_at')
+                attempts_data = TeacherAttempterializer(attempts_qs, many=True, context={'request': request}).data
+                results.append({
+                    "teacher": teacher_data,
+                    "attempts": attempts_data
+                })
+
+            return Response({"count": len(results), "results": results}, status=status.HTTP_200_OK)
+
+        # Recruiter/public flow (existing behavior)
         # Get required parameters
         class_category = request.query_params.getlist('class_category')
         subject = request.query_params.getlist('subject')
