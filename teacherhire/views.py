@@ -3664,6 +3664,70 @@ class QualifiedLevel2UsersViewSet(viewsets.ReadOnlyModelViewSet):
             isqualified=True,
             exam__level__level_code__in=[2.0]
         ).distinct().select_related('user', 'exam__subject', 'exam__class_category')
+
+
+# Teachers qualified for Level 2 (From Home) and ready for interview
+class ReadyForInterviewViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = TeacherSerializer
+
+    def get_queryset(self):
+        # Get users who qualified Level 2 (From Home) - level_code 2.0
+        qualified_results = TeacherExamResult.objects.filter(
+            isqualified=True,
+            exam__level__level_code=2.0
+        ).select_related('user', 'exam__subject', 'exam__class_category').values_list('user_id', flat=True).distinct()
+        
+        # Get users who don't have any interview scheduled/completed for their qualified subjects
+        users_with_interviews = Interview.objects.filter(
+            user_id__in=qualified_results
+        ).values_list('user_id', flat=True).distinct()
+        
+        # Teachers who are qualified but don't have interviews yet
+        ready_users = set(qualified_results) - set(users_with_interviews)
+        
+        return CustomUser.objects.filter(
+            id__in=ready_users,
+            is_teacher=True,
+            is_verified=True
+        ).prefetch_related(
+            'teacherskill',
+            'profiles',
+            'teachersaddress',
+            'teacherexperiences',
+            'teacherqualifications',
+            'preferences',
+            'jobpreferencelocation',
+            'apply'
+        )
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Optional filters
+        subject_id = request.query_params.get('subject_id')
+        class_category_id = request.query_params.get('class_category_id')
+        
+        if subject_id or class_category_id:
+            # Filter users based on their qualified exams
+            filter_kwargs = {'isqualified': True, 'exam__level__level_code': 2.0}
+            if subject_id:
+                filter_kwargs['exam__subject_id'] = subject_id
+            if class_category_id:
+                filter_kwargs['exam__class_category_id'] = class_category_id
+            
+            filtered_user_ids = TeacherExamResult.objects.filter(
+                **filter_kwargs
+            ).values_list('user_id', flat=True).distinct()
+            
+            queryset = queryset.filter(id__in=filtered_user_ids)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'count': queryset.count(),
+            'teachers': serializer.data
+        }, status=200)
         
 
 

@@ -34,6 +34,7 @@ router.register(r"admin/interview", InterviewViewSet, basename="interview")
 router.register(r"admin/reason", ReasonViewSet, basename="reason")
 router.register(r"examsetter/question", ExamSetterQuestionViewSet, basename="examsetter-question")
 router.register(r"admin/qualified-level2-users", QualifiedLevel2UsersViewSet, basename="qualified-level2-users")
+router.register(r"admin/ready-for-interview", ReadyForInterviewViewSet, basename="ready-for-interview")
 
 router.register(r"new/examsetter/question", NewExamSetterQuestionViewSet, basename="new-examsetter-question")
 
