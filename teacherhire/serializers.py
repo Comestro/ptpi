@@ -554,10 +554,13 @@ class ExamSerializer(serializers.ModelSerializer):
         level = validated_data.get('level')
         class_category = validated_data.get('class_category')
         assigneduser = validated_data.get('assigneduser', None)
-        try:
-            subject = Subject.objects.get(id=subject.id, class_category_id=class_category.id)
-        except Subject.DoesNotExist:
-            serializers.ValidationError("Invalid subject")
+        
+        # Validate that subject belongs to the selected class_category
+        if subject.class_category_id != class_category.id:
+            raise serializers.ValidationError({
+                "subject": f"Subject '{subject.subject_name}' does not belong to class category '{class_category.name}'. Please select a valid subject for this class."
+            })
+        
         # auto generate exam name
         exam_name = f"{class_category.name} | {subject.subject_name} | {level.name}".strip()
 
