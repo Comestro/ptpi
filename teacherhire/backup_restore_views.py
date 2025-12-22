@@ -1,6 +1,5 @@
 import os
-import shutil
-import stat
+from datetime import datetime
 
 from django.conf import settings
 from django.core.management import call_command
@@ -12,52 +11,104 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-def get_backup_directory():
-    return os.getenv('BACKUP_DIR', os.path.join(settings.BASE_DIR, 'backups'))
-
-
-def ensure_permissions(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory, exist_ok=True)
-    os.chmod(directory, stat.S_IRWXU)
-
-
 @method_decorator(csrf_exempt, name='dispatch')
 class BackupDatabaseView(APIView):
+    """
+    API endpoint to create a database backup on-demand.
+    Only accessible to admin users.
+    Creates timestamped backups and automatically cleans up old ones.
+    """
     permission_classes = [IsAdminUser]
 
     def post(self, request):
-        db_path = settings.DATABASES['default'].get('NAME')
-        if not db_path:
+        try:
+            # Get backup directory
+            backup_dir = getattr(settings, 'BACKUP_DIR', settings.BASE_DIR / 'backups')
+            
+            # Ensure backup directory exists
+            os.makedirs(backup_dir, exist_ok=True)
+            
+            # Create timestamped backup using django-dbbackup
+            call_command('dbbackup', '--clean')
+            
+            # Get current timestamp
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # List backup files to confirm
+            backup_files = []
+            if os.path.exists(backup_dir):
+                backup_files = sorted(
+                    [f for f in os.listdir(backup_dir) if f.endswith('.backup')],
+                    reverse=True
+                )[:5]  # Show latest 5 backups
+            
             return Response(
-                {'error': 'Database path is not configured properly'},
+                {
+                    'status': 'success',
+                    'message': 'Database backup created successfully',
+                    'timestamp': timestamp,
+                    'backup_location': str(backup_dir),
+                    'recent_backups': backup_files,
+                    'retention_policy': 'Last 10 backups are kept'
+                },
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            return Response(
+                {
+                    'status': 'error',
+                    'message': f'Backup failed: {str(e)}'
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        backup_dir = get_backup_directory()
-        backup_path = os.path.join(backup_dir, 'db_backup.sqlite3')
-
-        if not os.path.exists(db_path):
-            return Response(
-                {'error': 'Database file does not exist'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
+    def get(self, request):
+        """
+        Get list of available backups
+        """
         try:
-            ensure_permissions(backup_dir)
-            shutil.copy2(db_path, backup_path)
+            backup_dir = getattr(settings, 'BACKUP_DIR', settings.BASE_DIR / 'backups')
+            
+            if not os.path.exists(backup_dir):
+                return Response(
+                    {
+                        'status': 'success',
+                        'backups': [],
+                        'message': 'No backups found'
+                    }
+                )
+            
+            # List all backup files with details
+            backup_files = []
+            for filename in os.listdir(backup_dir):
+                if filename.endswith('.backup'):
+                    filepath = os.path.join(backup_dir, filename)
+                    file_stat = os.stat(filepath)
+                    backup_files.append({
+                        'filename': filename,
+                        'size': f"{file_stat.st_size / (1024 * 1024):.2f} MB",
+                        'created': datetime.fromtimestamp(file_stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+                    })
+            
+            # Sort by creation time (newest first)
+            backup_files.sort(key=lambda x: x['created'], reverse=True)
+            
             return Response(
-                {'message': f'Database backup created at {backup_path}'},
-                status=status.HTTP_201_CREATED
+                {
+                    'status': 'success',
+                    'backup_location': str(backup_dir),
+                    'total_backups': len(backup_files),
+                    'backups': backup_files
+                }
             )
-        except PermissionError as e:
-            return Response(
-                {'error': f'Permission error: {str(e)}'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            
         except Exception as e:
             return Response(
-                {'error': f'An error occurred: {str(e)}'},
+                {
+                    'status': 'error',
+                    'message': str(e)
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

@@ -27,8 +27,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Configure django-dbbackup settings
+BACKUP_DIR = BASE_DIR / 'backups'
 DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-DBBACKUP_STORAGE_OPTIONS = {'location': BASE_DIR / 'backups'}
+DBBACKUP_STORAGE_OPTIONS = {'location': BACKUP_DIR}
+DBBACKUP_CLEANUP_KEEP = 10  # Keep last 10 database backups
+DBBACKUP_CLEANUP_KEEP_MEDIA = 10  # Keep last 10 media backups
+DBBACKUP_DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'  # Timestamp format for backups
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -121,6 +125,13 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Django-dbbackup configuration
+BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {'location': BACKUP_DIR}
+DBBACKUP_CLEANUP_KEEP = 10  # Keep last 10 backups
+DBBACKUP_CLEANUP_KEEP_MEDIA = 10
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

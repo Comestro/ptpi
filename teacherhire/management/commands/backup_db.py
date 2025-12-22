@@ -1,37 +1,37 @@
 import os
-import shutil
-import stat
+from datetime import datetime
 from django.core.management.base import BaseCommand
+from django.core.management import call_command
 from django.conf import settings
 
 
-def get_backup_directory():
-    return os.getenv('BACKUP_DIR', os.path.join(settings.BASE_DIR, 'backups'))
-
-
-def ensure_permissions(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory, exist_ok=True)
-    os.chmod(directory, stat.S_IRWXU)
-
-
 class Command(BaseCommand):
-    help = 'Backup the SQLite3 database'
+    help = 'Create a timestamped backup of the database'
 
-    def handle(self, *args, **kwargs):
-        db_path = settings.DATABASES['default']['NAME']
-        backup_dir = get_backup_directory()
-        backup_path = os.path.join(backup_dir, 'db_backup.sqlite3')
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--cleanup',
+            action='store_true',
+            help='Clean up old backups (keep last 10)',
+        )
 
-        if not os.path.exists(db_path):
-            self.stdout.write(self.style.ERROR('Database file does not exist'))
-            return
-
+    def handle(self, *args, **options):
         try:
-            ensure_permissions(backup_dir)
-            shutil.copy2(db_path, backup_path)
-            self.stdout.write(self.style.SUCCESS(f'Database backup created at {backup_path}'))
-        except PermissionError as e:
-            self.stdout.write(self.style.ERROR(f'Permission error: {str(e)}'))
+            # Create backup using django-dbbackup
+            self.stdout.write('Creating database backup...')
+            call_command('dbbackup', '--clean')  # --clean removes old backups
+            
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'✓ Database backup created successfully at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+                )
+            )
+            
+            # Optional: Also backup media files
+            backup_dir = getattr(settings, 'BACKUP_DIR', settings.BASE_DIR / 'backups')
+            self.stdout.write(f'Backups stored in: {backup_dir}')
+            
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'An error occurred: {str(e)}'))
+            self.stdout.write(
+                self.style.ERROR(f'✗ Backup failed: {str(e)}')
+            )
