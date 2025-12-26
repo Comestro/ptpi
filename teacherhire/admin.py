@@ -79,6 +79,11 @@ class TeacherSubjectAdmin(admin.ModelAdmin):
 class SkillAdmin(admin.ModelAdmin):
     list_display = ['name', 'description']
 
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.teacherskill_set.exists():
+            return False
+        return super().has_delete_permission(request, obj)
+
     
 @admin.register(Preference)
 class PreferenceAdmin(admin.ModelAdmin):
@@ -119,6 +124,11 @@ admin.site.register(Question, QuestionAdmin)
 @admin.register(Level)
 class LevelAdmin(admin.ModelAdmin):
     list_display = ['name','level_code', 'description']
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.exam_set.exists():
+            return False
+        return super().has_delete_permission(request, obj)
 
 @admin.register(TeacherJobType)
 class TeacherJobTypeAdmin(admin.ModelAdmin):

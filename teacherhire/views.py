@@ -286,6 +286,8 @@ class LevelViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.exam_set.exists():
+            return Response({"error": "Cannot delete level because it has associated exams."}, status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "Level deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
@@ -303,6 +305,8 @@ class SkillViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.teacherskill_set.exists():
+             return Response({"error": "Cannot delete skill because it is assigned to teachers."}, status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "Skill deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 

@@ -368,19 +368,15 @@ class LevelSerializer(serializers.ModelSerializer):
 
 
 class SkillSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=20, required=True, allow_null=True)
+    name = serializers.CharField(max_length=255, required=True, allow_null=True)
 
     class Meta:
         model = Skill
         fields = ['id', 'name', 'description']
 
     def validate_name(self, value):
-        if value is not None:
-            if len(value) < 3:
-                raise serializers.ValidationError("Skill name must be at least 3 characters.")
-        return value
-
-    def validate_name(self, value):
+        if value is not None and len(value) < 3:
+            raise serializers.ValidationError("Skill name must be at least 3 characters.")
         skill_id = self.instance.id if self.instance else None
         if Skill.objects.filter(name=value).exclude(id=skill_id).exists():
             raise serializers.ValidationError("A skill with this name already exists.")
