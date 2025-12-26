@@ -1818,6 +1818,10 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
 
     def paginate_queryset(self, queryset):
         user = self.request.user
+        # If searching, disable pagination to show all results
+        if self.request.query_params.get('search', None):
+            return None
+            
         if user.is_staff:
             return super().paginate_queryset(queryset)
         return None
@@ -1838,12 +1842,23 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Admins see all exams; assigned users see only their own."""
         user = self.request.user
+        search_query = self.request.query_params.get('search', None)
+        
         if user.is_staff:
             exams = Exam.objects.all()
         else:
             assigned_user = AssignedQuestionUser.objects.get(user=user)
             exams = Exam.objects.filter(assigneduser=assigned_user)
-
+            
+        if search_query:
+            # When searching, we want to search across all relevant fields
+            exams = exams.filter(
+                Q(name__icontains=search_query) |
+                Q(subject__subject_name__icontains=search_query) |
+                Q(class_category__name__icontains=search_query) |
+                Q(level__name__icontains=search_query)
+            )
+            
         return exams.order_by('level__level_code', 'created_at')
 
     def create(self, request):
