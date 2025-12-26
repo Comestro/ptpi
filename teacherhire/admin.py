@@ -24,6 +24,11 @@ class TeacherExperiencesAdmin(admin.ModelAdmin):
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ['subject_name','subject_description','class_category']
 
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.exam_set.exists():
+            return False
+        return super().has_delete_permission(request, obj)
+
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
     list_display = ['jobrole_name']

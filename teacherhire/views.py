@@ -406,6 +406,8 @@ class SubjectViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.exam_set.exists():
+             return Response({"error": "Cannot delete subject because it has associated exams."}, status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "subject deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
