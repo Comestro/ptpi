@@ -1844,11 +1844,43 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
         user = self.request.user
         search_query = self.request.query_params.get('search', None)
         
+        # New server-side filters
+        class_category_id = self.request.query_params.get('class_category', None)
+        subject_id = self.request.query_params.get('subject', None)
+        level_id = self.request.query_params.get('level', None)
+        exam_type = self.request.query_params.get('type', None)
+        status_param = self.request.query_params.get('status', None)
+        assigned_user_id = self.request.query_params.get('assigneduser', None)
+
         if user.is_staff:
             exams = Exam.objects.all()
         else:
             assigned_user = AssignedQuestionUser.objects.get(user=user)
             exams = Exam.objects.filter(assigneduser=assigned_user)
+
+        # Apply Server-Side Filters
+        if class_category_id:
+            exams = exams.filter(class_category_id=class_category_id)
+        if subject_id:
+             exams = exams.filter(subject_id=subject_id)
+        if level_id:
+             exams = exams.filter(level_id=level_id)
+        if exam_type:
+             exams = exams.filter(type=exam_type)
+        
+        # Handle status logic:
+        # If the param matches 'true' (case-insensitive) -> True
+        # If 'false' -> False
+        # Otherwise, ignore (or handle strictly)
+        if status_param is not None:
+             if status_param.lower() == 'true':
+                 exams = exams.filter(status=True)
+             elif status_param.lower() == 'false':
+                 exams = exams.filter(status=False)
+        
+        # Admin-only filter: if admin wants to filter by a specific assigned user
+        if user.is_staff and assigned_user_id:
+             exams = exams.filter(assigneduser_id=assigned_user_id)
             
         if search_query:
             # When searching, we want to search across all relevant fields
