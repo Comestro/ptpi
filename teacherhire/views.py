@@ -703,6 +703,10 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.subjects.exists():
+            return Response({"error": "Cannot delete class category because it has associated subjects."}, status=status.HTTP_400_BAD_REQUEST)
+        if instance.exam_set.exists():
+             return Response({"error": "Cannot delete class category because it has associated exams."}, status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
@@ -721,6 +725,10 @@ class PublicClassCategoryViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        if instance.subjects.exists():
+            return Response({"error": "Cannot delete class category because it has associated subjects."}, status=status.HTTP_400_BAD_REQUEST)
+        if instance.exam_set.exists():
+             return Response({"error": "Cannot delete class category because it has associated exams."}, status=status.HTTP_400_BAD_REQUEST)
         instance.delete()
         return Response({"message": "ClassCategory deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 

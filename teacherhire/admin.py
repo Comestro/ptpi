@@ -36,6 +36,11 @@ class ReasonAdmin(admin.ModelAdmin):
 class classCategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'description']
 
+    def has_delete_permission(self, request, obj=None):
+        if obj and (obj.subjects.exists() or obj.exam_set.exists()):
+            return False
+        return super().has_delete_permission(request, obj)
+
 @admin.register(TeacherClassCategory)
 class TeacherClassCategoryAdmin(admin.ModelAdmin):
     list_display = ['user', 'class_category']
