@@ -180,7 +180,7 @@ class TeacherExperiences(models.Model):
         return self.user.username
 
 class Skill(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=20, unique=True)
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
