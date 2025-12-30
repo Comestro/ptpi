@@ -29,6 +29,9 @@ def validate_password(value):
 class EmailValidationMixin:
     def validate_email(self, value):
         user_qs = CustomUser.objects.filter(email=value)
+        if hasattr(self, 'instance') and self.instance:
+            user_qs = user_qs.exclude(pk=self.instance.pk)
+            
         if user_qs.exists():
             user = user_qs.first()
             if user.is_recruiter:
