@@ -1751,3 +1751,18 @@ class QualifiedUserExamSerializer(serializers.ModelSerializer):
             "id": obj.exam.class_category.id,
             "name": obj.exam.class_category.name
         } if obj.exam and obj.exam.class_category else None
+
+class MissingSubjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MissingSubject
+        fields = ['id', 'user', 'subject_name', 'description', 'created_at']
+        extra_kwargs = {
+            'user': {'read_only': True},
+            'created_at': {'read_only': True}
+        }
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            validated_data['user'] = request.user
+        return super().create(validated_data)

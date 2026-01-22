@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
@@ -12,6 +12,19 @@ from .permissions import *
 import random
 import re
 from rest_framework.response import Response
+# ... existing imports
+
+class MissingSubjectViewSet(viewsets.ModelViewSet):
+    queryset = MissingSubject.objects.all()
+    serializer_class = MissingSubjectSerializer
+    permission_classes = [AllowAny] 
+
+    def perform_create(self, serializer):
+        if self.request.user.is_authenticated:
+            serializer.save(user=self.request.user)
+        else:
+            serializer.save()
+
 from rest_framework.decorators import action
 from django.conf import settings
 import random

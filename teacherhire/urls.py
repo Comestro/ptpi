@@ -13,6 +13,7 @@ from django.conf.urls.static import static
 # Initialize router
 router = routers.DefaultRouter()
 router.register(r"self/new/exam", ExamCard, basename="self-new-exam")
+router.register(r"missing-subject", MissingSubjectViewSet, basename="missing-subject")
 
 # === Admin Routes ===
 router.register(r"admin/teacherqualification", TeacherQualificationViewSet)
