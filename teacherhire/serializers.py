@@ -442,6 +442,9 @@ class QuestionSerializer(serializers.ModelSerializer):
         translator = Translator()
         language = validated_data.get("language")
         subject = validated_data.get("exam").subject if validated_data.get("exam") else None
+        
+        native_languages = ['english', 'hindi', 'urdu', 'sanskrit', 'bengali', 'maithili', 'bhojpuri','japanese','french','german','spanish']
+
         if language == 'Hindi':
             try:
                 hindi_question = Question.objects.create(**validated_data)
@@ -450,13 +453,18 @@ class QuestionSerializer(serializers.ModelSerializer):
             return {
                 "hindi_data": QuestionSerializer(hindi_question).data
             }
-        if subject and subject.subject_name.lower() == 'english':
+            
+        # Check if subject is a language subject (native) where we should NOT translate
+        if subject and subject.subject_name.lower() in native_languages:
             try:
-                english_question = Question.objects.create(**validated_data)
+                # Create the question as provided (likely "English" language slot but native text)
+                native_question = Question.objects.create(**validated_data)
             except KeyError as e:
-                raise serializers.ValidationError(f"Missing field {e.args[0]} in English question.")
+                raise serializers.ValidationError(f"Missing field {e.args[0]} in {subject.subject_name} question.")
+            
+            # Return it under english_data as that's the default slot for non-Hindi inputs usually
             return {
-                "english_data": QuestionSerializer(english_question).data
+                "english_data": QuestionSerializer(native_question).data
             }
 
         english_text = validated_data.get("text")
@@ -504,7 +512,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
         instance.save()
 
-        if instance.language == 'Hindi' or instance.exam.subject.subject_name.lower() == 'english' == 'English':
+        if instance.language == 'Hindi' or (instance.exam.subject and instance.exam.subject.subject_name.lower() in ['english', 'hindi', 'urdu', 'sanskrit', 'bengali', 'maithili', 'bhojpuri','japanese','french','german','spanish']):
             return instance
 
         hindi_related_question = Question.objects.filter(related_question=instance).first()
