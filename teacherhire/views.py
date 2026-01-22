@@ -3366,6 +3366,12 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 # If subject is a native language, just save it as is and skip the pair logic
                 if subject_name in native_languages:
+                     # Fix: Prevent creating a Hindi copy for English/other native subjects
+                     # If the incoming payload is 'hindi' but the subject is NOT 'hindi', skip it.
+                     # This ensures 'English' subject only accepts 'English' language payload.
+                     if language == 'hindi' and subject_name != 'hindi':
+                         continue
+                     
                      english_instance = serializer.save()
                      # No hindi_instance for native languages
                      continue
