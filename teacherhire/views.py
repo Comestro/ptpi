@@ -3359,14 +3359,21 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
             q["exam"] = exam.id
             q['order'] = order 
             language = q.get("language", "").lower()
+            subject_name = exam.subject.subject_name.lower()
+            native_languages = ['english', 'hindi', 'urdu', 'sanskrit', 'bengali', 'maithili', 'bhojpuri','japanese','french','german','spanish']
 
             serializer = self.get_serializer(data=q)
             if serializer.is_valid():
-                # Save English first without related_question
+                # If subject is a native language, just save it as is and skip the pair logic
+                if subject_name in native_languages:
+                     english_instance = serializer.save()
+                     # No hindi_instance for native languages
+                     continue
+
+                # Standard behavior for non-native subjects (English + Hindi pair)
                 if language == "english":
                     english_instance = serializer.save()
 
-                # Save Hindi with related_question set
                 elif language == "hindi":
                     if english_instance:
                         q["related_question"] = english_instance.id
