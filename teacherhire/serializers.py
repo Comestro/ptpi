@@ -424,13 +424,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     def validate_text(self, value):
         if value is not None and len(value) < 5:
             raise serializers.ValidationError("Text must be at least 5 characters.")
-        if self.instance and self.instance.language == "Hindi":
-            return value
-        question_id = self.instance.id if self.instance else None
-        exam = self.instance.exam if self.instance else self.initial_data.get('exam')
-
-        if Question.objects.filter(text=value, exam=exam).exclude(id=question_id).exists():
-            raise serializers.ValidationError("This question already exists for this exam.")
         return value
     
     def validate_options(self, value):
