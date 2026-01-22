@@ -1766,3 +1766,15 @@ class MissingSubjectSerializer(serializers.ModelSerializer):
         if request and hasattr(request, 'user') and request.user.is_authenticated:
             validated_data['user'] = request.user
         return super().create(validated_data)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.user:
+            representation['user'] = {
+                "id": instance.user.id,
+                "username": instance.user.username,
+                "Fname": instance.user.Fname,
+                "Lname": instance.user.Lname,
+                "email": instance.user.email
+            }
+        return representation
