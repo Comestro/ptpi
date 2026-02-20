@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    container_name: ptpi_web
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn --bind 0.0.0.0:8000 ptpi.wsgi:application"
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./db.sqlite3:/app/db.sqlite3
+      - ptpi_media:/app/media
+      - ptpi_backups:/app/backups
+    restart: unless-stopped
+
+volumes:
+  ptpi_media:
+  ptpi_backups:
