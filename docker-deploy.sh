@@ -2,6 +2,7 @@
 
 # Ensure the database file exists so Docker binds a file instead of creating a directory
 touch db.sqlite3
+chmod 777 db.sqlite3
 
 # Ensure media and backups directories exist
 mkdir -p media
