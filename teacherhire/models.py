@@ -43,6 +43,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+class PendingRegistration(models.Model):
+    email = models.EmailField(unique=True)
+    password_hash = models.CharField(max_length=255)
+    Fname = models.CharField(max_length=100)
+    Lname = models.CharField(max_length=100, null=True, blank=True)
+    role = models.CharField(max_length=50) # 'teacher', 'recruiter', etc.
+    otp = models.CharField(max_length=8)
+    otp_created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Pending {self.role}: {self.email}"
     
 
     def save(self, *args, **kwargs):

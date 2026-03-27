@@ -10,6 +10,7 @@ from django.utils.timezone import now
 from django.conf import settings
 from datetime import timedelta
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.hashers import make_password
 import uuid
 from teacherhire.serializers import *
 from teacherhire.utils import send_otp_via_email, verified_msg
@@ -35,43 +36,49 @@ class RegisterUser(APIView):
 
         serializer = serializer_class(data=request.data)
 
-        if not serializer.is_valid():
-            errors = []
-            for field, messages in serializer.errors.items():
-                for message in messages:
-                    errors.append({
-                        "code": "invalid",
-                        "detail": str(message),
-                        "attr": field
-                    })
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            password = serializer.validated_data['password']
+            fname = serializer.validated_data['Fname']
+            lname = serializer.validated_data['Lname']
+            
+            # Generate OTP
+            otp = send_otp_via_email(email)
+            
+            # Create or update pending registration
+            pending_user, created = PendingRegistration.objects.update_or_create(
+                email=email,
+                defaults={
+                    'password_hash': make_password(password),
+                    'Fname': fname,
+                    'Lname': lname,
+                    'role': role,
+                    'otp': otp,
+                    'otp_created_at': now()
+                }
+            )
 
             return Response({
-                "status": "error",
-                "type": "validation_error",
-                "errors": errors
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        user = serializer.save()
-
-        role = (
-            "admin" if user.is_staff else
-            "recruiter" if user.is_recruiter else
-            "teacher" if user.is_teacher else
-            "centeruser" if user.is_centeruser else
-            "questionuser" if user.is_questionuser else
-            "user"
-        )
-
-        otp = send_otp_via_email(user.email)
-        user.otp = otp
-        user.otp_created_at = now()
-        user.save(update_fields=['otp', 'otp_created_at'])
+                "payload": serializer.data,
+                "role": role,
+                "message": "Check your email to verify your account."
+            }, status=status.HTTP_201_CREATED)
+        
+        # Handle errors (same as before)
+        errors = []
+        for field, messages in serializer.errors.items():
+            for message in messages:
+                errors.append({
+                    "code": "invalid",
+                    "detail": str(message),
+                    "attr": field
+                })
 
         return Response({
-            "payload": serializer.data,
-            "role": role,
-            "message": "Check your email to verify your account."
-        }, status=status.HTTP_201_CREATED)
+            "status": "error",
+            "type": "validation_error",
+            "errors": errors
+        }, status=status.HTTP_400_BAD_REQUEST)
     
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -104,12 +111,28 @@ class LoginUser(APIView):
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
+            # Check if there is a pending registration
+            pending = PendingRegistration.objects.filter(email=email).first()
+            if pending:
+                # Trigger a new OTP for the pending registration
+                otp = send_otp_via_email(email)
+                pending.otp = otp
+                pending.otp_created_at = now()
+                pending.save()
+                
+                return Response({
+                    "message": "Please verify your account. A new OTP has been sent to your email.",
+                    "is_verified": False,
+                    "is_pending": True,
+                    "email": email
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
             raise ValidationError({
                 "email": ["Invalid email or password."]
             })
 
         if not user.is_verified:
-            # Trigger a new OTP if they are not verified
+            # Trigger a new OTP if they are not verified in the main table
             otp = send_otp_via_email(user.email)
             user.otp = otp
             user.otp_created_at = now()
@@ -229,31 +252,60 @@ class VerifyOTP(APIView):
         email = serializer.validated_data['email']
         otp = serializer.validated_data['otp']
 
+        # 1. Check existing users in the main table
         user = CustomUser.objects.filter(email=email).first()
-        if not user:
-            raise ValidationError({
-                "email": ["Email not found."]
-            })
+        if user:
+            if user.is_verified:
+                raise ValidationError({"email": ["Your account is already verified."]})
+            
+            if user.otp != otp:
+                raise ValidationError({"otp": ["Incorrect OTP provided."]})
 
-        if user.is_verified:
-            raise ValidationError({
-                "email": ["Your account is already verified."]
-            })
+            if now() > user.otp_created_at + timedelta(minutes=10):
+                raise ValidationError({"otp": ["OTP expired. Please request a new OTP."]})
 
-        if user.otp != otp:
-            raise ValidationError({
-                "otp": ["Incorrect OTP provided."]
-            })
+            user.is_verified = True
+            user.save()
+            return self.get_login_response(user)
 
-        if now() > user.otp_created_at + timedelta(minutes=10):
-            raise ValidationError({
-                "otp": ["OTP expired. Please request a new OTP."]
-            })
+        # 2. Check pending registrations
+        pending = PendingRegistration.objects.filter(email=email).first()
+        if pending:
+            if pending.otp != otp:
+                raise ValidationError({"otp": ["Incorrect OTP provided."]})
 
-        user.is_verified = True
-        user.save()
-        
-        # Delete old token and create new one
+            if now() > pending.otp_created_at + timedelta(minutes=10):
+                raise ValidationError({"otp": ["OTP expired. Please request a new OTP."]})
+
+            # Create the actual User
+            base_username = email.split('@')[0]
+            username = base_username
+            while CustomUser.objects.filter(username=username).exists():
+                import random
+                username = f"{base_username}{random.randint(1000, 9999)}"
+
+            user = CustomUser.objects.create_user(
+                username=username,
+                email=email,
+                password=None, # Will set the raw hash directly
+                Fname=pending.Fname,
+                Lname=pending.Lname,
+                is_teacher=(pending.role == 'teacher'),
+                is_recruiter=(pending.role == 'recruiter'),
+                is_verified=True
+            )
+            user.password = pending.password_hash # Copy the already hashed password
+            user.save()
+            
+            # Delete the pending record
+            pending.delete()
+            
+            return self.get_login_response(user)
+
+        raise ValidationError({"email": ["Email not found or registration expired."]})
+
+    def get_login_response(self, user):
+        # Helper to generate the same login payload we use everywhere
         Token.objects.filter(user=user).delete()
         token = Token.objects.create(user=user)
         refresh_token = str(uuid.uuid4())
@@ -266,7 +318,7 @@ class VerifyOTP(APIView):
             "questionuser" if user.is_questionuser else "user"
         )
 
-        verified_msg(email)
+        verified_msg(user.email)
 
         return Response({
             "status": "success",
@@ -291,7 +343,18 @@ class ResendOTP(APIView):
         user = CustomUser.objects.filter(email=email).first()
 
         if not user:
-            raise ValidationError({"email": ["User not found."]})
+            # Check pending registrations
+            pending = PendingRegistration.objects.filter(email=email).first()
+            if not pending:
+                raise ValidationError({"email": ["User not found."]})
+            
+            # Resend for pending
+            otp = send_otp_via_email(email)
+            pending.otp = otp
+            pending.otp_created_at = now()
+            pending.save()
+            return Response({"status": "success", "message": "OTP resent successfully (Pending)."}, status=status.HTTP_200_OK)
+
         if user.is_verified:
             raise ValidationError({"email": ["Account already verified."]})
 
