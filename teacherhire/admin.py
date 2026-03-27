@@ -181,3 +181,6 @@ class HireRequestAdmin(admin.ModelAdmin):
 @admin.register(Apply)
 class ApplyAdmin(admin.ModelAdmin):
     list_display = ['user','subject','class_category','teacher_job_type','status','date']
+
+
+admin.site.register(PendingRegistration)
