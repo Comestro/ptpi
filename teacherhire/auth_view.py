@@ -105,9 +105,16 @@ class LoginUser(APIView):
             })
 
         if not user.is_verified:
+            # Trigger a new OTP if they are not verified
+            otp = send_otp_via_email(user.email)
+            user.otp = otp
+            user.otp_created_at = now()
+            user.save(update_fields=['otp', 'otp_created_at'])
+            
             return Response({
-                "message": "Please verify your account before logging in.",
-                "is_verified": user.is_verified
+                "message": "Please verify your account. A new OTP has been sent to your email.",
+                "is_verified": user.is_verified,
+                "email": user.email
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.check_password(password):
@@ -237,13 +244,34 @@ class VerifyOTP(APIView):
 
         user.is_verified = True
         user.save()
-        token, _ = Token.objects.get_or_create(user=user)
+        
+        # Delete old token and create new one
+        Token.objects.filter(user=user).delete()
+        token = Token.objects.create(user=user)
+        refresh_token = str(uuid.uuid4())
+        
+        role = (
+            "admin" if user.is_staff else
+            "recruiter" if user.is_recruiter else
+            "teacher" if user.is_teacher else
+            "centeruser" if user.is_centeruser else
+            "questionuser" if user.is_questionuser else "user"
+        )
+
         verified_msg(email)
 
         return Response({
             "status": "success",
-            "message": "Account verified successfully.",
-            "data": {"access_token": token.key}
+            "message": "Account verified and logged in successfully.",
+            "data": {
+                "access_token": token.key,
+                "refresh_token": refresh_token,
+                "Fname": user.Fname,
+                "email": user.email,
+                "role": role,
+                "user_code": user.user_code,
+                "is_active": user.is_active,
+            }
         }, status=status.HTTP_200_OK)
     
 

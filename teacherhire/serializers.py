@@ -34,6 +34,9 @@ class EmailValidationMixin:
             
         if user_qs.exists():
             user = user_qs.first()
+            if not user.is_verified:
+                raise ValidationError("This email is already registered but not verified. Please login to verify your account and continue.")
+            
             if user.is_recruiter:
                 role_name = 'recruiter'
             elif user.is_teacher:
