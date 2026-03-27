@@ -17,6 +17,8 @@ from .authentication import ExpiringTokenAuthentication
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 class RegisterUser(APIView):
+    authentication_classes = []
+
     @extend_schema(
         request=[RecruiterRegisterSerializer, TeacherRegisterSerializer],
         responses={
@@ -94,6 +96,8 @@ def generate_refresh_token():
 
 
 class LoginUser(APIView):
+    authentication_classes = []
+
     def post(self, request):
         email, password = request.data.get('email'), request.data.get('password')
 
@@ -176,6 +180,8 @@ class ResetPasswordView(APIView):
 
 
 class VerifyEmailView(APIView):
+    authentication_classes = []
+
     def post(self, request):
         email = request.data.get("email")
         user = CustomUser.objects.filter(email=email).first()
@@ -214,6 +220,8 @@ class VerifyLinkView(APIView):
 
 
 class VerifyOTP(APIView):
+    authentication_classes = []
+
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -276,6 +284,8 @@ class VerifyOTP(APIView):
     
 
 class ResendOTP(APIView):
+    authentication_classes = []
+
     def post(self, request):
         email = request.data.get('email')
         user = CustomUser.objects.filter(email=email).first()
