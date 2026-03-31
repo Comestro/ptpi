@@ -34,14 +34,14 @@ def send_otp_via_email(email):
 
 def verified_msg(email):
     try:
-        subject = "🎉 Account Verified Successfully! Welcome to TeacherGotHire!"
+        subject = "🎉 Account Verified Successfully! Welcome to PTPI!"
         
         html_message = render_to_string('emails/account_verified.html')
         
         plain_message = (
-            "Yay!! Welcome to TeacherGotHire! 🎉\n\n"
+            "Yay!! Welcome to PTPI! 🎉\n\n"
             "We're absolutely thrilled to have you join our growing community of passionate educators. 🌟\n\n"
-            "TeacherGotHire is your gateway to endless opportunities where you can:\n"
+            "PTPI is your gateway to endless opportunities where you can:\n"
             "- 🌍 Connect with learners from around the world.\n"
             "- 📚 Share your knowledge and expertise.\n"
             "- 🚀 Take your teaching career to new heights.\n\n"
@@ -49,9 +49,9 @@ def verified_msg(email):
             "Your journey starts here! Log in to your account and explore features designed to empower you on this exciting path. "
             "Together, we can make a difference in education.\n\n"
             "If you have any questions or need help, our team is always here to assist you.\n\n"
-            "Welcome aboard, and here's to your success with TeacherGotHire! 🥳\n\n"
+            "Welcome aboard, and here's to your success with PTPI! 🥳\n\n"
             "Best regards,\n"
-            "The TeacherGotHire Team"
+            "The PTPI Team"
         )
         
         from_email = os.environ.get('EMAIL_FROM')

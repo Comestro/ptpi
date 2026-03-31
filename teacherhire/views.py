@@ -3578,9 +3578,9 @@ class TeacherFilterAPIView(APIView):
     def get(self, request):
         user = request.user if request.user.is_authenticated else None
 
-        # Admin: return all teachers (or users) who have attempted any exam, with their exam progress.
+        # Admin: return all teachers who have teacher role
         if user and user.is_staff:
-            teachers_qs = CustomUser.objects.filter(teacherexamresult__isnull=False).distinct()
+            teachers_qs = CustomUser.objects.filter(is_teacher=True).distinct()
 
             results = []
             for teacher in teachers_qs:
