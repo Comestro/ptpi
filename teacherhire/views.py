@@ -3416,11 +3416,18 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
         if not exam_id or not questions:
             return Response({"error": "Both 'exam' and 'questions' fields are required."}, status=status.HTTP_400_BAD_REQUEST)
 
+        subject_name = base_instance.exam.subject.subject_name.lower()
+        native_languages = ['english', 'hindi', 'urdu', 'sanskrit', 'bengali', 'maithili', 'bhojpuri','japanese','french','german','spanish']
+
         updated_data = {}
         errors = {}
 
         for item in questions:
             language = item.get("language")
+
+            if subject_name in native_languages:
+                if language.lower() == 'hindi' and subject_name != 'hindi':
+                    continue
 
             # Inject exam ID into question
             item["exam"] = exam_id
