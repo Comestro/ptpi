@@ -3442,7 +3442,7 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
                         hindi_instance.save()
                         updated_data["hindi_data"] = QuestionSerializer(hindi_instance).data
                     except Question.DoesNotExist:
-                        errors["hindi_errors"] = None
+                        pass # No error, just no twin to update
                     updated_data["english_data"] = QuestionSerializer(english_instance).data
                 else:
                     errors["english_errors"] = serializer.errors
@@ -3464,7 +3464,8 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
                 else:
                     errors["hindi_errors"] = serializer.errors
 
-        if errors:
+        # Only return 400 if there are actual errors (rejecting None/empty values)
+        if any(errors.values()):
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
