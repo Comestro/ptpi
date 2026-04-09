@@ -1454,6 +1454,30 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(recent_attempt)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
+        # Per-language attempt limit: max 5 attempts per language
+        MAX_ATTEMPTS_PER_LANGUAGE = 5
+        language = data.get('language', '')
+        if language:
+            language_attempt_count = TeacherExamResult.objects.filter(
+                user_id=user,
+                exam__subject=exam.subject,
+                exam__class_category=exam.class_category,
+                exam__level=exam.level,
+                language__iexact=language
+            ).count()
+
+            if language_attempt_count >= MAX_ATTEMPTS_PER_LANGUAGE:
+                other_lang = "Hindi" if language.lower() == "english" else "English"
+                return Response(
+                    {
+                        "error": f"You have reached the maximum {MAX_ATTEMPTS_PER_LANGUAGE} attempts in {language}. Please try in {other_lang}.",
+                        "max_attempts_reached": True,
+                        "language": language,
+                        "attempt_count": language_attempt_count
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
