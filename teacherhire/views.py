@@ -1442,6 +1442,18 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
         )
 
+        # Prevent duplicate submissions within a 60-second window
+        recent_cutoff = timezone.now() - timedelta(seconds=60)
+        recent_attempt = TeacherExamResult.objects.filter(
+            user_id=user,
+            exam=exam,
+            created_at__gte=recent_cutoff
+        ).order_by('-created_at').first()
+
+        if recent_attempt:
+            serializer = self.get_serializer(recent_attempt)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
