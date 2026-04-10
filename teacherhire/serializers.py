@@ -430,7 +430,9 @@ class QuestionSerializer(serializers.ModelSerializer):
         return value
     
     def validate_options(self, value):
-        if len(value) != len(set(value)):  
+        # Only check uniqueness among non-empty options
+        non_empty = [opt for opt in value if opt and opt.strip()]
+        if non_empty and len(non_empty) != len(set(non_empty)):  
             raise serializers.ValidationError("Options must be unique.")
         return value
     
@@ -1436,7 +1438,9 @@ class NewQuestionSerializer(serializers.ModelSerializer):
         return value
 
     def validate_options(self, value):
-        if len(value) != len(set(value)):  
+        # Only check uniqueness among non-empty options
+        non_empty = [opt for opt in value if opt and opt.strip()]
+        if non_empty and len(non_empty) != len(set(non_empty)):  
             raise serializers.ValidationError("Options must be unique.")
         return value
     
