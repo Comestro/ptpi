@@ -18,3 +18,6 @@ ptpi/__pycache__
 /static/
 /staticfiles/
 /media
+
+.env
+/.env
