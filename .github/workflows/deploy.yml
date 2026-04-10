@@ -55,6 +55,9 @@ jobs:
             touch db.sqlite3
             chmod 664 db.sqlite3
 
+            systemctl stop gunicorn 2>/dev/null || true
+            systemctl disable gunicorn 2>/dev/null || true
+
             if docker compose version >/dev/null 2>&1; then
               docker compose up -d --build --remove-orphans
             else
