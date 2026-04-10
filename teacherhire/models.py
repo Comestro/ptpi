@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.exceptions import ValidationError
 import os
 import base64
 from django.utils.timezone import now
@@ -382,7 +383,7 @@ class Question(models.Model):
     def clean(self):
         super().clean()
         if self.correct_option < 1 or self.correct_option > len(self.options):
-            raise models.ValidationError({
+            raise ValidationError({
                 'correct_option': f'Correct option must be between 1 and {len(self.options)}.'
             })
 

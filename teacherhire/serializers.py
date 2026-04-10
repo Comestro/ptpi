@@ -885,10 +885,10 @@ class JobPreferenceLocationSerializer(serializers.ModelSerializer):
 
 class BasicProfileSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    bio = models.CharField(max_length=100, blank=True, null=True)
+    bio = serializers.CharField(max_length=100, required=False, allow_blank=True, allow_null=True)
     phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True,
                                          validators=[UniqueValidator(queryset=BasicProfile.objects.all())])
-    religion = models.CharField(max_length=15, blank=True, null=True)
+    religion = serializers.CharField(max_length=15, required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = BasicProfile

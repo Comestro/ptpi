@@ -1537,7 +1537,7 @@ class AllRecruiterBasicProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = AllBasicProfileSerializer
-    queryset = CustomUser.objects.filter(is_recruiter=True, is_verified=True)
+    queryset = CustomUser.objects.filter(is_recruiter=True)
 
 
 class BasicProfileViewSet(viewsets.ModelViewSet):
@@ -2839,8 +2839,8 @@ class TeacherReportViewSet(viewsets.ModelViewSet):
 
 
 class AllTeacherViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated, IsAdminUser]
-    # authentication_classes = [ExpiringTokenAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = AllTeacherSerializer
 
     def get_queryset(self):
