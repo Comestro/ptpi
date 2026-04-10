@@ -2705,6 +2705,11 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
         if user.is_staff:
             serializer = self.get_serializer(queryset, many=True)
         elif user.is_teacher:
+            # Teachers should only see active exam centers
+            queryset = queryset.filter(status=True)
+            serializer = TeacherExamCenterSerializer(queryset, many=True)
+        else:
+            queryset = queryset.filter(status=True)
             serializer = TeacherExamCenterSerializer(queryset, many=True)
         return Response(serializer.data)
     
