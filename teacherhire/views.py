@@ -2682,6 +2682,12 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             exam_center_serializer = ExamCenterSerializer(examcenter, data=exam_center_data, partial=True)
             if exam_center_serializer.is_valid():
                 exam_center_serializer.save()
+
+                # Sync user.is_active with center status so inactive center users cannot login
+                if 'status' in exam_center_data and examcenter.user:
+                    examcenter.user.is_active = exam_center_serializer.validated_data.get('status', examcenter.status)
+                    examcenter.user.save(update_fields=['is_active'])
+
                 return Response({
                     "user": CenterUserSerializer(examcenter.user).data,
                     "exam_center": exam_center_serializer.data,
@@ -2970,6 +2976,11 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             instance.status = new_status
+
+            # Sync user.is_active with status so inactive users cannot login
+            if instance.user:
+                instance.user.is_active = new_status
+                instance.user.save(update_fields=['is_active'])
 
             # Validate and update subjects
             new_subjects = request.data.get('subject')

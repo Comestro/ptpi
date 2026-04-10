@@ -149,6 +149,13 @@ class LoginUser(APIView):
                 "password": ["Invalid email or password."]
             })
 
+        if not user.is_active:
+            return Response({
+                "status": "error",
+                "message": "Your account has been deactivated. Please contact the administrator.",
+                "is_active": False
+            }, status=status.HTTP_403_FORBIDDEN)
+
         Token.objects.filter(user=user).delete()
         token = Token.objects.create(user=user)
         refresh_token = str(uuid.uuid4())
