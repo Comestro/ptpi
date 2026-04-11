@@ -101,25 +101,32 @@ jobs:
             cd "${{ env.DEPLOY_PATH }}"
             git pull --ff-only origin master
 
-            if [ -d ".venv" ]; then
+            if [ -x ".venv/bin/python" ]; then
               VENV_PATH=".venv"
-            elif [ -d "venv" ]; then
+            elif [ -x "venv/bin/python" ]; then
               VENV_PATH="venv"
             else
               python3 -m venv .venv
               VENV_PATH=".venv"
             fi
 
-            . "${VENV_PATH}/bin/activate"
-            pip install --upgrade pip
-            pip install -r requirements.txt
+            PYTHON_BIN="${VENV_PATH}/bin/python"
+
+            if [ ! -x "${PYTHON_BIN}" ]; then
+              echo "Virtual environment is missing a Python executable at ${PYTHON_BIN}"
+              exit 1
+            fi
+
+            "${PYTHON_BIN}" -m ensurepip --upgrade
+            "${PYTHON_BIN}" -m pip install --upgrade pip setuptools wheel
+            "${PYTHON_BIN}" -m pip install -r requirements.txt
 
             touch db.sqlite3
             chmod 664 db.sqlite3
             mkdir -p media backups staticfiles/static
 
-            python manage.py migrate --noinput
-            python manage.py collectstatic --noinput
+            "${PYTHON_BIN}" manage.py migrate --noinput
+            "${PYTHON_BIN}" manage.py collectstatic --noinput
 
             systemctl restart gunicorn
             systemctl status gunicorn --no-pager --lines=20
