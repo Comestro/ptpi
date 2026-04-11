@@ -13,6 +13,7 @@ concurrency:
 env:
   DEPLOY_PATH: /home/ptpinstitute-api/htdocs/api.ptpinstitute.com/ptpi
   DOCKER_IMAGE: ptpi-backend
+  SSH_PORT: "22"
 
 jobs:
   build:
@@ -39,12 +40,80 @@ jobs:
     needs: build
 
     steps:
+      - name: Validate SSH configuration
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.HOST }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DEPLOY_HOST}" ]; then
+            echo "::error::Missing required secret HOST. Set it to the VPS public IP or public DNS record."
+            exit 1
+          fi
+
+          if [ -z "${SSH_KEY}" ]; then
+            echo "::error::Missing required secret SSH_PRIVATE_KEY."
+            exit 1
+          fi
+
+          echo "SSH target configured for ${DEPLOY_HOST}:${{ env.SSH_PORT }}"
+
+      - name: Preflight SSH reachability
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.HOST }}
+          DEPLOY_PORT: ${{ env.SSH_PORT }}
+        run: |
+          set -euo pipefail
+
+          echo "Resolving ${DEPLOY_HOST}..."
+          resolved_ips="$(getent ahosts "${DEPLOY_HOST}" | awk '{print $1}' | sort -u)"
+
+          if [ -z "${resolved_ips}" ]; then
+            echo "::error::Unable to resolve HOST='${DEPLOY_HOST}'. Use the VPS public IP or a public DNS record."
+            exit 1
+          fi
+
+          echo "Resolved ${DEPLOY_HOST} to:"
+          printf '%s\n' "${resolved_ips}"
+
+          first_ip="$(printf '%s\n' "${resolved_ips}" | head -n 1)"
+          case "${first_ip}" in
+            10.*|127.*|172.1[6-9].*|172.2[0-9].*|172.3[0-1].*|192.168.*)
+              echo "::warning::HOST resolves to private/internal IP ${first_ip}. GitHub-hosted runners usually cannot reach private addresses directly."
+              ;;
+          esac
+
+          echo "Probing TCP connectivity to ${DEPLOY_HOST}:${DEPLOY_PORT}..."
+          if ! timeout 10 bash -c ">/dev/tcp/${DEPLOY_HOST}/${DEPLOY_PORT}" 2>/dev/null; then
+            echo "::error::GitHub runner cannot reach ${DEPLOY_HOST}:${DEPLOY_PORT}. Ensure sshd is running, listening publicly on port ${DEPLOY_PORT}, and that OS/provider firewalls allow inbound TCP ${DEPLOY_PORT}."
+            {
+              echo "## SSH Preflight Failed"
+              echo
+              echo "- Host: \`${DEPLOY_HOST}\`"
+              echo "- Port: \`${DEPLOY_PORT}\`"
+              echo "- Resolution: succeeded"
+              echo "- TCP reachability: failed"
+              echo
+              echo "Checks to perform on the server:"
+              echo "- Confirm \`sshd\` is running."
+              echo "- Confirm SSH is listening on \`0.0.0.0:${DEPLOY_PORT}\` or the public interface."
+              echo "- Open inbound TCP \`${DEPLOY_PORT}\` in OS and provider firewalls."
+              echo "- Verify there is no NAT or allowlist blocking GitHub-hosted runners."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          echo "TCP port ${DEPLOY_PORT} is reachable from the GitHub runner."
+
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.HOST }}
           username: root
-          port: 22
+          port: ${{ env.SSH_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           timeout: 60s
           script: |
