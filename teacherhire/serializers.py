@@ -1444,6 +1444,36 @@ class NewQuestionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Options must be unique.")
         return value
     
+class TeacherListSerializer(serializers.ModelSerializer):
+    class_categories = serializers.SerializerMethodField()
+    subjects = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
+    phone_number = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
+            'is_active', 'is_verified', 'class_categories', 'subjects'
+        ]
+
+    def get_class_categories(self, obj):
+        # Using prefetch_related in view will make this fast
+        return [c.class_category.name for c in obj.teacherclasscategory.all() if c.class_category]
+
+    def get_subjects(self, obj):
+        return [s.subject.subject_name for s in obj.teachersubjects.all() if s.subject]
+
+    def get_profile_picture(self, obj):
+        if hasattr(obj, 'profiles') and obj.profiles and obj.profiles.profile_picture:
+            return obj.profiles.profile_picture.url if hasattr(obj.profiles.profile_picture, 'url') else str(obj.profiles.profile_picture)
+        return None
+
+    def get_phone_number(self, obj):
+        if hasattr(obj, 'profiles') and obj.profiles:
+            return obj.profiles.phone_number
+        return None
+
 class TeacherSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)
     profiles = BasicProfileSerializer(required=False)

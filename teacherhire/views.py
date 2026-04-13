@@ -3788,20 +3788,58 @@ class TeacherFilterAPIView(APIView):
         return Response(serializer.data)
     
 
+# Optimized Teacher List for Admin
+class AdminTeacherListView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def get(self, request):
+        # Using prefetch_related and select_related to solve N+1 query problem
+        teachers_qs = CustomUser.objects.filter(is_teacher=True).prefetch_related(
+            'teacherclasscategory__class_category',
+            'teachersubjects__subject',
+            'profiles'
+        ).distinct().order_by('-date_joined')
+        
+        # Apply basic search if query param exists
+        search = request.query_params.get('search')
+        if search:
+            teachers_qs = teachers_qs.filter(
+                Q(Fname__icontains=search) | 
+                Q(Lname__icontains=search) | 
+                Q(email__icontains=search)
+            )
+
+        serializer = TeacherListSerializer(teachers_qs, many=True, context={'request': request})
+        return Response({"count": teachers_qs.count(), "results": serializer.data}, status=status.HTTP_200_OK)
+
+
 # API for teacher all details and their highest qualified exam attempts
 class TeacherDetailAPIView(APIView):
     permission_classes = []
 
     def get(self, request, teacher_id):
         try:
-            teacher = CustomUser.objects.get(id=teacher_id, is_teacher=True)
+            # Optimize single fetch with prefetch
+            teacher = CustomUser.objects.prefetch_related(
+                'teacherskill__skill',
+                'profiles',
+                'teachersaddress',
+                'teacherexperiences__role',
+                'teacherqualifications__qualification',
+                'preferences__class_category',
+                'preferences__prefered_subject',
+                'jobpreferencelocation',
+                'apply__class_category',
+                'apply__subject'
+            ).get(id=teacher_id, is_teacher=True)
         except CustomUser.DoesNotExist:
             return Response({"error": "Teacher not found."}, status=404)
+        
         serializer = TeacherSerializer(teacher, context={'request': request})
 
         # For recruiters (non-admin), return only interview details
         if not request.user.is_authenticated or not request.user.is_staff:
-            # Get all interviews with grades for this teacher
             interviews = Interview.objects.filter(
                 user=teacher
             ).exclude(grade__isnull=True).order_by('-created_at')
@@ -3812,11 +3850,10 @@ class TeacherDetailAPIView(APIView):
         # For admin, return exam attempt details
         exam_results_qs = TeacherExamResult.objects.filter(
             user=teacher, isqualified=True
-        ).order_by(
+        ).select_related('exam__subject', 'exam__class_category', 'exam__level').order_by(
             'exam__subject_id', 'exam__class_category_id', 'exam__level_id', '-correct_answer', '-created_at'
         )
 
-        # Only keep the highest marks for each (subject, class_category, level)
         seen = set()
         highest_results = []
         for result in exam_results_qs:
