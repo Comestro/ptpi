@@ -1042,22 +1042,40 @@ class ReportSerializer(serializers.ModelSerializer):
         
         # Enrich question data with exam context
         question_data = QuestionSerializer(instance.question).data
-        exam = instance.question.exam
+        q_obj = instance.question
+        exam = q_obj.exam
         
-        # Fallback to related question's exam if missing (useful for translations/clones)
-        if not exam and instance.question.related_question:
-            exam = instance.question.related_question.exam
+        # 1. Try related_question fallback
+        if not exam and q_obj.related_question:
+            exam = q_obj.related_question.exam
+            
+        # 2. Aggressive fallback: find ANY question with same text that HAS an exam
+        if not exam:
+            match = Question.objects.filter(text=q_obj.text).exclude(exam=None).first()
+            if match:
+                exam = match.exam
             
         if exam:
             question_data['exam_name'] = getattr(exam, 'name', "Custom Exam")
-            question_data['class_category'] = getattr(exam.class_category, 'name', "General") if hasattr(exam, 'class_category') else "General"
-            question_data['subject'] = getattr(exam.subject, 'subject_name', "No Subject") if hasattr(exam, 'subject') else "No Subject"
+            # Handle recursive relationships
+            if hasattr(exam, 'class_category') and exam.class_category:
+                question_data['class_category'] = getattr(exam.class_category, 'name', "General")
+            else:
+                question_data['class_category'] = "General"
+                
+            if hasattr(exam, 'subject') and exam.subject:
+                question_data['subject'] = getattr(exam.subject, 'subject_name', "No Subject")
+            else:
+                question_data['subject'] = "No Subject"
         else:
-            question_data['exam_name'] = "Independent Question"
-            question_data['class_category'] = "General"
-            question_data['subject'] = "No Subject"
+            # Ultimate fallbacks if truly independent
+            question_data['exam_name'] = "General Practice"
+            question_data['class_category'] = "All Categories"
+            question_data['subject'] = "General Subject"
             
         representation['question'] = question_data
+        representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
+        return representation
         representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
         return representation
 
