@@ -1038,45 +1038,46 @@ class ReportSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data
         
-        # Enrich question data with exam context
-        question_data = QuestionSerializer(instance.question).data
+        # 1. Serialize User
+        representation['user'] = UserSerializer(instance.user).data if instance.user else None
+        
+        # 2. Serialize Question with Context
         q_obj = instance.question
-        exam = q_obj.exam
-        
-        # 1. Try related_question fallback
-        if not exam and q_obj.related_question:
-            exam = q_obj.related_question.exam
+        if q_obj:
+            q_data = QuestionSerializer(q_obj).data
             
-        # 2. Aggressive fallback: find ANY question with same text that HAS an exam
-        if not exam:
-            match = Question.objects.filter(text=q_obj.text).exclude(exam=None).first()
-            if match:
-                exam = match.exam
+            # Find associated exam (through question or related_question or same-text question)
+            exam = q_obj.exam
+            if not exam and q_obj.related_question:
+                exam = q_obj.related_question.exam
             
-        if exam:
-            question_data['exam_name'] = getattr(exam, 'name', "Custom Exam")
-            # Handle recursive relationships
-            if hasattr(exam, 'class_category') and exam.class_category:
-                question_data['class_category'] = getattr(exam.class_category, 'name', "General")
-            else:
-                question_data['class_category'] = "General"
+            if not exam:
+                match = Question.objects.filter(text=q_obj.text).exclude(exam=None).first()
+                if match:
+                    exam = match.exam
+
+            # Inject metadata into question dictionary
+            if exam:
+                q_data['exam_name'] = getattr(exam, 'name', "Custom Exam")
                 
-            if hasattr(exam, 'subject') and exam.subject:
-                question_data['subject'] = getattr(exam.subject, 'subject_name', "No Subject")
+                # Nested Category
+                cat_obj = getattr(exam, 'class_category', None)
+                q_data['class_category'] = getattr(cat_obj, 'name', "General") if cat_obj else "General"
+                
+                # Nested Subject
+                sub_obj = getattr(exam, 'subject', None)
+                q_data['subject'] = getattr(sub_obj, 'subject_name', "No Subject") if sub_obj else "No Subject"
             else:
-                question_data['subject'] = "No Subject"
-        else:
-            # Ultimate fallbacks if truly independent
-            question_data['exam_name'] = "General Practice"
-            question_data['class_category'] = "All Categories"
-            question_data['subject'] = "General Subject"
+                q_data['exam_name'] = "General Practice"
+                q_data['class_category'] = "All Categories"
+                q_data['subject'] = "General Subject"
             
-        representation['question'] = question_data
+            representation['question'] = q_data
+            
+        # 3. Serialize Issue Types
         representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
-        return representation
-        representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
+        
         return representation
 
 
