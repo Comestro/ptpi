@@ -11,6 +11,7 @@ services:
     env_file:
       - .env
     volumes:
+      - .:/app
       - ./db.sqlite3:/app/db.sqlite3
       - ptpi_media:/app/media
       - ptpi_backups:/app/backups
