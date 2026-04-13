@@ -1028,57 +1028,23 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 
 class ReportSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
-    issue_type = serializers.PrimaryKeyRelatedField(queryset=Reason.objects.all(), many=True)
+    user = UserSerializer(read_only=True)
+    question = QuestionSerializer(read_only=True)
+    issue_type = ReasonSerializer(many=True, read_only=True)
+    
+    # Context Fields
+    exam_name = serializers.CharField(source='question.exam.name', read_only=True, default="General Practice")
+    class_category = serializers.CharField(source='question.exam.class_category.name', read_only=True, default="All Categories")
+    subject = serializers.CharField(source='question.exam.subject.subject_name', read_only=True, default="General Subject")
+    api_proof = serializers.SerializerMethodField()
 
     class Meta:
         model = Report
-        fields = ['id', 'user', 'question', 'issue_type', 'status', 'created_at']
+        fields = ['id', 'user', 'question', 'issue_type', 'status', 'created_at', 'exam_name', 'class_category', 'subject', 'api_proof']
         read_only_fields = ['id', 'user', 'created_at']
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        
-        # 1. Serialize User
-        representation['user'] = UserSerializer(instance.user).data if instance.user else None
-        
-        # 2. Serialize Question with Context
-        q_obj = instance.question
-        if q_obj:
-            q_data = QuestionSerializer(q_obj).data
-            
-            # Find associated exam (through question or related_question or same-text question)
-            exam = q_obj.exam
-            if not exam and q_obj.related_question:
-                exam = q_obj.related_question.exam
-            
-            if not exam:
-                match = Question.objects.filter(text=q_obj.text).exclude(exam=None).first()
-                if match:
-                    exam = match.exam
-
-            # Inject metadata into question dictionary
-            if exam:
-                q_data['exam_name'] = getattr(exam, 'name', "Custom Exam")
-                
-                # Nested Category
-                cat_obj = getattr(exam, 'class_category', None)
-                q_data['class_category'] = getattr(cat_obj, 'name', "General") if cat_obj else "General"
-                
-                # Nested Subject
-                sub_obj = getattr(exam, 'subject', None)
-                q_data['subject'] = getattr(sub_obj, 'subject_name', "No Subject") if sub_obj else "No Subject"
-            else:
-                q_data['exam_name'] = "General Practice"
-                q_data['class_category'] = "All Categories"
-                q_data['subject'] = "General Subject"
-            
-            representation['question'] = q_data
-            
-        # 3. Serialize Issue Types
-        representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
-        
-        return representation
+    def get_api_proof(self, obj):
+        return "YES_V3_ACTIVE"
 
 
 class PasskeySerializer(serializers.ModelSerializer):
