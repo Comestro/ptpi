@@ -1043,10 +1043,19 @@ class ReportSerializer(serializers.ModelSerializer):
         # Enrich question data with exam context
         question_data = QuestionSerializer(instance.question).data
         exam = instance.question.exam
+        
+        # Fallback to related question's exam if missing (useful for translations/clones)
+        if not exam and instance.question.related_question:
+            exam = instance.question.related_question.exam
+            
         if exam:
-            question_data['exam_name'] = exam.name
-            question_data['class_category'] = exam.class_category.name
-            question_data['subject'] = exam.subject.subject_name
+            question_data['exam_name'] = getattr(exam, 'name', "Custom Exam")
+            question_data['class_category'] = getattr(exam.class_category, 'name', "General") if hasattr(exam, 'class_category') else "General"
+            question_data['subject'] = getattr(exam.subject, 'subject_name', "No Subject") if hasattr(exam, 'subject') else "No Subject"
+        else:
+            question_data['exam_name'] = "Independent Question"
+            question_data['class_category'] = "General"
+            question_data['subject'] = "No Subject"
             
         representation['question'] = question_data
         representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
