@@ -1032,19 +1032,38 @@ class ReportSerializer(serializers.ModelSerializer):
     question = QuestionSerializer(read_only=True)
     issue_type = ReasonSerializer(many=True, read_only=True)
     
-    # Context Fields
-    exam_name = serializers.CharField(source='question.exam.name', read_only=True, default="General Practice")
-    class_category = serializers.CharField(source='question.exam.class_category.name', read_only=True, default="All Categories")
-    subject = serializers.CharField(source='question.exam.subject.subject_name', read_only=True, default="General Subject")
-    api_proof = serializers.SerializerMethodField()
+    # Metadata Fields
+    exam_name = serializers.SerializerMethodField()
+    class_category = serializers.SerializerMethodField()
+    subject = serializers.SerializerMethodField()
+    v_check = serializers.SerializerMethodField()
 
     class Meta:
         model = Report
-        fields = ['id', 'user', 'question', 'issue_type', 'status', 'created_at', 'exam_name', 'class_category', 'subject', 'api_proof']
+        fields = [
+            'id', 'user', 'question', 'issue_type', 'status', 'created_at', 
+            'exam_name', 'class_category', 'subject', 'v_check'
+        ]
         read_only_fields = ['id', 'user', 'created_at']
 
-    def get_api_proof(self, obj):
-        return "YES_V3_ACTIVE"
+    def get_v_check(self, obj):
+        return "ACTIVE_V4"
+
+    def get_exam_name(self, obj):
+        exam = obj.question.exam if obj.question else None
+        return getattr(exam, 'name', "General Practice") if exam else "General Practice"
+
+    def get_class_category(self, obj):
+        exam = obj.question.exam if obj.question else None
+        if exam and exam.class_category:
+            return getattr(exam.class_category, 'name', "All Categories")
+        return "All Categories"
+
+    def get_subject(self, obj):
+        exam = obj.question.exam if obj.question else None
+        if exam and exam.subject:
+            return getattr(exam.subject, 'subject_name', "General Subject")
+        return "General Subject"
 
 
 class PasskeySerializer(serializers.ModelSerializer):
