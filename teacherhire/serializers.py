@@ -1039,7 +1039,16 @@ class ReportSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data
-        representation['question'] = QuestionSerializer(instance.question).data
+        
+        # Enrich question data with exam context
+        question_data = QuestionSerializer(instance.question).data
+        exam = instance.question.exam
+        if exam:
+            question_data['exam_name'] = exam.name
+            question_data['class_category'] = exam.class_category.name
+            question_data['subject'] = exam.subject.subject_name
+            
+        representation['question'] = question_data
         representation['issue_type'] = ReasonSerializer(instance.issue_type.all(), many=True).data      
         return representation
 
