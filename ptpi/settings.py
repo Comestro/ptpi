@@ -102,6 +102,9 @@ TOKEN_EXPIRATION_TIME = 86400
 
 # REST Framework settings
 REST_FRAMEWORK = {
+      'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'teacherhire.authentication.ExpiringTokenAuthentication',
         'rest_framework.authentication.BasicAuthentication',
