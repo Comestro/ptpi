@@ -88,8 +88,8 @@ router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="p
 router.register(r'translator', TranslatorViewset, basename="translator")
 # === Permission-Based Routes ===
 urlpatterns = [
-    path("", include(router.urls)),
     path("admin/teacher/list/", AdminTeacherListView.as_view(), name="admin-teacher-list"),
+    path("", include(router.urls)),
     path("new/teacher/", TeacherFilterAPIView.as_view(), name="new-teacher"),
     # Profile & Checkout
     path("profile/completed/", ProfilecompletedView.as_view(), name="profile-completed"),
