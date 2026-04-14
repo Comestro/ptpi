@@ -1476,7 +1476,7 @@ class TeacherListSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             'id', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
-            'is_active', 'is_verified', 'class_categories', 'subjects'
+            'is_active', 'is_verified', 'class_categories', 'subjects', 'date'
         ]
 
     def get_class_categories(self, obj):
