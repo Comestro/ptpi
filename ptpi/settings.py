@@ -129,14 +129,7 @@ DATABASES = {
     }
 }
 
-# Django-dbbackup configuration
-BACKUP_DIR = os.path.join(BASE_DIR, 'backups')
-DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-DBBACKUP_STORAGE_OPTIONS = {'location': BACKUP_DIR}
-DBBACKUP_CLEANUP_KEEP = 10  # Keep last 10 backups
-DBBACKUP_CLEANUP_KEEP_MEDIA = 10
-
-# Password validation
+# Internationalization
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
