@@ -28,8 +28,20 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Configure django-dbbackup settings
 BACKUP_DIR = BASE_DIR / 'backups'
-DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-DBBACKUP_STORAGE_OPTIONS = {'location': BACKUP_DIR}
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "dbbackup": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": str(BACKUP_DIR),
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 DBBACKUP_CLEANUP_KEEP = 10  # Keep last 10 database backups
 DBBACKUP_CLEANUP_KEEP_MEDIA = 10  # Keep last 10 media backups
 DBBACKUP_DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'  # Timestamp format for backups
@@ -160,8 +172,7 @@ STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Whitenoise configuration for static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Whitenoise configuration for static files (migrated to STORAGES)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

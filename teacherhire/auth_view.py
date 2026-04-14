@@ -321,8 +321,16 @@ class VerifyOTP(APIView):
 
     def get_login_response(self, user):
         # Helper to generate the same login payload we use everywhere
-        Token.objects.filter(user=user).delete()
-        token = Token.objects.create(user=user)
+        token = Token.objects.filter(user=user).first()
+        if token:
+            # Check if existing token has expired
+            expiration_time = timedelta(seconds=settings.TOKEN_EXPIRATION_TIME)
+            if now() > token.created + expiration_time:
+                 token.delete()
+                 token = Token.objects.create(user=user)
+        else:
+            token = Token.objects.create(user=user)
+            
         refresh_token = str(uuid.uuid4())
         
         role = (
