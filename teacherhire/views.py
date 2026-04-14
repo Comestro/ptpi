@@ -3796,10 +3796,10 @@ class AdminTeacherListView(APIView):
     def get(self, request):
         # Using prefetch_related and select_related to solve N+1 query problem
         teachers_qs = CustomUser.objects.filter(is_teacher=True).prefetch_related(
-            'teacherclasscategory__class_category',
+            'teacherclasscategory_set__class_category',
             'teachersubjects__subject',
             'profiles'
-        ).distinct().order_by('-date_joined')
+        ).distinct().order_by('-date')
         
         # Apply basic search if query param exists
         search = request.query_params.get('search')

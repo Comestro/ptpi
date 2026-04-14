@@ -35,7 +35,7 @@ DBBACKUP_CLEANUP_KEEP_MEDIA = 10  # Keep last 10 media backups
 DBBACKUP_DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'  # Timestamp format for backups
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # Allowed hosts
 ALLOWED_HOSTS = [

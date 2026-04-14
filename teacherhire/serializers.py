@@ -1481,7 +1481,7 @@ class TeacherListSerializer(serializers.ModelSerializer):
 
     def get_class_categories(self, obj):
         # Using prefetch_related in view will make this fast
-        return [c.class_category.name for c in obj.teacherclasscategory.all() if c.class_category]
+        return [c.class_category.name for c in obj.teacherclasscategory_set.all() if c.class_category]
 
     def get_subjects(self, obj):
         return [s.subject.subject_name for s in obj.teachersubjects.all() if s.subject]
