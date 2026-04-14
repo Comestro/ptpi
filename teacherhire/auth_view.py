@@ -156,8 +156,16 @@ class LoginUser(APIView):
                 "is_active": False
             }, status=status.HTTP_403_FORBIDDEN)
 
-        Token.objects.filter(user=user).delete()
-        token = Token.objects.create(user=user)
+        token = Token.objects.filter(user=user).first()
+        if token:
+            # Check if existing token has expired
+            from datetime import timedelta
+            expiration_time = timedelta(seconds=settings.TOKEN_EXPIRATION_TIME)
+            if now() > token.created + expiration_time:
+                 token.delete()
+                 token = Token.objects.create(user=user)
+        else:
+            token = Token.objects.create(user=user)
         refresh_token = str(uuid.uuid4())
 
         role = (
