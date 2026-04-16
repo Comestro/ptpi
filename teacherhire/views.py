@@ -2552,13 +2552,20 @@ class InterviewViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         interview = self.get_object()
+        old_status = interview.status
         serializer = self.get_serializer(interview, data=request.data, partial=True)
 
         if serializer.is_valid():
             updated_interview = serializer.save()
-            self.send_interview_link(updated_interview, updated_interview.user.email)
+            # Only send email if status changed to scheduled
+            if updated_interview.status == 'scheduled' and old_status != 'scheduled':
+                self.send_interview_link(updated_interview, updated_interview.user.email)
+                msg = "Interview updated successfully and email with the link has been sent."
+            else:
+                msg = "Interview updated successfully."
+                
             return Response({
-                "message": "Interview updated successfully and email with the link has been sent.",
+                "message": msg,
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
