@@ -78,7 +78,7 @@ def calculate_profile_completed(user):
     if user.Fname and user.Lname:
         complete_profile += 10
     else:
-        feedback.append({"id": "name", "step": "Personal Information", "label": "Add your first and last name", "link": "/teacher/personal-profile"})
+        feedback.append({"id": "name", "step": "Personal Information", "label": "Add your first and last name", "link": "/teacher/personal-profile?tab=basic"})
 
     # 2. Basic Profile (20%)
     basic_profile = BasicProfile.objects.filter(user=user).first()
@@ -88,9 +88,9 @@ def calculate_profile_completed(user):
             complete_profile += 20
         else:
             complete_profile += 10
-            feedback.append({"id": "basic", "step": "Personal Information", "label": f"Complete your basic profile (Missing: {', '.join(missing_fields)})", "link": "/teacher/personal-profile"})
+            feedback.append({"id": "basic", "step": "Personal Information", "label": f"Complete your basic profile (Missing: {', '.join(missing_fields)})", "link": "/teacher/personal-profile?tab=basic"})
     else:
-        feedback.append({"id": "basic", "step": "Personal Information", "label": "Complete your basic profile details", "link": "/teacher/personal-profile"})
+        feedback.append({"id": "basic", "step": "Personal Information", "label": "Complete your basic profile details", "link": "/teacher/personal-profile?tab=basic"})
 
     # 3. Address Information (15%)
     teacher_address = TeachersAddress.objects.filter(user=user).first()
@@ -100,9 +100,9 @@ def calculate_profile_completed(user):
             complete_profile += 15
         else:
             complete_profile += 7
-            feedback.append({"id": "address", "step": "Address Details", "label": "Complete your address information", "link": "/teacher/personal-profile"})
+            feedback.append({"id": "address", "step": "Address Details", "label": "Complete your address information", "link": "/teacher/personal-profile?tab=address"})
     else:
-        feedback.append({"id": "address", "step": "Address Details", "label": "Add your address details", "link": "/teacher/personal-profile"})
+        feedback.append({"id": "address", "step": "Address Details", "label": "Add your address details", "link": "/teacher/personal-profile?tab=address"})
 
     # 4. Job Preferences (20%)
     from .models import Preference
@@ -113,23 +113,23 @@ def calculate_profile_completed(user):
             complete_profile += 20
         else:
             complete_profile += 10
-            feedback.append({"id": "preference", "step": "Job Preferences", "label": "Complete your job preferences", "link": "/teacher/personal-profile"})
+            feedback.append({"id": "preference", "step": "Job Preferences", "label": "Complete your job preferences", "link": "/teacher/personal-profile?tab=Subject Preference"})
     else:
-        feedback.append({"id": "preference", "step": "Job Preferences", "label": "Add your job preferences", "link": "/teacher/personal-profile"})
+        feedback.append({"id": "preference", "step": "Job Preferences", "label": "Add your job preferences", "link": "/teacher/personal-profile?tab=Subject Preference"})
 
     # 5. Educational Qualifications (20%)
     from .models import TeacherQualification
     if TeacherQualification.objects.filter(user=user).exists():
         complete_profile += 20
     else:
-        feedback.append({"id": "qualification", "step": "Education", "label": "Add your educational qualifications", "link": "/teacher/personal-profile"})
+        feedback.append({"id": "qualification", "step": "Education", "label": "Add your educational qualifications", "link": "/teacher/personal-profile?tab=education"})
 
     # 6. Work Experience (15%)
     from .models import TeacherExperiences
     if TeacherExperiences.objects.filter(user=user).exists():
         complete_profile += 15
     else:
-        feedback.append({"id": "experience", "step": "Experience", "label": "Add your professional experience", "link": "/teacher/personal-profile"})
+        feedback.append({"id": "experience", "step": "Experience", "label": "Add your professional experience", "link": "/teacher/personal-profile?tab=experience"})
 
     return min(complete_profile, 100), feedback
 
