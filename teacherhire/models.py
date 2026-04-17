@@ -119,8 +119,9 @@ class TeachersAddress(models.Model):
         required_fields = {
             "state": self.state,
             "district": self.district,
-            "block": self.block,
             "pincode": self.pincode,
+            "postoffice": self.postoffice,
+            "area": self.area,
         }
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields

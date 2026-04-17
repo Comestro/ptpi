@@ -93,16 +93,29 @@ def calculate_profile_completed(user):
         feedback.append({"id": "basic", "step": "Personal Information", "label": "Complete your basic profile details", "link": "/teacher/personal-profile?tab=basic"})
 
     # 3. Address Information (15%)
-    teacher_address = TeachersAddress.objects.filter(user=user).first()
-    if teacher_address:
-        is_complete, missing_fields = teacher_address.is_complete()
-        if is_complete:
-            complete_profile += 15
-        else:
-            complete_profile += 7
-            feedback.append({"id": "address", "step": "Address Details", "label": "Complete your address information", "link": "/teacher/personal-profile?tab=address"})
+    addresses = TeachersAddress.objects.filter(user=user)
+    has_current = addresses.filter(address_type='current').exists()
+    has_permanent = addresses.filter(address_type='permanent').exists()
+    
+    current_complete = False
+    if has_current:
+        current_addr = addresses.filter(address_type='current').first()
+        is_complete, _ = current_addr.is_complete()
+        current_complete = is_complete
+        
+    permanent_complete = False
+    if has_permanent:
+        perm_addr = addresses.filter(address_type='permanent').first()
+        is_complete, _ = perm_addr.is_complete()
+        permanent_complete = is_complete
+
+    if current_complete and permanent_complete:
+        complete_profile += 15
+    elif current_complete or permanent_complete:
+        complete_profile += 7
+        feedback.append({"id": "address", "step": "Address Details", "label": "Complete both current and permanent addresses", "link": "/teacher/personal-profile?tab=address"})
     else:
-        feedback.append({"id": "address", "step": "Address Details", "label": "Add your address details", "link": "/teacher/personal-profile?tab=address"})
+        feedback.append({"id": "address", "step": "Address Details", "label": "Add your address details (Current & Permanent)", "link": "/teacher/personal-profile?tab=address"})
 
     # 4. Job Preferences (20%)
     from .models import Preference
