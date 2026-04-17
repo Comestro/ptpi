@@ -73,42 +73,63 @@ def calculate_profile_completed(user):
 
     complete_profile = 0
     feedback = []
+    
+    # 1. Name fields (10%)
     if user.Fname and user.Lname:
-        complete_profile += 16
+        complete_profile += 10
     else:
-        feedback.append("Name fields (First and Last name) are incomplete.")
+        feedback.append({"id": "name", "step": "Personal Information", "label": "Add your first and last name", "link": "/teacher/personal-profile"})
 
-    if BasicProfile.objects.filter(user=user).exists():
-        complete_profile += 16
-    else:
-        feedback.append("Basic Profile is incomplete.")
-
-    # TeachersAddress and validate completeness
-    teacher_address = TeachersAddress.objects.filter(user=user)
-    if teacher_address.exists():
-        address = teacher_address.first()
-        is_complete, missing_fields = address.is_complete()
+    # 2. Basic Profile (20%)
+    basic_profile = BasicProfile.objects.filter(user=user).first()
+    if basic_profile:
+        is_complete, missing_fields = basic_profile.is_complete()
         if is_complete:
-            complete_profile += 16
-        # else:
-        #     feedback.append(f"TeachersAddress is incomplete. Missing fields: {', '.join(missing_fields)}")
+            complete_profile += 20
+        else:
+            complete_profile += 10
+            feedback.append({"id": "basic", "step": "Personal Information", "label": f"Complete your basic profile (Missing: {', '.join(missing_fields)})", "link": "/teacher/personal-profile"})
     else:
-        feedback.append("Add Address")
+        feedback.append({"id": "basic", "step": "Personal Information", "label": "Complete your basic profile details", "link": "/teacher/personal-profile"})
 
+    # 3. Address Information (15%)
+    teacher_address = TeachersAddress.objects.filter(user=user).first()
+    if teacher_address:
+        is_complete, missing_fields = teacher_address.is_complete()
+        if is_complete:
+            complete_profile += 15
+        else:
+            complete_profile += 7
+            feedback.append({"id": "address", "step": "Address Details", "label": "Complete your address information", "link": "/teacher/personal-profile"})
+    else:
+        feedback.append({"id": "address", "step": "Address Details", "label": "Add your address details", "link": "/teacher/personal-profile"})
 
-    # Check Job Preferences
+    # 4. Job Preferences (20%)
+    from .models import Preference
     preference = Preference.objects.filter(user=user).first()
     if preference:
         is_complete, missing_fields = preference.is_complete()
         if is_complete:
-            complete_profile += 24
-        # else:
-        #     feedback.append(f"Job Preferences are incomplete. Missing fields: {', '.join(missing_fields)}")
+            complete_profile += 20
+        else:
+            complete_profile += 10
+            feedback.append({"id": "preference", "step": "Job Preferences", "label": "Complete your job preferences", "link": "/teacher/personal-profile"})
     else:
-        feedback.append("Add Job Preferences")
+        feedback.append({"id": "preference", "step": "Job Preferences", "label": "Add your job preferences", "link": "/teacher/personal-profile"})
 
+    # 5. Educational Qualifications (20%)
+    from .models import TeacherQualification
+    if TeacherQualification.objects.filter(user=user).exists():
+        complete_profile += 20
+    else:
+        feedback.append({"id": "qualification", "step": "Education", "label": "Add your educational qualifications", "link": "/teacher/personal-profile"})
 
- 
-    # Ensure the total does not exceed 100%
+    # 6. Work Experience (15%)
+    from .models import TeacherExperiences
+    if TeacherExperiences.objects.filter(user=user).exists():
+        complete_profile += 15
+    else:
+        feedback.append({"id": "experience", "step": "Experience", "label": "Add your professional experience", "link": "/teacher/personal-profile"})
+
     return min(complete_profile, 100), feedback
 

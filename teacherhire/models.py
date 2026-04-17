@@ -118,11 +118,8 @@ class TeachersAddress(models.Model):
     def is_complete(self):
         required_fields = {
             "state": self.state,
-            "division": self.division,
             "district": self.district,
             "block": self.block,
-            "village": self.village,
-            "area": self.area,
             "pincode": self.pincode,
         }
         missing_fields = [field for field, value in required_fields.items() if not value]
@@ -231,13 +228,16 @@ class Preference(models.Model):
         return self.user.username
     
     def is_complete(self):
-        required_fields = {
-            "job_role": self.job_role,
-            "class_category": self.class_category,
-            "prefered_subject": self.prefered_subject,
-            "teacher_job_type": self.teacher_job_type
-        }
-        missing_fields = [field for field, value in required_fields.items() if not value]
+        # ManyToMany fields check using .exists()
+        has_class_cat = self.class_category.exists()
+        has_subjects = self.prefered_subject.exists()
+        
+        missing_fields = []
+        if not has_class_cat:
+            missing_fields.append("class_category")
+        if not has_subjects:
+            missing_fields.append("prefered_subject")
+            
         return not missing_fields, missing_fields
 
 class TeacherSubject(models.Model):	
@@ -282,13 +282,10 @@ class BasicProfile(models.Model):
     
     def is_complete(self):
         required_fields = {
-            "profile_picture": self.profile_picture,
             "phone_number": self.phone_number,
-            "religion": self.religion,
             "date_of_birth": self.date_of_birth,
             "marital_status": self.marital_status,
             "gender": self.gender,
-            "language": self.language
         }
         missing_fields = [field for field, value in required_fields.items() if not value]
         return not missing_fields, missing_fields

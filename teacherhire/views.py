@@ -1718,11 +1718,14 @@ class ProfilecompletedView(APIView):
 
     @action(detail=False, methods=["get"])
     def get(self, request, *args, **kwargs):
-        user = request.user  # Get the logged-in user
+        user = request.user
         try:
-            completed_percentage = calculate_profile_completed(user)  # Calculate completed
+            percentage, feedback = calculate_profile_completed(user)
             return Response(
-                {"profile_completed": completed_percentage},  # Return percentage
+                {
+                    "profile_completed": percentage,
+                    "feedback": feedback
+                },
                 status=status.HTTP_200_OK
             )
         except Exception as e:
