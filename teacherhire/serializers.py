@@ -120,9 +120,9 @@ class CenterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_centeruser', 'is_verified', 'is_active']
-        # extra_kwargs = {
-        #     'email': {'validators': [validate_email]},
-        # }
+        extra_kwargs = {
+            'password': {'required': False, 'allow_null': True}
+        }
 
     def create(self, validated_data):
         email = validated_data['email']
@@ -149,6 +149,15 @@ class CenterUserSerializer(serializers.ModelSerializer):
             raise ValidationError({'error': str(e)})
         return user
 
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
 
 # Assigned Question user register serializer
 class QuestionUserSerializer(EmailValidationMixin, serializers.ModelSerializer):
@@ -160,9 +169,9 @@ class QuestionUserSerializer(EmailValidationMixin, serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'Fname', 'Lname', 'is_questionuser', 'is_verified', 'is_active']
-        # extra_kwargs = {
-        #     'email': {'validators': [validate_email]},
-        # }
+        extra_kwargs = {
+            'password': {'required': False, 'allow_null': True}
+        }
 
     def validate_email(self, value):
         return super().validate_email(value)
@@ -191,6 +200,15 @@ class QuestionUserSerializer(EmailValidationMixin, serializers.ModelSerializer):
         except Exception as e:
             raise ValidationError({'error': str(e)})
         return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
 
 class ChangePasswordSerializer(serializers.Serializer):
