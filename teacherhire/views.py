@@ -3859,20 +3859,10 @@ class TeacherDetailAPIView(APIView):
         
         # For admin, return exam attempt details
         exam_results_qs = TeacherExamResult.objects.filter(
-            user=teacher, isqualified=True
-        ).select_related('exam__subject', 'exam__class_category', 'exam__level').order_by(
-            'exam__subject_id', 'exam__class_category_id', 'exam__level_id', '-correct_answer', '-created_at'
-        )
+            user=teacher
+        ).select_related('exam__subject', 'exam__class_category', 'exam__level').order_by('-created_at')
 
-        seen = set()
-        highest_results = []
-        for result in exam_results_qs:
-            key = (result.exam.subject_id, result.exam.class_category_id, result.exam.level_id)
-            if key not in seen:
-                seen.add(key)
-                highest_results.append(result)
-
-        exam_results = TeacherAttempterializer(highest_results, many=True, context={'request': request}).data
+        exam_results = TeacherAttempterializer(exam_results_qs, many=True, context={'request': request}).data
         return Response({"teacher": serializer.data, "attempts": exam_results}, status=200)
     
 
