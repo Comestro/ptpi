@@ -1512,15 +1512,24 @@ class TeacherListSerializer(serializers.ModelSerializer):
 
     def get_subjects(self, obj):
         subjects = set()
+        
+        def normalize_subject(name):
+            if not name: return name
+            name_clean = name.strip()
+            # Normalize common variations
+            if name_clean.lower() in ['maths', 'math']:
+                return 'Mathematics'
+            return name_clean
+
         # From TeacherSubject
         for ts in obj.teachersubjects.all():
             if ts.subject:
-                subjects.add(ts.subject.subject_name)
+                subjects.add(normalize_subject(ts.subject.subject_name))
         # From Preference
         for pref in obj.preferences.all():
             for sub in pref.prefered_subject.all():
-                subjects.add(sub.subject_name)
-        return list(subjects)
+                subjects.add(normalize_subject(sub.subject_name))
+        return sorted(list(subjects))
 
     def get_qualifications(self, obj):
         return [q.qualification.name for q in obj.teacherqualifications.all() if q.qualification]
