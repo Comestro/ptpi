@@ -1487,6 +1487,7 @@ class NewQuestionSerializer(serializers.ModelSerializer):
 class TeacherListSerializer(serializers.ModelSerializer):
     class_categories = serializers.SerializerMethodField()
     subjects = serializers.SerializerMethodField()
+    qualifications = serializers.SerializerMethodField()
     profile_picture = serializers.SerializerMethodField()
     phone_number = serializers.SerializerMethodField()
 
@@ -1494,15 +1495,35 @@ class TeacherListSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             'id', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
-            'is_active', 'is_verified', 'class_categories', 'subjects', 'date'
+            'is_active', 'is_verified', 'class_categories', 'subjects', 'qualifications', 'date'
         ]
 
     def get_class_categories(self, obj):
-        # Using prefetch_related in view will make this fast
-        return [c.class_category.name for c in obj.teacherclasscategory_set.all() if c.class_category]
+        categories = set()
+        # From TeacherClassCategory
+        for tcc in obj.teacherclasscategory_set.all():
+            if tcc.class_category:
+                categories.add(tcc.class_category.name)
+        # From Preference
+        for pref in obj.preferences.all():
+            for cat in pref.class_category.all():
+                categories.add(cat.name)
+        return list(categories)
 
     def get_subjects(self, obj):
-        return [s.subject.subject_name for s in obj.teachersubjects.all() if s.subject]
+        subjects = set()
+        # From TeacherSubject
+        for ts in obj.teachersubjects.all():
+            if ts.subject:
+                subjects.add(ts.subject.subject_name)
+        # From Preference
+        for pref in obj.preferences.all():
+            for sub in pref.prefered_subject.all():
+                subjects.add(sub.subject_name)
+        return list(subjects)
+
+    def get_qualifications(self, obj):
+        return [q.qualification.name for q in obj.teacherqualifications.all() if q.qualification]
 
     def get_profile_picture(self, obj):
         if hasattr(obj, 'profiles') and obj.profiles and obj.profiles.profile_picture:

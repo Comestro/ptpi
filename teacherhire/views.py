@@ -3808,6 +3808,9 @@ class AdminTeacherListView(APIView):
         teachers_qs = CustomUser.objects.filter(is_teacher=True).prefetch_related(
             'teacherclasscategory_set__class_category',
             'teachersubjects__subject',
+            'preferences__class_category',
+            'preferences__prefered_subject',
+            'teacherqualifications__qualification',
             'profiles'
         ).distinct().order_by('-date')
         
