@@ -196,16 +196,11 @@ PASSWORD_RESET_TIME_OUT = 900
 
 # Custom user model
 AUTH_USER_MODEL = 'teacherhire.CustomUser'
-
-# Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.hostinger.com' # Direct IP of smtp.hostinger.com
-EMAIL_PORT = 465                  # Use Port 465 for SSL
-EMAIL_USE_SSL = True              # Enable SSL
-EMAIL_USE_TLS = False             # Disable TLS
-
-EMAIL_TIMEOUT = 30
-
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = 587  # Use 465 for SSL
+EMAIL_USE_TLS = True  # Set to False if using SSL
+EMAIL_USE_SSL = False  # Set to True if using SSL
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_FROM')
