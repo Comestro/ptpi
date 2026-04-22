@@ -205,9 +205,9 @@ EMAIL_USE_SSL = False
 EMAIL_USE_TLS = True
 
 
-EMAIL_HOST_USER = info@ptpinstitute.com
-EMAIL_HOST_PASSWORD = Shaan@854301
-DEFAULT_FROM_EMAIL = info@ptpinstitute.com
+EMAIL_HOST_USER = "info@ptpinstitute.com"
+EMAIL_HOST_PASSWORD = "Shaan@854301"
+DEFAULT_FROM_EMAIL = "info@ptpinstitute.com"
 
 # Security settings for production
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust X-Forwarded-Proto header
