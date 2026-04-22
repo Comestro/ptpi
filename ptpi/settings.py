@@ -199,7 +199,7 @@ AUTH_USER_MODEL = 'teacherhire.CustomUser'
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = '172.65.255.143' # Direct IP of smtp.hostinger.com
+EMAIL_HOST = 'smtp.hostinger.com' # Direct IP of smtp.hostinger.com
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
