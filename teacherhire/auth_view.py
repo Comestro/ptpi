@@ -216,6 +216,8 @@ class LogoutUser(APIView):
 
 
 class PasswordResetRequest(APIView):
+    authentication_classes = []
+
     def post(self, request):
         serializer = SendPasswordResetEmailSerializer(data=request.data)
         if serializer.is_valid():
@@ -224,6 +226,8 @@ class PasswordResetRequest(APIView):
 
 
 class ResetPasswordView(APIView):
+    authentication_classes = []
+
     def post(self, request, uid, token):
         serializer = ResetPasswordSerializer(data=request.data, context={'uid': uid, 'token': token})
         if serializer.is_valid():
@@ -408,6 +412,8 @@ class ResendOTP(APIView):
 
 
 class UserVerify(APIView):
+    authentication_classes = []
+
     def post(self, request):
         email = request.data.get('email')
         user = CustomUser.objects.filter(email=email).first()
