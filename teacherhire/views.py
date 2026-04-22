@@ -3697,6 +3697,8 @@ class ApplyEligibilityView(APIView):
 
 # Teacher Filter API View
 class TeacherFilterAPIView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
     def get(self, request):
         user = request.user if request.user.is_authenticated else None
@@ -3871,7 +3873,8 @@ class AdminTeacherListView(APIView):
 
 # API for teacher all details and their highest qualified exam attempts
 class TeacherDetailAPIView(APIView):
-    permission_classes = []
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
     def get(self, request, teacher_id):
         try:
