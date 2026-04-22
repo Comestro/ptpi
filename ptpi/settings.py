@@ -199,16 +199,15 @@ AUTH_USER_MODEL = 'teacherhire.CustomUser'
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.hostinger.com'
-
-
 EMAIL_TIMEOUT = 30
 EMAIL_PORT = 587
 EMAIL_USE_SSL = False
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
-DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_FROM')
+
+EMAIL_HOST_USER = info@ptpinstitute.com
+EMAIL_HOST_PASSWORD = Shaan@854301
+DEFAULT_FROM_EMAIL = info@ptpinstitute.com
 
 # Security settings for production
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust X-Forwarded-Proto header
