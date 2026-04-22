@@ -1574,9 +1574,10 @@ class TeacherSerializer(serializers.ModelSerializer):
         fields = super().get_fields()
         user = self.context.get('request').user if self.context.get('request') else None
         # Only admin can see jobpreferencelocation, preferences, teachersaddress
-        if user and not user.is_staff:
+        if not user or not user.is_staff:
             fields.pop('jobpreferencelocation', None)
             fields.pop('preferences', None)
+            fields.pop('teachersaddress', None)
         return fields
 
     def get_total_marks(self, instance):
@@ -1637,14 +1638,14 @@ class TeacherSerializer(serializers.ModelSerializer):
             ]
         user = self.context.get('request').user if self.context.get('request') else None
 
-        # Mask email for non-admins
-        if user and not user.is_staff and 'email' in representation and representation['email']:
+        # Mask email for non-admins (including guests)
+        if (not user or not user.is_staff) and 'email' in representation and representation['email']:
             representation['email'] = self.mask_email(representation['email'])
-
+        
         # Mask phone number for non-admins in profiles
         if 'profiles' in representation and representation['profiles'] is not None:
             profile_data = representation['profiles']
-            if user and not user.is_staff and profile_data.get('phone_number'):
+            if (not user or not user.is_staff) and profile_data.get('phone_number'):
                 profile_data['phone_number'] = self.mask_phone(profile_data['phone_number'])
             profile_filtered = {
                 'bio': profile_data.get('bio', ''),
@@ -1806,14 +1807,33 @@ class TeacherFilterSerializer(serializers.ModelSerializer):
         return None
 
     def get_phone_number(self, obj):
+        user = self.context.get('request').user if self.context.get('request') else None
         profile = getattr(obj, 'profiles', None)
-        return profile.phone_number if profile else None
+        if not profile or not profile.phone_number:
+            return None
+        phone = profile.phone_number
+        if not user or not user.is_staff:
+            if len(phone) >= 6:
+                return f"{phone[:4]}****{phone[-2:]}"
+            return "****"
+        return phone
 
     def get_current_address(self, obj):
+        user = self.context.get('request').user if self.context.get('request') else None
         address = obj.teachersaddress.filter(address_type='current').first()
-        if address:
-            return TeachersAddressSerializer(address).data
-        return None
+        if not address:
+            return None
+        
+        data = TeachersAddressSerializer(address).data
+        if not user or not user.is_staff:
+            # Mask sensitive components
+            return {
+                'state': data.get('state'),
+                'district': data.get('district'),
+                'division': data.get('division'),
+                # area, pincode, block, village, postoffice removed
+            }
+        return data
 
     def get_last_experience(self, obj):
         exp = obj.teacherexperiences.order_by('-end_date', '-start_date').first()
@@ -1826,6 +1846,19 @@ class TeacherFilterSerializer(serializers.ModelSerializer):
         if edu:
             return TeacherQualificationSerializer(edu).data
         return None
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        user = self.context.get('request').user if self.context.get('request') else None
+        
+        if (not user or not user.is_staff) and representation.get('email'):
+            email = representation['email']
+            if '@' in email:
+                name, domain = email.split('@', 1)
+                masked_name = name[:2] + "***" if len(name) > 2 else name + "***"
+                representation['email'] = f"{masked_name}@{domain}"
+        
+        return representation
     
 
 class QualifiedUserExamSerializer(serializers.ModelSerializer):
