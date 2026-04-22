@@ -232,6 +232,12 @@ class EducationalQulificationViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+    
+    def get_authenticators(self):
+        if self.request.method == 'GET':
+            return []
+        return [ExpiringTokenAuthentication()]
+
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = EducationalQualificationSerializer
     queryset = EducationalQualification.objects.all()
@@ -313,6 +319,12 @@ class SkillViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+    
+    def get_authenticators(self):
+        if self.request.method == 'GET':
+            return []
+        return [ExpiringTokenAuthentication()]
+
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
@@ -716,6 +728,12 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def get_authenticators(self):
+        if self.request.method == 'GET':
+            return []
+        return [ExpiringTokenAuthentication()]
+
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
@@ -1145,6 +1163,11 @@ class RoleViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def get_authenticators(self):
+        if self.request.method == 'GET':
+            return []
+        return [ExpiringTokenAuthentication()]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
@@ -1716,6 +1739,12 @@ class TeacherJobTypeViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def get_authenticators(self):
+        if self.request.method == 'GET':
+            return []
+        return [ExpiringTokenAuthentication()]
+
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
