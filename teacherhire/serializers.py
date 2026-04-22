@@ -999,11 +999,16 @@ class SendPasswordResetEmailSerializer(serializers.Serializer):
         token = PasswordResetTokenGenerator().make_token(user)
 
         reset_link = f'https://ptpinstitute.com/reset-password/{uid}/{token}'
-        print('reset_link', reset_link)
-        body = f'Click the following link to reset your password: {reset_link}'
+        
+        # Render HTML message
+        context = {'reset_link': reset_link, 'user': user}
+        html_message = render_to_string('emails/password_reset.html', context)
+        plain_message = f'Click the following link to reset your password: {reset_link}'
+        
         data = {
             'subject': 'Reset Your Password',
-            'body': body,
+            'body': plain_message,
+            'html_message': html_message,
             'to_email': user.email
         }
 

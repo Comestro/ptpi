@@ -8,13 +8,14 @@ from .models import BasicProfile ,TeachersAddress,Preference
 class Util:
     @staticmethod
     def send_email(data):
-        email = EmailMessage(
+        send_mail(
             subject=data['subject'],
-            body=data['body'],
+            message=data['body'],
             from_email=os.environ.get('EMAIL_FROM'),
-            to=[data['to_email']]
+            recipient_list=[data['to_email']],
+            html_message=data.get('html_message'),
+            fail_silently=False
         )
-        email.send()
 
 def send_otp_via_email(email):
     subject = "Your Account Verification Email"
