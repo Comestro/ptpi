@@ -426,6 +426,8 @@ class SubjectViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return [IsAuthenticated()]
     authentication_classes = [ExpiringTokenAuthentication]
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
 
     def get_authenticators(self):
         if self.request.method == 'GET':
