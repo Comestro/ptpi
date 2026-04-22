@@ -228,7 +228,10 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
 
 
 class EducationalQulificationViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     authentication_classes = [ExpiringTokenAuthentication]
     serializer_class = EducationalQualificationSerializer
     queryset = EducationalQualification.objects.all()
@@ -306,7 +309,10 @@ class LevelViewSet(viewsets.ModelViewSet):
 
 
 class SkillViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
@@ -403,13 +409,11 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
 
 
 class SubjectViewSet(viewsets.ModelViewSet):
-    queryset = Subject.objects.all()
-    serializer_class = SubjectSerializer
-
     def get_permissions(self):
-        if self.request.method == 'GET':
-            return []
-        return [IsAuthenticated(), IsAdminOrTeacher()]
+        if self.action in ['list', 'retrieve', 'subjects_by_category']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+    authentication_classes = [ExpiringTokenAuthentication]
 
     def get_authenticators(self):
         if self.request.method == 'GET':
@@ -708,7 +712,10 @@ class RecruiterTeacherSearch(viewsets.ModelViewSet):
 
         return queryset
 class ClassCategoryViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = ClassCategory.objects.all()
     serializer_class = ClassCategorySerializer
@@ -1134,7 +1141,10 @@ class SelfQuestionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RoleViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, IsAdminOrTeacher]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
@@ -1702,7 +1712,10 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 
 
 class TeacherJobTypeViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated, IsAdminOrTeacher]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     authentication_classes = [ExpiringTokenAuthentication]
     queryset = TeacherJobType.objects.all()
     serializer_class = TeacherJobTypeSerializer
