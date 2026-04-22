@@ -14,6 +14,7 @@ from googletrans import Translator
 from rest_framework.validators import UniqueValidator
 from rest_framework.response import Response
 from rest_framework.fields import CurrentUserDefault
+from django.template.loader import render_to_string
 
 
 # global password validation function
