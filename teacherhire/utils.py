@@ -20,17 +20,24 @@ def send_otp_via_email(email):
     subject = "Your Account Verification Email"
     otp = random.randint(100000, 999999)
     
-    html_message = render_to_string('emails/otp_verification.html', {'otp': otp})
-    
-    message = f"Your OTP is {otp}"
-    
-    from_email = os.environ.get('EMAIL_FROM')
-    send_mail(subject, message, from_email, [email], html_message=html_message)
-    # user_obj = CustomUser.objects.get(email=email)
-    # user_obj.otp = otp
-    # user_obj.otp_created_at = now()
-    # user_obj.save()
-    return otp
+    try:
+        html_message = render_to_string('emails/otp_verification.html', {'otp': otp})
+        message = f"Your OTP is {otp}"
+        from_email = os.environ.get('EMAIL_FROM')
+        
+        send_mail(
+            subject, 
+            message, 
+            from_email, 
+            [email], 
+            html_message=html_message,
+            fail_silently=False
+        )
+        return otp
+    except Exception as e:
+        # Re-raise with a more descriptive message or handle appropriately
+        raise Exception(f"Failed to send OTP email: {str(e)}")
+
 
 def verified_msg(email):
     try:

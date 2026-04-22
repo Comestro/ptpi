@@ -42,27 +42,41 @@ class RegisterUser(APIView):
             fname = serializer.validated_data['Fname']
             lname = serializer.validated_data['Lname']
             
-            # Generate OTP
-            otp = send_otp_via_email(email)
-            
-            # Create or update pending registration
-            pending_user, created = PendingRegistration.objects.update_or_create(
-                email=email,
-                defaults={
-                    'password_hash': make_password(password),
-                    'Fname': fname,
-                    'Lname': lname,
-                    'role': role,
-                    'otp': otp,
-                    'otp_created_at': now()
-                }
-            )
+            try:
+                # Generate OTP
+                otp = send_otp_via_email(email)
+                
+                # Create or update pending registration
+                pending_user, created = PendingRegistration.objects.update_or_create(
+                    email=email,
+                    defaults={
+                        'password_hash': make_password(password),
+                        'Fname': fname,
+                        'Lname': lname,
+                        'role': role,
+                        'otp': otp,
+                        'otp_created_at': now()
+                    }
+                )
 
-            return Response({
-                "payload": serializer.data,
-                "role": role,
-                "message": "Check your email to verify your account."
-            }, status=status.HTTP_201_CREATED)
+                return Response({
+                    "payload": serializer.data,
+                    "role": role,
+                    "message": "Check your email to verify your account."
+                }, status=status.HTTP_201_CREATED)
+            
+            except Exception as e:
+                # Handle specific exceptions like email failure
+                return Response({
+                    "status": "error",
+                    "type": "server_error",
+                    "errors": [{
+                        "code": "server_error",
+                        "detail": f"An error occurred during registration: {str(e)}",
+                        "attr": None
+                    }]
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         
         # Handle errors (same as before)
         errors = []
