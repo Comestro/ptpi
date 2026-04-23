@@ -3898,8 +3898,21 @@ class TeacherDetailAPIView(APIView):
         
         serializer = TeacherSerializer(teacher, context={'request': request})
 
+        # Manually verify admin token since authentication_classes is bypassed
+        from rest_framework.authtoken.models import Token
+        is_admin = False
+        auth_header = request.headers.get('Authorization', '')
+        if auth_header.startswith('Token '):
+            token_key = auth_header.replace('Token ', '').strip()
+            try:
+                token = Token.objects.get(key=token_key)
+                if token.user.is_staff:
+                    is_admin = True
+            except Exception:
+                pass
+
         # For recruiters (non-admin), return only interview details
-        if not request.user.is_authenticated or not request.user.is_staff:
+        if not is_admin:
             interviews = Interview.objects.filter(
                 user=teacher
             ).exclude(grade__isnull=True).order_by('-created_at')
