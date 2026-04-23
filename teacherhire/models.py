@@ -416,6 +416,7 @@ class TeacherExamResult(models.Model):
             ('English', 'English'),
         ],blank=True
     )
+    time_taken_seconds = models.IntegerField(default=0, help_text="Time taken to complete the exam in seconds")
 
     def __str__(self):
         return f"ExamResult-{self.examresult_id}"

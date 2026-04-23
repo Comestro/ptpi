@@ -181,7 +181,7 @@ class SingleTeachersAddressViewSet(viewsets.ModelViewSet):
             return Response(
                 {"detail": "Invalid or missing 'address_type'. Expected 'current' or 'permanent'."},
                 status=status.HTTP_400_BAD_REQUEST
-            )
+            )   
 
         # Try to find the address of the given address type for the authenticated user
         address = TeachersAddress.objects.filter(user=request.user, address_type=address_type).first()
