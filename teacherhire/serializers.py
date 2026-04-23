@@ -1573,8 +1573,9 @@ class TeacherSerializer(serializers.ModelSerializer):
     def get_fields(self):
         fields = super().get_fields()
         user = self.context.get('request').user if self.context.get('request') else None
+        is_admin = self.context.get('is_admin', False)
         # Only admin can see jobpreferencelocation, preferences, teachersaddress
-        if not user or not user.is_staff:
+        if not is_admin and (not user or not user.is_staff):
             fields.pop('jobpreferencelocation', None)
             fields.pop('preferences', None)
             fields.pop('teachersaddress', None)
@@ -1637,15 +1638,16 @@ class TeacherSerializer(serializers.ModelSerializer):
                 for experience in representation['teacherexperiences']
             ]
         user = self.context.get('request').user if self.context.get('request') else None
+        is_admin = self.context.get('is_admin', False)
 
         # Mask email for non-admins (including guests)
-        if (not user or not user.is_staff) and 'email' in representation and representation['email']:
+        if not is_admin and (not user or not user.is_staff) and 'email' in representation and representation['email']:
             representation['email'] = self.mask_email(representation['email'])
         
         # Mask phone number for non-admins in profiles
         if 'profiles' in representation and representation['profiles'] is not None:
             profile_data = representation['profiles']
-            if (not user or not user.is_staff) and profile_data.get('phone_number'):
+            if not is_admin and (not user or not user.is_staff) and profile_data.get('phone_number'):
                 profile_data['phone_number'] = self.mask_phone(profile_data['phone_number'])
             profile_filtered = {
                 'bio': profile_data.get('bio', ''),

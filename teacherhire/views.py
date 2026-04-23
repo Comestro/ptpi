@@ -3895,9 +3895,6 @@ class TeacherDetailAPIView(APIView):
             ).get(id=teacher_id, is_teacher=True)
         except CustomUser.DoesNotExist:
             return Response({"error": "Teacher not found."}, status=404)
-        
-        serializer = TeacherSerializer(teacher, context={'request': request})
-
         # Manually verify admin token since authentication_classes is bypassed
         from rest_framework.authtoken.models import Token
         is_admin = False
@@ -3910,6 +3907,8 @@ class TeacherDetailAPIView(APIView):
                     is_admin = True
             except Exception:
                 pass
+                
+        serializer = TeacherSerializer(teacher, context={'request': request, 'is_admin': is_admin})
 
         # For recruiters (non-admin), return only interview details
         if not is_admin:
