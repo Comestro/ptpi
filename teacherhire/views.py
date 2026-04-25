@@ -3541,47 +3541,64 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         for item in questions:
             language = item.get("language")
-
+            item_id = item.get("id")
+            
             if subject_name in native_languages:
                 if language.lower() == 'hindi' and subject_name != 'hindi':
                     continue
 
-            # Inject exam ID into question
-            item["exam"] = exam_id
-
-            if language == "English":
-                serializer = self.get_serializer(base_instance, data=item, partial=partial)
-                if serializer.is_valid():
-                    english_instance = serializer.save()
-                    try:
-                        hindi_instance = Question.objects.get(related_question=base_instance.id)
-                        hindi_instance.correct_option = base_instance.correct_option
-                        hindi_instance.save()
-                        updated_data["hindi_data"] = QuestionSerializer(hindi_instance).data
-                    except Question.DoesNotExist:
-                        pass # No error, just no twin to update
-                    updated_data["english_data"] = QuestionSerializer(english_instance).data
-                else:
-                    errors["english_errors"] = serializer.errors
-
-            elif language == "Hindi":
+            # 1. Try finding instance by ID
+            instance = None
+            if item_id:
                 try:
-                    if base_instance.language.lower() == "english":
-                        hindi_instance = Question.objects.get(related_question=base_instance)
-                    else:
-                        hindi_instance = Question.objects.get(id=base_instance.id)
+                    instance = Question.objects.get(id=item_id)
                 except Question.DoesNotExist:
-                    errors["hindi_errors"] = "Hindi question not found"
-                    continue
+                    pass
+            
+            # 2. Fallback: If languages match, use base_instance
+            if not instance and language.lower() == base_instance.language.lower():
+                instance = base_instance
 
-                serializer = self.get_serializer(hindi_instance, data=item, partial=partial)
-                if serializer.is_valid():
-                    hindi_instance = serializer.save()
-                    updated_data["hindi_data"] = QuestionSerializer(hindi_instance).data
-                else:
-                    errors["hindi_errors"] = serializer.errors
+            # 3. Last resort: Try finding pair
+            if not instance:
+                if language == "Hindi":
+                    try:
+                        instance = Question.objects.get(related_question=base_instance)
+                    except (Question.DoesNotExist, Question.MultipleObjectsReturned):
+                        pass
+                elif language == "English":
+                    try:
+                        if base_instance.language == "Hindi":
+                            instance = base_instance.related_question
+                    except Exception:
+                        pass
 
-        # Only return 400 if there are actual errors (rejecting None/empty values)
+            if not instance:
+                errors[f"{language.lower()}_errors"] = f"{language} question instance not found"
+                continue
+
+            item["exam"] = exam_id
+            serializer = self.get_serializer(instance, data=item, partial=partial)
+            
+            if serializer.is_valid():
+                updated_instance = serializer.save()
+                
+                # Auto-sync correct_option to pair if it exists but wasn't in the update list
+                if language == "English":
+                    try:
+                        hindi_ids = [q.get('id') for q in questions if q.get('language') == 'Hindi']
+                        hindi_instance = Question.objects.get(related_question=updated_instance)
+                        if hindi_instance.id not in hindi_ids:
+                            hindi_instance.correct_option = updated_instance.correct_option
+                            hindi_instance.save()
+                            updated_data["hindi_data"] = NewQuestionSerializer(hindi_instance).data
+                    except (Question.DoesNotExist, Question.MultipleObjectsReturned):
+                        pass
+                
+                updated_data[f"{language.lower()}_data"] = NewQuestionSerializer(updated_instance).data
+            else:
+                errors[f"{language.lower()}_errors"] = serializer.errors
+
         if any(errors.values()):
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3589,6 +3606,72 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
             "message": "Questions updated successfully",
             **updated_data
         }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def sync(self, request):
+        exam_id = request.data.get("exam_id")
+        if not exam_id:
+            return Response({"error": "exam_id is required"}, status=400)
+            
+        try:
+            exam = Exam.objects.get(id=exam_id)
+        except Exam.DoesNotExist:
+            return Response({"error": "Exam not found"}, status=404)
+            
+        import re
+        def is_hindi(text):
+            if not text: return False
+            return bool(re.search(r'[\u0900-\u097F]', text))
+
+        questions = Question.objects.filter(exam=exam).order_by('order', 'id')
+        by_order = {}
+        for q in questions:
+            if q.order not in by_order:
+                by_order[q.order] = []
+            by_order[q.order].append(q)
+            
+        logs = []
+        for order, qs in by_order.items():
+            # 1. Fix mislabeled languages
+            for q in qs:
+                if q.language == 'Hindi' and not is_hindi(q.text):
+                    q.language = 'English'
+                    q.save()
+                    logs.append(f"Order {order}: Changed ID {q.id} Hindi -> English")
+                elif q.language == 'English' and is_hindi(q.text):
+                    q.language = 'Hindi'
+                    q.save()
+                    logs.append(f"Order {order}: Changed ID {q.id} English -> Hindi")
+
+            # Re-fetch after language fix
+            qs = list(Question.objects.filter(exam=exam, order=order).order_by('id'))
+            english_qs = [q for q in qs if q.language == 'English']
+            hindi_qs = [q for q in qs if q.language == 'Hindi']
+            
+            # 2. Handle duplicates
+            if len(english_qs) > 1:
+                for q in english_qs[1:]:
+                    q.delete()
+                    logs.append(f"Order {order}: Deleted duplicate English ID {q.id}")
+                english_qs = [english_qs[0]]
+
+            if len(hindi_qs) > 1:
+                for q in hindi_qs[1:]:
+                    q.delete()
+                    logs.append(f"Order {order}: Deleted duplicate Hindi ID {q.id}")
+                hindi_qs = [hindi_qs[0]]
+                
+            # 3. Link pairs
+            if english_qs and hindi_qs:
+                en = english_qs[0]
+                hi = hindi_qs[0]
+                if hi.related_question != en:
+                    hi.related_question = en
+                    hi.save()
+                    logs.append(f"Order {order}: Linked Hindi ID {hi.id} to English ID {en.id}")
+
+        return Response({"message": "Sync complete", "logs": logs}, status=200)
+
 
 
     def destroy(self, request, *args, **kwargs):
