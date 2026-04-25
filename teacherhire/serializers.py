@@ -1103,7 +1103,15 @@ class PasskeySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {"id": instance.user.id, "email": instance.user.email, "user_code":instance.user.user_code} if instance.user else None
+        profile = getattr(instance.user, 'profiles', None)
+        representation['user'] = {
+            "id": instance.user.id,
+            "Fname": instance.user.Fname,
+            "Lname": instance.user.Lname,
+            "email": instance.user.email,
+            "user_code": instance.user.user_code,
+            "phone_number": profile.phone_number if profile else None
+        } if instance.user else None
         representation['exam'] = {"id": instance.exam.id, "name": instance.exam.name}
         representation['center'] = {"id": instance.center.id, "name": instance.center.center_name}
         return representation
