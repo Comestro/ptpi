@@ -834,9 +834,15 @@ class TeacherExamResultSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
+        profile = getattr(instance.user, 'profiles', None)
         representation['user'] = {
             "id": instance.user.id,
-            "name": instance.user.username
+            "Fname": instance.user.Fname,
+            "Lname": instance.user.Lname,
+            "email": instance.user.email,
+            "username": instance.user.username,
+            "user_code": instance.user.user_code,
+            "phone_number": profile.phone_number if profile else None
         }
 
         if instance.exam:
@@ -1142,6 +1148,8 @@ class InterviewSerializer(serializers.ModelSerializer):
             "Fname": instance.user.Fname,
             "Lname": instance.user.Lname,
             "email": instance.user.email,
+            "user_code": instance.user.user_code,
+            "phone_number": profile.phone_number if profile else None,
             "profile_picture": profile_picture
         }
         representation['class_category'] = {
