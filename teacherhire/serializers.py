@@ -303,10 +303,19 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
     start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
     achievements = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    years_of_experience = serializers.SerializerMethodField()
 
     class Meta:
         model = TeacherExperiences
-        fields = ['id', 'user', 'institution', 'role', 'start_date', 'end_date', 'achievements']
+        fields = ['id', 'user', 'institution', 'role', 'start_date', 'end_date', 'achievements', 'description', 'years_of_experience']
+
+    def get_years_of_experience(self, obj):
+        if not obj.start_date:
+            return None
+        end = obj.end_date or date.today()
+        diff = (end - obj.start_date).days / 365.25
+        return round(diff, 1)
 
     def validate_institution(self, value):
         if value and len(value) < 3:
@@ -1795,7 +1804,9 @@ class TeacherSerializer(serializers.ModelSerializer):
                     'institution': experience.get('institution', ''),
                     'start_date': experience.get('start_date', ''),
                     'end_date': experience.get('end_date', ''),
-                    'achievements': experience.get('achievements', '')
+                    'achievements': experience.get('achievements', ''),
+                    'description': experience.get('description', ''),
+                    'years_of_experience': experience.get('years_of_experience', 0)
                 }
                 for experience in representation['teacherexperiences']
             ]
