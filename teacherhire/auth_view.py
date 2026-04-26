@@ -9,7 +9,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.timezone import now
 from django.conf import settings
 from datetime import timedelta
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, update_last_login
 from django.contrib.auth.hashers import make_password
 import uuid
 from teacherhire.serializers import *
@@ -180,6 +180,10 @@ class LoginUser(APIView):
                  token = Token.objects.create(user=user)
         else:
             token = Token.objects.create(user=user)
+        
+        # Update last login
+        update_last_login(None, user)
+        
         refresh_token = str(uuid.uuid4())
 
         role = (
@@ -348,6 +352,9 @@ class VerifyOTP(APIView):
                  token = Token.objects.create(user=user)
         else:
             token = Token.objects.create(user=user)
+            
+        # Update last login
+        update_last_login(None, user)
             
         refresh_token = str(uuid.uuid4())
         
