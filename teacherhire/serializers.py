@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from .utils import Util
+from .utils import Util, calculate_profile_completed
 from datetime import datetime
 from datetime import date
 from rest_framework import status
@@ -1585,12 +1585,17 @@ class TeacherSerializer(serializers.ModelSerializer):
     total_marks = serializers.SerializerMethodField()
     jobpreferencelocation = JobPreferenceLocationSerializer(many=True, required=False)
     apply = ApplySerializer(many=True, required=False)
+    profile_completed = serializers.SerializerMethodField()
+    profile_feedback = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
+    last_login = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
         fields = [
             'id', 'user_code', 'Fname', 'Lname', 'email', 'profiles', 'is_active', 'is_verified',
-            'teacherskill', 'teachersaddress',
+            'teacherskill', 'teachersaddress', 'date', 'last_login', 
+            'profile_completed', 'profile_feedback',
             'teacherexperiences', 'teacherqualifications',
             'preferences', 'total_marks', 'jobpreferencelocation', 'apply'
         ]
@@ -1605,6 +1610,54 @@ class TeacherSerializer(serializers.ModelSerializer):
             fields.pop('preferences', None)
             fields.pop('teachersaddress', None)
         return fields
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profiles', None)
+        instance = super().update(instance, validated_data)
+        
+        if profile_data:
+            profile_instance = getattr(instance, 'profiles', None)
+            if profile_instance:
+                # Update existing profile
+                for attr, value in profile_data.items():
+                    setattr(profile_instance, attr, value)
+                profile_instance.save()
+            else:
+                # Create profile if it doesn't exist
+                from .models import BasicProfile
+                BasicProfile.objects.create(user=instance, **profile_data)
+        
+        return instance
+
+    def get_profile_completed(self, instance):
+        # HARDCODED TEST: If you see 99%, the backend is updating correctly.
+        # If you still see 0%, the server needs a restart or we are in the wrong file.
+        return 99
+
+    def get_profile_feedback(self, instance):
+        _, feedback = calculate_profile_completed(instance)
+        return feedback
+
+    def get_date(self, instance):
+        # Try 'date', then 'date_joined', then 'created_at'
+        val = getattr(instance, 'date', None) or getattr(instance, 'date_joined', None) or getattr(instance, 'created_at', None)
+        print(f"DEBUG: Date for {instance.email}: {val}")
+        if val:
+            try:
+                return val.isoformat()
+            except:
+                return str(val)
+        return None
+
+    def get_last_login(self, instance):
+        val = getattr(instance, 'last_login', None)
+        print(f"DEBUG: Last Login for {instance.email}: {val}")
+        if val:
+            try:
+                return val.isoformat()
+            except:
+                return str(val)
+        return None
 
     def get_total_marks(self, instance):
         last_result = TeacherExamResult.objects.filter(user=instance).order_by('created_at').last()
@@ -1628,7 +1681,19 @@ class TeacherSerializer(serializers.ModelSerializer):
         return f"{phone[:4]}****{phone[-2:]}"
 
     def to_representation(self, instance):
+        print(f"DEBUG: Serializing teacher {instance.email} (ID: {instance.id})")
         representation = super().to_representation(instance)
+        
+        # Ensure completion fields are present and not None
+        percentage = self.get_profile_completed(instance)
+        representation['completion_score'] = percentage
+        representation['profile_completed'] = percentage # Keep both for now
+        
+        representation['profile_feedback'] = self.get_profile_feedback(instance)
+            
+        # Ensure dates are present
+        representation['date'] = self.get_date(instance)
+        representation['last_login'] = self.get_last_login(instance)
 
         if 'total_marks' not in representation:
             representation['total_marks'] = self.get_total_marks(instance)
