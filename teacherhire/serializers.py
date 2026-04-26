@@ -1061,6 +1061,7 @@ class ReportSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     question = QuestionSerializer(read_only=True)
     issue_type = ReasonSerializer(many=True, read_only=True)
+    resolved_by = UserSerializer(read_only=True)
     
     # Metadata Fields
     exam_name = serializers.SerializerMethodField()
@@ -1072,12 +1073,20 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = [
             'id', 'user', 'question', 'issue_type', 'status', 'created_at', 
-            'exam_name', 'class_category', 'subject', 'v_check'
+            'exam_name', 'class_category', 'subject', 'v_check', 'resolved_by'
         ]
         read_only_fields = ['id', 'user', 'created_at']
 
     def get_v_check(self, obj):
         return "ACTIVE_V4"
+
+    def update(self, instance, validated_data):
+        status = validated_data.get('status', instance.status)
+        if status and not instance.status:
+            request = self.context.get('request')
+            if request and request.user:
+                instance.resolved_by = request.user
+        return super().update(instance, validated_data)
 
     def get_exam_name(self, obj):
         exam = obj.question.exam if obj.question else None
