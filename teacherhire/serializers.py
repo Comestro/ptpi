@@ -314,8 +314,23 @@ class TeacherExperiencesSerializer(serializers.ModelSerializer):
         if not obj.start_date:
             return None
         end = obj.end_date or date.today()
-        diff = (end - obj.start_date).days / 365.25
-        return round(diff, 1)
+        diff_days = (end - obj.start_date).days
+        if diff_days < 0:
+            return "0 months"
+            
+        years = diff_days // 365
+        months = (diff_days % 365) // 30
+        
+        parts = []
+        if years > 0:
+            parts.append(f"{years} yr{'s' if years > 1 else ''}")
+        if months > 0:
+            parts.append(f"{months} month{'s' if months > 1 else ''}")
+            
+        if not parts:
+            return "0 months"
+            
+        return " ".join(parts)
 
     def validate_institution(self, value):
         if value and len(value) < 3:
@@ -1592,6 +1607,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     teacherqualifications = TeacherQualificationSerializer(many=True, required=False)
     preferences = PreferenceSerializer(many=True, required=False)
     total_marks = serializers.SerializerMethodField()
+    total_experience = serializers.SerializerMethodField()
     jobpreferencelocation = JobPreferenceLocationSerializer(many=True, required=False)
     apply = ApplySerializer(many=True, required=False)
     profile_completed = serializers.SerializerMethodField()
@@ -1606,8 +1622,32 @@ class TeacherSerializer(serializers.ModelSerializer):
             'teacherskill', 'teachersaddress', 'date', 'last_login', 
             'profile_completed', 'profile_feedback',
             'teacherexperiences', 'teacherqualifications',
-            'preferences', 'total_marks', 'jobpreferencelocation', 'apply'
+            'preferences', 'total_marks', 'total_experience', 'jobpreferencelocation', 'apply'
         ]
+
+    def get_total_experience(self, obj):
+        from .models import TeacherExperiences
+        from datetime import date
+        total_days = 0
+        for exp in obj.teacherexperiences.all():
+            if exp.start_date:
+                end = exp.end_date or date.today()
+                total_days += (end - exp.start_date).days
+        
+        if total_days <= 0:
+            return "Fresher"
+            
+        years = total_days // 365
+        months = (total_days % 365) // 30
+        
+        parts = []
+        if years > 0:
+            parts.append(f"{years} yr{'s' if years > 1 else ''}")
+        if months > 0:
+            parts.append(f"{months} month{'s' if months > 1 else ''}")
+            
+        return " ".join(parts) if parts else "0 months"
+
 
     def get_fields(self):
         fields = super().get_fields()
@@ -1778,6 +1818,9 @@ class TeacherSerializer(serializers.ModelSerializer):
 
         if 'total_marks' not in representation:
             representation['total_marks'] = self.get_total_marks(instance)
+            
+        if 'total_experience' not in representation:
+            representation['total_experience'] = self.get_total_experience(instance)
 
         if 'teacherskill' in representation:
             representation['teacherskill'] = [
