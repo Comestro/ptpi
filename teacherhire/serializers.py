@@ -1612,27 +1612,99 @@ class TeacherSerializer(serializers.ModelSerializer):
         return fields
 
     def update(self, instance, validated_data):
+        # 1. Pop nested data
         profile_data = validated_data.pop('profiles', None)
+        address_data = validated_data.pop('teachersaddress', None)
+        skills_data = validated_data.pop('teacherskill', None)
+        experience_data = validated_data.pop('teacherexperiences', None)
+        qualification_data = validated_data.pop('teacherqualifications', None)
+        preference_data = validated_data.pop('preferences', None)
+        
+        # 2. Update base User instance
         instance = super().update(instance, validated_data)
         
+        # 3. Update Basic Profile
         if profile_data:
             profile_instance = getattr(instance, 'profiles', None)
             if profile_instance:
-                # Update existing profile
                 for attr, value in profile_data.items():
                     setattr(profile_instance, attr, value)
                 profile_instance.save()
             else:
-                # Create profile if it doesn't exist
                 from .models import BasicProfile
                 BasicProfile.objects.create(user=instance, **profile_data)
+        
+        # 4. Update Addresses (Residency)
+        if address_data:
+            from .models import TeachersAddress
+            # address_data could be a dict with 'current_address' and 'permanent_address' 
+            # if coming from my SerializerMethodField representation, or a list/dict from raw.
+            # Handle standard format:
+            for addr_type in ['current', 'permanent']:
+                key = f"{addr_type}_address"
+                if key in address_data:
+                    data = address_data[key]
+                    TeachersAddress.objects.update_or_create(
+                        user=instance, address_type=addr_type,
+                        defaults=data
+                    )
+
+        # 5. Update Skills
+        if skills_data is not None:
+            from .models import TeacherSkill, Skill
+            # Standard pattern: Replace all
+            instance.teacherskill.all().delete()
+            for skill_item in skills_data:
+                skill_name = skill_item.get('skill', {}).get('name')
+                if skill_name:
+                    skill_obj, _ = Skill.objects.get_or_create(name=skill_name)
+                    TeacherSkill.objects.create(user=instance, skill=skill_obj)
+
+        # 6. Update Qualifications
+        if qualification_data is not None:
+            from .models import TeacherQualification, Qualification
+            instance.teacherqualifications.all().delete()
+            for qual_item in qualification_data:
+                qual_name = qual_item.get('qualification', {}).get('name')
+                if qual_name:
+                    qual_obj, _ = Qualification.objects.get_or_create(name=qual_name)
+                    TeacherQualification.objects.create(
+                        user=instance, 
+                        qualification=qual_obj,
+                        institution=qual_item.get('institution'),
+                        year_of_passing=qual_item.get('year_of_passing'),
+                        grade_or_percentage=qual_item.get('grade_or_percentage'),
+                        stream_or_degree=qual_item.get('stream_or_degree'),
+                        session=qual_item.get('session')
+                    )
+
+        # 7. Update Experience
+        if experience_data is not None:
+            from .models import TeacherExperiences
+            instance.teacherexperiences.all().delete()
+            for exp_item in experience_data:
+                TeacherExperiences.objects.create(user=instance, **exp_item)
+
+        # 8. Update Preferences (Academic Preferences)
+        if preference_data is not None:
+            from .models import Preference, ClassCategory, Subject
+            # This is complex because of M2M fields
+            pref_instance, _ = Preference.objects.get_or_create(user=instance)
+            for pref_item in preference_data:
+                if 'class_category' in pref_item:
+                    cat_ids = [c.get('id') for c in pref_item['class_category'] if c.get('id')]
+                    pref_instance.class_category.set(cat_ids)
+                if 'prefered_subject' in pref_item:
+                    sub_ids = [s.get('id') for s in pref_item['prefered_subject'] if s.get('id')]
+                    pref_instance.prefered_subject.set(sub_ids)
+                # Handle other fields like job_role if needed
         
         return instance
 
     def get_profile_completed(self, instance):
-        # HARDCODED TEST: If you see 99%, the backend is updating correctly.
-        # If you still see 0%, the server needs a restart or we are in the wrong file.
-        return 99
+        percentage, _ = calculate_profile_completed(instance)
+        print(f"DEBUG: Profile Completion for {instance.email}: {percentage}%")
+        return percentage
 
     def get_profile_feedback(self, instance):
         _, feedback = calculate_profile_completed(instance)
