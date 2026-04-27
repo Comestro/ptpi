@@ -9,7 +9,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.timezone import now
 from django.conf import settings
 from datetime import timedelta
-from django.contrib.auth import update_session_auth_hash, update_last_login
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth.hashers import make_password
 import uuid
 from teacherhire.serializers import *
