@@ -1546,11 +1546,18 @@ class TeacherListSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
     phone_number = serializers.SerializerMethodField()
 
+    gender = serializers.SerializerMethodField()
+    experience_years = serializers.SerializerMethodField()
+    current_address = serializers.SerializerMethodField()
+    permanent_address = serializers.SerializerMethodField()
+    subject_ids = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
         fields = [
             'id', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
-            'is_active', 'is_verified', 'class_categories', 'subjects', 'qualifications', 'date'
+            'is_active', 'is_verified', 'class_categories', 'subjects', 'qualifications', 'date',
+            'gender', 'experience_years', 'current_address', 'permanent_address', 'subject_ids'
         ]
 
     def get_class_categories(self, obj):
@@ -1598,6 +1605,39 @@ class TeacherListSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'profiles') and obj.profiles:
             return obj.profiles.phone_number
         return None
+
+    def get_subject_ids(self, obj):
+        s_ids = set()
+        for ts in obj.teachersubjects.all():
+            if ts.subject: s_ids.add(ts.subject.id)
+        for pref in obj.preferences.all():
+            for sub in pref.prefered_subject.all():
+                s_ids.add(sub.id)
+        return list(s_ids)
+
+    def get_gender(self, obj):
+        return obj.profiles.gender if hasattr(obj, 'profiles') and obj.profiles else None
+
+    def get_experience_years(self, obj):
+        from datetime import date
+        total_days = 0
+        for exp in obj.teacherexperiences.all():
+            if exp.start_date:
+                end = exp.end_date or date.today()
+                total_days += (end - exp.start_date).days
+        return total_days // 365
+
+    def get_current_address(self, obj):
+        for addr in obj.teachersaddress.all():
+            if addr.address_type == 'current':
+                return {'state': addr.state, 'district': addr.district, 'pincode': addr.pincode}
+        return {}
+
+    def get_permanent_address(self, obj):
+        for addr in obj.teachersaddress.all():
+            if addr.address_type == 'permanent':
+                return {'state': addr.state, 'district': addr.district, 'pincode': addr.pincode}
+        return {}
 
 class TeacherSerializer(serializers.ModelSerializer):
     teacherskill = TeacherSkillSerializer(many=True, required=False)

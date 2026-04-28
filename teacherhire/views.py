@@ -3940,7 +3940,9 @@ class AdminTeacherListView(APIView):
             'preferences__class_category',
             'preferences__prefered_subject',
             'teacherqualifications__qualification',
-            'profiles'
+            'profiles',
+            'teachersaddress',
+            'teacherexperiences'
         ).distinct().order_by('-date')
         
         # Apply basic search if query param exists
