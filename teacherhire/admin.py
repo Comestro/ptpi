@@ -184,3 +184,14 @@ class ApplyAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PendingRegistration)
+
+@admin.register(EmailTemplate)
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'subject', 'created_at', 'updated_at']
+    search_fields = ['name', 'subject']
+
+@admin.register(EmailLog)
+class EmailLogAdmin(admin.ModelAdmin):
+    list_display = ['user', 'template', 'subject', 'sent_at', 'status']
+    list_filter = ['status', 'sent_at']
+    search_fields = ['user__email', 'subject']
