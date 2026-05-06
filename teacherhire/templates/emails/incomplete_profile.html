@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Verified</title>
+    <title>Complete Your Profile</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Inter', 'Segoe UI', Arial, sans-serif;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
@@ -16,38 +16,38 @@
                             <h2 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 800; letter-spacing: 1px;">
                                 <span style="color: #1e293b;">PTP</span> <span style="color: #0d9488;">INSTITUTE</span>
                             </h2>
-                            <div style="display: inline-block; padding: 6px 16px; background-color: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 999px; color: #0f766e; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">
-                                Success
+                            <div style="display: inline-block; padding: 6px 16px; background-color: #fff7ed; border: 1px solid #ffedd5; border-radius: 999px; color: #c2410c; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">
+                                Action Required
                             </div>
-                            <h1 style="margin: 20px 0 0 0; color: #0f172a; font-size: 32px; font-weight: 800;">Account Verified!</h1>
+                            <h1 style="margin: 20px 0 0 0; color: #0f172a; font-size: 32px; font-weight: 800;">Complete Your Profile</h1>
                         </td>
                     </tr>
                     
-                    <!-- Hero Content -->
+                    <!-- Content -->
                     <tr>
                         <td style="padding: 40px;">
                             <p style="margin: 0 0 20px 0; font-size: 20px; font-weight: 600; color: #1e293b; text-align: center;">
-                                Welcome to PTP Institute 🎉
+                                Hi {{ user_name }}, you're almost there! 🚀
                             </p>
                             <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.7; color: #475569; text-align: center;">
-                                We are thrilled to have you join our community of educators. Your account is now fully active and ready for your teaching journey. 
+                                We noticed that your teacher profile is missing some important details. Completing your profile increases your chances of getting matched with the right opportunities.
                             </p>
                             
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 24px;">
-                                        <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #0f766e; text-transform: uppercase; letter-spacing: 1px;">What's next?</h3>
+                                        <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 1px;">Missing Information</h3>
                                         <ul style="margin: 0; padding: 0 0 0 20px; font-size: 15px; color: #475569; line-height: 1.6;">
-                                            <li style="margin-bottom: 8px;">Complete your professional profile</li>
-                                            <li style="margin-bottom: 8px;">Browse through available teaching opportunities</li>
-                                            <li>Connect with potential recruiters</li>
+                                            {% for item in missing_items %}
+                                            <li style="margin-bottom: 8px;"><strong>{{ item }}</strong></li>
+                                            {% endfor %}
                                         </ul>
                                     </td>
                                 </tr>
                             </table>
 
                             <div style="text-align: center;">
-                                <a href="https://ptpinstitute.com/signin" style="display: inline-block; background-color: #0d9488; color: #ffffff; padding: 16px 32px; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 8px; box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);">Get Started Now</a>
+                                <a href="https://ptpinstitute.com/teacher" style="display: inline-block; background-color: #0d9488; color: #ffffff; padding: 16px 32px; font-size: 15px; font-weight: 600; text-decoration: none; border-radius: 8px; box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);">Update Profile Now</a>
                             </div>
                         </td>
                     </tr>

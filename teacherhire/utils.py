@@ -75,6 +75,73 @@ def verified_msg(email):
     except Exception as e:
         print(f"Failed to send verification email to {email}: {e}")
 
+def send_qualification_email(user, score, subject, level):
+    try:
+        subject_line = "🎉 Congratulations! You have qualified for the next level!"
+        
+        context = {
+            'score': score,
+            'subject': subject,
+            'level': level
+        }
+        html_message = render_to_string('emails/exam_qualified.html', context)
+        
+        plain_message = (
+            f"Congratulations {user.Fname}!\n\n"
+            f"You have successfully passed the exam for {subject} ({level}) with a score of {score}%.\n"
+            "You are now eligible to proceed to the next level or schedule your interview.\n\n"
+            "Log in to your dashboard to see the next steps.\n\n"
+            "Best regards,\n"
+            "The PTP Institute Team"
+        )
+        
+        from_email = os.environ.get('EMAIL_FROM')
+        send_mail(
+            subject=subject_line,
+            message=plain_message,  
+            from_email=from_email,
+            recipient_list=[user.email],
+            html_message=html_message,  
+            fail_silently=False,
+        )
+        print(f"Qualification email sent to {user.email}.")
+    except Exception as e:
+        print(f"Failed to send qualification email to {user.email}: {e}")
+
+def send_incomplete_profile_email(user, missing_items):
+    try:
+        subject_line = "Action Required: Complete Your PTP Institute Profile"
+        
+        context = {
+            'user_name': getattr(user, 'Fname', 'Teacher'),
+            'missing_items': missing_items
+        }
+        html_message = render_to_string('emails/incomplete_profile.html', context)
+        
+        missing_text = "\n- ".join(missing_items)
+        plain_message = (
+            f"Hi {context['user_name']},\n\n"
+            f"We noticed that your teacher profile is missing some important details:\n\n"
+            f"- {missing_text}\n\n"
+            "Completing your profile increases your chances of getting matched with the right opportunities.\n"
+            "Log in to your dashboard to update your profile.\n\n"
+            "Best regards,\n"
+            "The PTP Institute Team"
+        )
+        
+        from_email = os.environ.get('EMAIL_FROM')
+        send_mail(
+            subject=subject_line,
+            message=plain_message,  
+            from_email=from_email,
+            recipient_list=[user.email],
+            html_message=html_message,  
+            fail_silently=False,
+        )
+        print(f"Incomplete profile email sent to {user.email}.")
+    except Exception as e:
+        print(f"Failed to send incomplete profile email to {user.email}: {e}")
+
 def calculate_profile_completed(user):
     if not user:
         return 0, ["User not found."]

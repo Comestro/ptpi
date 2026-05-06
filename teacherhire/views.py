@@ -5,7 +5,7 @@ from rest_framework import status
 from teacherhire.models import *
 from rest_framework.exceptions import NotFound
 from teacherhire.serializers import *
-from teacherhire.utils import calculate_profile_completed
+from teacherhire.utils import calculate_profile_completed, send_qualification_email
 from .authentication import ExpiringTokenAuthentication
 from rest_framework.decorators import action
 from .permissions import *
@@ -1516,6 +1516,16 @@ class TeacherExamResultViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        
+        result = serializer.instance
+        if result.isqualified:
+            send_qualification_email(
+                user=request.user,
+                score=result.calculate_percentage(),
+                subject=exam.subject.subject_name if exam.subject else "Unknown Subject",
+                level=exam.level.name if exam.level else "Unknown Level"
+            )
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     def get_queryset(self):
