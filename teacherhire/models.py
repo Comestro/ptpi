@@ -252,6 +252,7 @@ class BasicProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
+    whatsapp_number = models.CharField(max_length=15, blank=True, null=True)
     religion = models.CharField(max_length=100, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     marital_status = models.CharField(
@@ -284,6 +285,7 @@ class BasicProfile(models.Model):
     def is_complete(self):
         required_fields = {
             "phone_number": self.phone_number,
+            "whatsapp_number": self.whatsapp_number,
             "date_of_birth": self.date_of_birth,
             "marital_status": self.marital_status,
             "gender": self.gender,

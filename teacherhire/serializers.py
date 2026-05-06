@@ -941,7 +941,7 @@ class BasicProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BasicProfile
-        fields = ['id', 'user', 'bio', 'phone_number', 'religion', 'profile_picture', 'date_of_birth', 'marital_status',
+        fields = ['id', 'user', 'bio', 'phone_number', 'whatsapp_number', 'religion', 'profile_picture', 'date_of_birth', 'marital_status',
                   'gender', 'language']
 
     def to_representation(self, instance):
