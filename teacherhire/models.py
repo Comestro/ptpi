@@ -571,3 +571,24 @@ class MissingSubject(models.Model):
 
     def __str__(self):
         return f"{self.subject_name} - {self.user.username if self.user else 'Anonymous'}"
+
+class EmailTemplate(models.Model):
+    name = models.CharField(max_length=255, unique=True, help_text="e.g., otp_verification, exam_qualified")
+    subject = models.CharField(max_length=255)
+    body_html = models.TextField(help_text="HTML content of the email. Use {{ context_var }} for variables.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class EmailLog(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='email_logs')
+    template = models.ForeignKey(EmailTemplate, on_delete=models.SET_NULL, null=True, blank=True)
+    subject = models.CharField(max_length=255)
+    body_html = models.TextField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, default='sent')
+
+    def __str__(self):
+        return f"{self.user.email} - {self.subject} - {self.sent_at}"

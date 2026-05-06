@@ -86,6 +86,8 @@ router.register(r"check-passkey", checkPasskeyViewSet, basename="check-passkey")
 # public
 router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="public-classcategory")
 router.register(r'translator', TranslatorViewset, basename="translator")
+router.register(r'admin/emailtemplates', EmailTemplateViewSet, basename="admin-emailtemplates")
+router.register(r'emaillogs', EmailLogViewSet, basename="emaillogs")
 # === Permission-Based Routes ===
 urlpatterns = [
     path("admin/teacher/list/", AdminTeacherListView.as_view(), name="admin-teacher-list"),

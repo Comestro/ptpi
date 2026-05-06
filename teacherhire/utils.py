@@ -3,7 +3,8 @@ import os
 import random
 from django.utils.timezone import now
 from django.template.loader import render_to_string
-from .models import BasicProfile ,TeachersAddress,Preference
+from django.template import Context, Template
+from .models import BasicProfile ,TeachersAddress,Preference, CustomUser, EmailTemplate, EmailLog
 
 class Util:
     @staticmethod
@@ -17,130 +18,117 @@ class Util:
             fail_silently=False
         )
 
-def send_otp_via_email(email):
-    subject = "Your Account Verification Email"
-    otp = random.randint(100000, 999999)
-    
+def send_and_log_email(email, template_name, context_dict, default_subject, default_html_path, default_plain):
     try:
-        html_message = render_to_string('emails/otp_verification.html', {'otp': otp})
-        message = f"Your OTP is {otp}"
+        user = CustomUser.objects.filter(email=email).first()
+        template_obj = EmailTemplate.objects.filter(name=template_name).first()
+        
+        if template_obj:
+            subject_line = template_obj.subject
+            t = Template(template_obj.body_html)
+            html_message = t.render(Context(context_dict))
+        else:
+            subject_line = default_subject
+            html_message = render_to_string(default_html_path, context_dict)
+            
         from_email = os.environ.get('EMAIL_FROM')
         
         send_mail(
-            subject, 
-            message, 
-            from_email, 
-            [email], 
-            html_message=html_message,
-            fail_silently=False
-        )
-        return otp
-    except Exception as e:
-        # Re-raise with a more descriptive message or handle appropriately
-        raise Exception(f"Failed to send OTP email: {str(e)}")
-
-
-def verified_msg(email):
-    try:
-        subject = "🎉 Account Verified Successfully! Welcome to PTPI!"
-        
-        html_message = render_to_string('emails/account_verified.html')
-        
-        plain_message = (
-            "Yay!! Welcome to PTPI! 🎉\n\n"
-            "We're absolutely thrilled to have you join our growing community of passionate educators. 🌟\n\n"
-            "PTPI is your gateway to endless opportunities where you can:\n"
-            "- 🌍 Connect with learners from around the world.\n"
-            "- 📚 Share your knowledge and expertise.\n"
-            "- 🚀 Take your teaching career to new heights.\n\n"
-            "Take your teaching journey to the next level with the tools, resources, and support you need to succeed.\n\n"
-            "Your journey starts here! Log in to your account and explore features designed to empower you on this exciting path. "
-            "Together, we can make a difference in education.\n\n"
-            "If you have any questions or need help, our team is always here to assist you.\n\n"
-            "Welcome aboard, and here's to your success with PTPI! 🥳\n\n"
-            "Best regards,\n"
-            "The PTPI Team"
-        )
-        
-        from_email = os.environ.get('EMAIL_FROM')
-        send_mail(
-            subject=subject,
-            message=plain_message,  
+            subject=subject_line,
+            message=default_plain,  
             from_email=from_email,
             recipient_list=[email],
             html_message=html_message,  
             fail_silently=False,
         )
-        print(f"Verification email sent to {email}.")
+        
+        if user:
+            EmailLog.objects.create(
+                user=user,
+                template=template_obj,
+                subject=subject_line,
+                body_html=html_message,
+                status='sent'
+            )
+        print(f"Email {template_name} sent to {email}.")
     except Exception as e:
-        print(f"Failed to send verification email to {email}: {e}")
+        print(f"Failed to send email {template_name} to {email}: {e}")
+        user = CustomUser.objects.filter(email=email).first()
+        if user:
+            EmailLog.objects.create(
+                user=user,
+                template=None,
+                subject=default_subject,
+                body_html=str(e),
+                status='failed'
+            )
+        raise e
+
+def send_otp_via_email(email):
+    otp = random.randint(100000, 999999)
+    try:
+        send_and_log_email(
+            email=email,
+            template_name="otp_verification",
+            context_dict={'otp': otp},
+            default_subject="Your Account Verification Email",
+            default_html_path='emails/otp_verification.html',
+            default_plain=f"Your OTP is {otp}"
+        )
+        return otp
+    except Exception as e:
+        raise Exception(f"Failed to send OTP email: {str(e)}")
+
+
+def verified_msg(email):
+    plain_message = (
+        "Yay!! Welcome to PTPI! 🎉\n\n"
+        "We're absolutely thrilled to have you join our growing community of passionate educators. 🌟\n\n"
+        "Your journey starts here! Log in to your account and explore features designed to empower you on this exciting path. "
+    )
+    send_and_log_email(
+        email=email,
+        template_name="account_verified",
+        context_dict={},
+        default_subject="🎉 Account Verified Successfully! Welcome to PTPI!",
+        default_html_path='emails/account_verified.html',
+        default_plain=plain_message
+    )
 
 def send_qualification_email(user, score, subject, level):
-    try:
-        subject_line = "🎉 Congratulations! You have qualified for the next level!"
-        
-        context = {
-            'score': score,
-            'subject': subject,
-            'level': level
-        }
-        html_message = render_to_string('emails/exam_qualified.html', context)
-        
-        plain_message = (
-            f"Congratulations {user.Fname}!\n\n"
-            f"You have successfully passed the exam for {subject} ({level}) with a score of {score}%.\n"
-            "You are now eligible to proceed to the next level or schedule your interview.\n\n"
-            "Log in to your dashboard to see the next steps.\n\n"
-            "Best regards,\n"
-            "The PTP Institute Team"
-        )
-        
-        from_email = os.environ.get('EMAIL_FROM')
-        send_mail(
-            subject=subject_line,
-            message=plain_message,  
-            from_email=from_email,
-            recipient_list=[user.email],
-            html_message=html_message,  
-            fail_silently=False,
-        )
-        print(f"Qualification email sent to {user.email}.")
-    except Exception as e:
-        print(f"Failed to send qualification email to {user.email}: {e}")
+    plain_message = (
+        f"Congratulations {user.Fname}!\n\n"
+        f"You have successfully passed the exam for {subject} ({level}) with a score of {score}%.\n"
+        "Log in to your dashboard to see the next steps.\n\n"
+    )
+    send_and_log_email(
+        email=user.email,
+        template_name="exam_qualified",
+        context_dict={'score': score, 'subject': subject, 'level': level},
+        default_subject="🎉 Congratulations! You have qualified for the next level!",
+        default_html_path='emails/exam_qualified.html',
+        default_plain=plain_message
+    )
 
 def send_incomplete_profile_email(user, missing_items):
-    try:
-        subject_line = "Action Required: Complete Your PTP Institute Profile"
-        
-        context = {
+    missing_text = "\n- ".join(missing_items)
+    plain_message = (
+        f"Hi {getattr(user, 'Fname', 'Teacher')},\n\n"
+        f"We noticed that your teacher profile is missing some important details:\n\n"
+        f"- {missing_text}\n\n"
+        "Log in to your dashboard to update your profile.\n\n"
+    )
+    send_and_log_email(
+        email=user.email,
+        template_name="incomplete_profile",
+        context_dict={
             'user_name': getattr(user, 'Fname', 'Teacher'),
             'missing_items': missing_items
-        }
-        html_message = render_to_string('emails/incomplete_profile.html', context)
-        
-        missing_text = "\n- ".join(missing_items)
-        plain_message = (
-            f"Hi {context['user_name']},\n\n"
-            f"We noticed that your teacher profile is missing some important details:\n\n"
-            f"- {missing_text}\n\n"
-            "Completing your profile increases your chances of getting matched with the right opportunities.\n"
-            "Log in to your dashboard to update your profile.\n\n"
-            "Best regards,\n"
-            "The PTP Institute Team"
-        )
-        
-        from_email = os.environ.get('EMAIL_FROM')
-        send_mail(
-            subject=subject_line,
-            message=plain_message,  
-            from_email=from_email,
-            recipient_list=[user.email],
-            html_message=html_message,  
-            fail_silently=False,
-        )
-        print(f"Incomplete profile email sent to {user.email}.")
-    except Exception as e:
-        print(f"Failed to send incomplete profile email to {user.email}: {e}")
+        },
+        default_subject="Action Required: Complete Your PTP Institute Profile",
+        default_html_path='emails/incomplete_profile.html',
+        default_plain=plain_message
+    )
 
 def calculate_profile_completed(user):
     if not user:

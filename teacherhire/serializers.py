@@ -2175,3 +2175,16 @@ class MissingSubjectSerializer(serializers.ModelSerializer):
                 "email": instance.user.email
             }
         return representation
+
+class EmailTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailTemplate
+        fields = '__all__'
+
+class EmailLogSerializer(serializers.ModelSerializer):
+    template_name = serializers.CharField(source='template.name', read_only=True)
+    
+    class Meta:
+        model = EmailLog
+        fields = ['id', 'user', 'template', 'template_name', 'subject', 'body_html', 'sent_at', 'status']
+        read_only_fields = ['user', 'sent_at']

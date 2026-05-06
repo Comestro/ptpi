@@ -4118,3 +4118,20 @@ class ReadyForInterviewViewSet(viewsets.ReadOnlyModelViewSet):
 #                 distinct_keys.add(key)
 #                 distinct_results.append(result)
         # return distinct_results
+
+class EmailTemplateViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = [ExpiringTokenAuthentication]
+    queryset = EmailTemplate.objects.all()
+    serializer_class = EmailTemplateSerializer
+
+class EmailLogViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+    serializer_class = EmailLogSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, 'is_admin', False) or getattr(user, 'is_superuser', False):
+            return EmailLog.objects.all().order_by('-sent_at')
+        return EmailLog.objects.filter(user=user).order_by('-sent_at')
