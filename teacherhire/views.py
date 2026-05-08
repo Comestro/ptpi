@@ -716,6 +716,7 @@ class RecruiterTeacherSearch(viewsets.ModelViewSet):
 
             search_conditions = (
                 name_query |                
+                Q(user_code__icontains=search_query) |
                 Q(teacherqualifications__qualification__name__icontains=search_query) |
                 Q(preferences__prefered_subject__subject_name__icontains=search_query) |
                 Q(preferences__class_category__name__icontains=search_query) |
@@ -3961,7 +3962,8 @@ class AdminTeacherListView(APIView):
             teachers_qs = teachers_qs.filter(
                 Q(Fname__icontains=search) | 
                 Q(Lname__icontains=search) | 
-                Q(email__icontains=search)
+                Q(email__icontains=search) |
+                Q(user_code__icontains=search)
             )
 
         serializer = TeacherListSerializer(teachers_qs, many=True, context={'request': request})

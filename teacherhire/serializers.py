@@ -1555,7 +1555,7 @@ class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
+            'id', 'user_code', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
             'is_active', 'is_verified', 'class_categories', 'subjects', 'qualifications', 'date',
             'gender', 'experience_years', 'current_address', 'permanent_address', 'subject_ids'
         ]
