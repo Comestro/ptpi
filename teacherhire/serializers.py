@@ -1551,14 +1551,45 @@ class TeacherListSerializer(serializers.ModelSerializer):
     current_address = serializers.SerializerMethodField()
     permanent_address = serializers.SerializerMethodField()
     subject_ids = serializers.SerializerMethodField()
+    academic_preferences = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
         fields = [
             'id', 'user_code', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
             'is_active', 'is_verified', 'class_categories', 'subjects', 'qualifications', 'date',
-            'gender', 'experience_years', 'current_address', 'permanent_address', 'subject_ids'
+            'gender', 'experience_years', 'current_address', 'permanent_address', 'subject_ids',
+            'academic_preferences'
         ]
+
+    def get_academic_preferences(self, obj):
+        grouped = {}
+        # Collect from Preference model
+        for pref in obj.preferences.all():
+            for cat in pref.class_category.all():
+                if cat.name not in grouped:
+                    grouped[cat.name] = set()
+                # Find subjects in this category that the user prefers
+                for sub in pref.prefered_subject.filter(class_category=cat):
+                    grouped[cat.name].add(sub.subject_name)
+        
+        # Collect from legacy direct links if any (though usually preferences are used)
+        # TeacherClassCategory and TeacherSubject aren't directly linked to each other
+        # so we rely on the Subject -> ClassCategory FK
+        for ts in obj.teachersubjects.all():
+            if ts.subject and ts.subject.class_category:
+                cat_name = ts.subject.class_category.name
+                if cat_name not in grouped:
+                    grouped[cat_name] = set()
+                grouped[cat_name].add(ts.subject.subject_name)
+
+        result = []
+        for cat_name, subs in grouped.items():
+            result.append({
+                'category': cat_name,
+                'subjects': sorted(list(subs))
+            })
+        return result
 
     def get_class_categories(self, obj):
         categories = set()
