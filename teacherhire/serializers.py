@@ -1545,6 +1545,7 @@ class TeacherListSerializer(serializers.ModelSerializer):
     qualifications = serializers.SerializerMethodField()
     profile_picture = serializers.SerializerMethodField()
     phone_number = serializers.SerializerMethodField()
+    whatsapp_number = serializers.SerializerMethodField()
 
     gender = serializers.SerializerMethodField()
     experience_years = serializers.SerializerMethodField()
@@ -1556,11 +1557,16 @@ class TeacherListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'user_code', 'Fname', 'Lname', 'email', 'phone_number', 'profile_picture', 
+            'id', 'user_code', 'Fname', 'Lname', 'email', 'phone_number', 'whatsapp_number', 'profile_picture', 
             'is_active', 'is_verified', 'class_categories', 'subjects', 'qualifications', 'date',
             'gender', 'experience_years', 'current_address', 'permanent_address', 'subject_ids',
             'academic_preferences'
         ]
+
+    def get_whatsapp_number(self, obj):
+        if hasattr(obj, 'profiles') and obj.profiles:
+            return obj.profiles.whatsapp_number
+        return None
 
     def get_academic_preferences(self, obj):
         grouped = {}
