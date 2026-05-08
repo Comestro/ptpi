@@ -1428,7 +1428,7 @@ class ApplySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = {'id': instance.user.id, 'Fname': instance.user.Fname, 'Lname': instance.user.Lname }
+        representation['user'] = {'id': instance.user.id, 'Fname': instance.user.Fname, 'Lname': instance.user.Lname, 'user_code': instance.user.user_code }
         representation['class_category'] = {'id': instance.class_category.id, 'name': instance.class_category.name} if instance.class_category else None
         representation['subject'] = {'id': instance.subject.id, 'name': instance.subject.subject_name} if instance.subject else None
         representation['teacher_job_type'] = {'id': instance.teacher_job_type.id, 'teacher_job_name': instance.teacher_job_type.teacher_job_name} if instance.teacher_job_type else None
