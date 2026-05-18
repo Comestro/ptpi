@@ -831,7 +831,7 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherQualificationSerializer
     lookup_field = 'id'
 
-    def put(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         data = request.data.copy()
         qualification_id = kwargs.get('id')
         user = request.user.id
