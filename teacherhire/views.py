@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from teacherhire.models import *
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from teacherhire.serializers import *
 from teacherhire.utils import calculate_profile_completed, send_qualification_email
 from .authentication import ExpiringTokenAuthentication
@@ -3963,7 +3963,9 @@ class AdminTeacherListView(APIView):
                 Q(Fname__icontains=search) | 
                 Q(Lname__icontains=search) | 
                 Q(email__icontains=search) |
-                Q(user_code__icontains=search)
+                Q(user_code__icontains=search) |
+                Q(profiles__phone_number__icontains=search) |
+                Q(profiles__whatsapp_number__icontains=search)
             )
 
         serializer = TeacherListSerializer(teachers_qs, many=True, context={'request': request})
@@ -4166,6 +4168,18 @@ class InterviewerAvailabilitySlotViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         interviewer = InterviewerProfile.objects.get(user=self.request.user)
+        day_of_week = serializer.validated_data.get('day_of_week')
+        start_time = serializer.validated_data.get('start_time')
+        end_time = serializer.validated_data.get('end_time')
+        
+        if InterviewerAvailabilitySlot.objects.filter(
+            interviewer=interviewer,
+            day_of_week=day_of_week,
+            start_time=start_time,
+            end_time=end_time
+        ).exists():
+            raise ValidationError("This availability slot already exists.")
+            
         serializer.save(interviewer=interviewer)
 
 class InterviewerDashboardView(APIView):
