@@ -195,3 +195,14 @@ class EmailLogAdmin(admin.ModelAdmin):
     list_display = ['user', 'template', 'subject', 'sent_at', 'status']
     list_filter = ['status', 'sent_at']
     search_fields = ['user__email', 'subject']
+
+@admin.register(InterviewerProfile)
+class InterviewerProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'is_available', 'total_interviews', 'average_score', 'rank']
+    list_filter = ['is_available']
+    search_fields = ['user__username', 'user__email']
+
+@admin.register(InterviewerAvailabilitySlot)
+class InterviewerAvailabilitySlotAdmin(admin.ModelAdmin):
+    list_display = ['interviewer', 'day_of_week', 'start_time', 'end_time']
+    list_filter = ['day_of_week']

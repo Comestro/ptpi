@@ -2225,3 +2225,23 @@ class EmailLogSerializer(serializers.ModelSerializer):
         model = EmailLog
         fields = ['id', 'user', 'template', 'template_name', 'subject', 'body_html', 'sent_at', 'status']
         read_only_fields = ['user', 'sent_at']
+
+class InterviewerProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    class_category_names = serializers.SerializerMethodField()
+    subject_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InterviewerProfile
+        fields = ['id', 'user', 'username', 'class_category', 'subject', 'is_available', 'total_interviews', 'average_score', 'rank', 'class_category_names', 'subject_names']
+
+    def get_class_category_names(self, obj):
+        return [cc.name for cc in obj.class_category.all()]
+
+    def get_subject_names(self, obj):
+        return [sub.subject_name for sub in obj.subject.all()]
+
+class InterviewerAvailabilitySlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InterviewerAvailabilitySlot
+        fields = '__all__'

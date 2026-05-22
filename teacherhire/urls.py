@@ -88,6 +88,8 @@ router.register(r"public/classcategory", PublicClassCategoryViewSet, basename="p
 router.register(r'translator', TranslatorViewset, basename="translator")
 router.register(r'admin/emailtemplates', EmailTemplateViewSet, basename="admin-emailtemplates")
 router.register(r'emaillogs', EmailLogViewSet, basename="emaillogs")
+router.register(r'interviewer/profile', InterviewerProfileViewSet, basename="interviewer-profile")
+router.register(r'interviewer/availability', InterviewerAvailabilitySlotViewSet, basename="interviewer-availability")
 # === Permission-Based Routes ===
 urlpatterns = [
     path("admin/teacher/list/", AdminTeacherListView.as_view(), name="admin-teacher-list"),
@@ -96,6 +98,9 @@ urlpatterns = [
     # Profile & Checkout
     path("profile/completed/", ProfilecompletedView.as_view(), name="profile-completed"),
     path("checklevel/", CheckoutView.as_view(), name="checkout-level"),
+    
+    path("interviewer/dashboard/", InterviewerDashboardView.as_view(), name="interviewer-dashboard"),
+    path("interviewer/assign/", InterviewAssignmentView.as_view(), name="interviewer-assign"),
 
     path('self/apply-eligibility/', ApplyEligibilityView.as_view(), name='apply-eligibility'),
     path('teacher/<int:teacher_id>/', TeacherDetailAPIView.as_view(), name='teacher-detail'),

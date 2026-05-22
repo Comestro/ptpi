@@ -4137,3 +4137,88 @@ class EmailLogViewSet(viewsets.ReadOnlyModelViewSet):
         if getattr(user, 'is_admin', False) or getattr(user, 'is_superuser', False):
             return EmailLog.objects.all().order_by('-sent_at')
         return EmailLog.objects.filter(user=user).order_by('-sent_at')
+
+from .serializers import InterviewerProfileSerializer, InterviewerAvailabilitySlotSerializer
+from django.db.models import Count, Avg
+from rest_framework.decorators import action
+
+class InterviewerProfileViewSet(viewsets.ModelViewSet):
+    queryset = InterviewerProfile.objects.all()
+    serializer_class = InterviewerProfileSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return InterviewerProfile.objects.all()
+        return InterviewerProfile.objects.filter(user=self.request.user)
+
+class InterviewerAvailabilitySlotViewSet(viewsets.ModelViewSet):
+    queryset = InterviewerAvailabilitySlot.objects.all()
+    serializer_class = InterviewerAvailabilitySlotSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return InterviewerAvailabilitySlot.objects.all()
+        return InterviewerAvailabilitySlot.objects.filter(interviewer__user=self.request.user)
+
+    def perform_create(self, serializer):
+        interviewer = InterviewerProfile.objects.get(user=self.request.user)
+        serializer.save(interviewer=interviewer)
+
+class InterviewerDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def get(self, request, *args, **kwargs):
+        if not getattr(request.user, 'is_interviewer', False):
+            return Response({"detail": "Not an interviewer"}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            profile = InterviewerProfile.objects.get(user=request.user)
+        except InterviewerProfile.DoesNotExist:
+            return Response({"detail": "Interviewer profile not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        upcoming_interviews = Interview.objects.filter(
+            interviewer=request.user,
+            status='scheduled',
+            time__gte=datetime.now()
+        ).order_by('time').values('id', 'time', 'link', 'status', 'user__Fname', 'user__Lname', 'subject__subject_name')
+
+        return Response({
+            "profile": InterviewerProfileSerializer(profile).data,
+            "upcoming_interviews": list(upcoming_interviews)
+        }, status=status.HTTP_200_OK)
+
+class InterviewAssignmentView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def post(self, request, *args, **kwargs):
+        interview_id = request.data.get('interview_id')
+        try:
+            interview = Interview.objects.get(id=interview_id)
+        except Interview.DoesNotExist:
+            return Response({"error": "Interview not found"}, status=404)
+        
+        # Simple match: available interviewer with same subject and class category
+        available_interviewers = InterviewerProfile.objects.filter(
+            is_available=True,
+            subject=interview.subject,
+            class_category=interview.class_category
+        ).order_by('total_interviews').first()
+
+        if available_interviewers:
+            interview.interviewer = available_interviewers.user
+            interview.status = 'scheduled'
+            
+            # TODO: Generate Google Meet Link Here
+            interview.link = f"https://meet.google.com/mock-{interview.id}"
+            interview.save()
+            
+            available_interviewers.total_interviews += 1
+            available_interviewers.save()
+            return Response({"message": "Assigned successfully", "meet_link": interview.link})
+        return Response({"error": "No available interviewer found for these subjects"}, status=400)

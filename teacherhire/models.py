@@ -33,6 +33,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_teacher = models.BooleanField(default=False)
     is_centeruser = models.BooleanField(default=False)
     is_questionuser = models.BooleanField(default=False)
+    is_interviewer = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     otp = models.CharField(max_length=8, null=True, blank=True)
     otp_created_at = models.DateTimeField(null=True, blank=True)
@@ -62,6 +63,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             prefix = "C"
         elif self.is_questionuser:
             prefix = "Q"
+        elif self.is_interviewer:
+            prefix = "I"
         elif self.is_staff:  # For admin
             prefix = "A"
         else:
@@ -96,6 +99,7 @@ class PendingRegistration(models.Model):
 
     def __str__(self):
         return f"Pending {self.role}: {self.email}"
+
 class TeachersAddress(models.Model):
     ADDRESS_TYPE_CHOICES = [
         ('current', 'Current'),
@@ -480,13 +484,40 @@ class Passkey(models.Model):
 def get_default_level():
     return Level.objects.get_or_create(name='2nd Level Online')[0]   
 
+class InterviewerProfile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='interviewer_profile')
+    class_category = models.ManyToManyField(ClassCategory, related_name='interviewers')
+    subject = models.ManyToManyField(Subject, related_name='interviewers')
+    is_available = models.BooleanField(default=True)
+    total_interviews = models.IntegerField(default=0)
+    average_score = models.FloatField(default=0.0)
+    rank = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Interviewer: {self.user.username}"
+
+class InterviewerAvailabilitySlot(models.Model):
+    interviewer = models.ForeignKey(InterviewerProfile, on_delete=models.CASCADE, related_name='availability_slots')
+    day_of_week = models.IntegerField(choices=[
+        (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'), 
+        (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')
+    ])
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    def __str__(self):
+        return f"{self.interviewer.user.username} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
+
+
 class Interview(models.Model):
-    user = models.ForeignKey(CustomUser,on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='teacher_interviews')
+    interviewer = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='conducted_interviews')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     level = models.ForeignKey(Level, on_delete=models.CASCADE, null=True,blank=True)
     class_category = models.ForeignKey(ClassCategory, on_delete=models.CASCADE)
     time = models.DateTimeField(null=True, blank=True)
-    link = models.CharField(max_length=200,null= True, blank=True)
+    link = models.CharField(max_length=500,null= True, blank=True)
     status = models.CharField(max_length=200,choices=[('requested','requested'),('scheduled','scheduled'),('fulfilled','fulfilled'),('rejected','rejected')], default='requested', null=True, blank=True)
     reject_reason = models.CharField(max_length=500, null=True, blank=True)
     grade = models.FloatField(default=0,null=True, blank=True)

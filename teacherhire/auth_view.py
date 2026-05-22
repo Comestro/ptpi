@@ -189,6 +189,7 @@ class LoginUser(APIView):
 
         role = (
             "admin" if user.is_staff else
+            "interviewer" if getattr(user, 'is_interviewer', False) else
             "recruiter" if user.is_recruiter else
             "teacher" if user.is_teacher else
             "centeruser" if user.is_centeruser else
@@ -361,6 +362,7 @@ class VerifyOTP(APIView):
         
         role = (
             "admin" if user.is_staff else
+            "interviewer" if getattr(user, 'is_interviewer', False) else
             "recruiter" if user.is_recruiter else
             "teacher" if user.is_teacher else
             "centeruser" if user.is_centeruser else
