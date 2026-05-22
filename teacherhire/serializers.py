@@ -1091,6 +1091,7 @@ class ReportSerializer(serializers.ModelSerializer):
     resolved_by = UserSerializer(read_only=True)
     
     # Metadata Fields
+    exam_id = serializers.SerializerMethodField()
     exam_name = serializers.SerializerMethodField()
     class_category = serializers.SerializerMethodField()
     subject = serializers.SerializerMethodField()
@@ -1100,7 +1101,7 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = [
             'id', 'user', 'question', 'issue_type', 'status', 'created_at', 
-            'exam_name', 'class_category', 'subject', 'v_check', 'resolved_by'
+            'exam_id', 'exam_name', 'class_category', 'subject', 'v_check', 'resolved_by'
         ]
         read_only_fields = ['id', 'user', 'created_at']
 
@@ -1114,6 +1115,10 @@ class ReportSerializer(serializers.ModelSerializer):
             if request and request.user:
                 instance.resolved_by = request.user
         return super().update(instance, validated_data)
+
+    def get_exam_id(self, obj):
+        exam = obj.question.exam if obj.question else None
+        return exam.id if exam else None
 
     def get_exam_name(self, obj):
         exam = obj.question.exam if obj.question else None
