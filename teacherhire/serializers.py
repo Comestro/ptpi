@@ -2248,3 +2248,4 @@ class InterviewerAvailabilitySlotSerializer(serializers.ModelSerializer):
     class Meta:
         model = InterviewerAvailabilitySlot
         fields = '__all__'
+        read_only_fields = ['interviewer']
