@@ -1659,7 +1659,6 @@ class TeacherListSerializer(serializers.ModelSerializer):
         return obj.profiles.gender if hasattr(obj, 'profiles') and obj.profiles else None
 
     def get_experience_years(self, obj):
-        from datetime import date
         total_days = 0
         for exp in obj.teacherexperiences.all():
             if exp.start_date:
@@ -1706,8 +1705,6 @@ class TeacherSerializer(serializers.ModelSerializer):
         ]
 
     def get_total_experience(self, obj):
-        from .models import TeacherExperiences
-        from datetime import date
         total_days = 0
         for exp in obj.teacherexperiences.all():
             if exp.start_date:
@@ -1760,12 +1757,10 @@ class TeacherSerializer(serializers.ModelSerializer):
                     setattr(profile_instance, attr, value)
                 profile_instance.save()
             else:
-                from .models import BasicProfile
                 BasicProfile.objects.create(user=instance, **profile_data)
         
         # 4. Update Addresses (Residency)
         if address_data:
-            from .models import TeachersAddress
             # address_data could be a dict with 'current_address' and 'permanent_address' 
             # if coming from my SerializerMethodField representation, or a list/dict from raw.
             # Handle standard format:
@@ -1780,7 +1775,6 @@ class TeacherSerializer(serializers.ModelSerializer):
 
         # 5. Update Skills
         if skills_data is not None:
-            from .models import TeacherSkill, Skill
             # Standard pattern: Replace all
             instance.teacherskill.all().delete()
             for skill_item in skills_data:
@@ -1791,7 +1785,6 @@ class TeacherSerializer(serializers.ModelSerializer):
 
         # 6. Update Qualifications
         if qualification_data is not None:
-            from .models import TeacherQualification, Qualification
             instance.teacherqualifications.all().delete()
             for qual_item in qualification_data:
                 qual_name = qual_item.get('qualification', {}).get('name')
@@ -1809,14 +1802,12 @@ class TeacherSerializer(serializers.ModelSerializer):
 
         # 7. Update Experience
         if experience_data is not None:
-            from .models import TeacherExperiences
             instance.teacherexperiences.all().delete()
             for exp_item in experience_data:
                 TeacherExperiences.objects.create(user=instance, **exp_item)
 
         # 8. Update Preferences (Academic Preferences)
         if preference_data is not None:
-            from .models import Preference, ClassCategory, Subject
             # This is complex because of M2M fields
             pref_instance, _ = Preference.objects.get_or_create(user=instance)
             for pref_item in preference_data:
