@@ -990,13 +990,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'last_login', 'is_superuser', 'email', 'username',
             'Fname', 'Lname', 'is_staff', 'is_active', 'is_recruiter',
-            'is_teacher', 'is_centeruser', 'user_code', 'is_questionuser', 'role'
+            'is_teacher', 'is_centeruser', 'user_code', 'is_questionuser', 
+            'is_interviewer', 'role'
         ]
         read_only_fields = ['email', 'username']
 
     def get_role(self, obj):
         if obj.is_staff:
             return "admin"
+        elif getattr(obj, 'is_interviewer', False):
+            return "interviewer"
         elif obj.is_recruiter:
             return "recruiter"
         elif obj.is_teacher:
