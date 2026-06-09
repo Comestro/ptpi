@@ -4236,3 +4236,23 @@ class InterviewAssignmentView(APIView):
             available_interviewers.save()
             return Response({"message": "Assigned successfully", "meet_link": interview.link})
         return Response({"error": "No available interviewer found for these subjects"}, status=400)
+
+class SystemErrorLogViewSet(viewsets.ModelViewSet):
+    queryset = SystemErrorLog.objects.all().order_by('-created_at')
+    serializer_class = SystemErrorLogSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminUser()]
+
+    def perform_create(self, serializer):
+        if self.request.user and self.request.user.is_authenticated:
+            serializer.save(user=self.request.user)
+        else:
+            serializer.save()
+
+    @action(detail=False, methods=['delete'], url_path='clear-all')
+    def clear_all(self, request):
+        SystemErrorLog.objects.all().delete()
+        return Response({"message": "All error logs cleared successfully"}, status=200)

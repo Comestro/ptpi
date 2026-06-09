@@ -625,3 +625,17 @@ class EmailLog(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.subject} - {self.sent_at}"
+
+class SystemErrorLog(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='system_errors')
+    source = models.CharField(max_length=50, default='Backend', choices=[('Backend', 'Backend'), ('Frontend', 'Frontend')])
+    request_path = models.CharField(max_length=255, null=True, blank=True)
+    request_method = models.CharField(max_length=10, null=True, blank=True)
+    exception_type = models.CharField(max_length=255)
+    exception_message = models.TextField()
+    stack_trace = models.TextField()
+    payload = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.source} - {self.exception_type} - {self.created_at}"

@@ -2245,3 +2245,21 @@ class InterviewerAvailabilitySlotSerializer(serializers.ModelSerializer):
         model = InterviewerAvailabilitySlot
         fields = '__all__'
         read_only_fields = ['interviewer']
+
+class SystemErrorLogSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    user_name = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = SystemErrorLog
+        fields = [
+            'id', 'user', 'user_email', 'user_name', 'source', 'request_path',
+            'request_method', 'exception_type', 'exception_message', 'stack_trace',
+            'payload', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return f"{obj.user.Fname or ''} {obj.user.Lname or ''}".strip() or obj.user.username
+        return None
