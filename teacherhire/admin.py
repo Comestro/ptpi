@@ -206,3 +206,10 @@ class InterviewerProfileAdmin(admin.ModelAdmin):
 class InterviewerAvailabilitySlotAdmin(admin.ModelAdmin):
     list_display = ['interviewer', 'day_of_week', 'start_time', 'end_time']
     list_filter = ['day_of_week']
+
+@admin.register(SystemErrorLog)
+class SystemErrorLogAdmin(admin.ModelAdmin):
+    list_display = ['source', 'exception_type', 'request_method', 'request_path', 'created_at']
+    list_filter = ['source', 'created_at', 'request_method']
+    search_fields = ['exception_type', 'exception_message', 'request_path', 'user__email']
+    readonly_fields = ['created_at']
