@@ -2533,6 +2533,28 @@ class GeneratePasskeyView(APIView):
     
 
 
+class ApprovePasskeyView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [ExpiringTokenAuthentication]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        exam_id = request.data.get('exam_id')
+
+        try:
+            passkey = Passkey.objects.get(user_id=user_id, exam_id=exam_id, status='requested')
+            passkey.status = 'fulfilled'
+            passkey.save() 
+
+            return Response({
+                "message": "Passkey approved successfully.",
+                "code": passkey.code,
+                "status": passkey.status
+            }, status=status.HTTP_200_OK)
+        except Passkey.DoesNotExist:
+            return Response({"error": "Passkey request not found or already processed."}, status=status.HTTP_404_NOT_FOUND)
+
+
 class VerifyPasscodeView(APIView):
     def post(self, request):
         user_id = self.request.user.id
