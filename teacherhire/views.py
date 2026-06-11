@@ -2486,19 +2486,17 @@ class GeneratePasskeyView(APIView):
                 {"error": "User must qualify both Level 1 and Level 2 online exams to access Level 2 offline exams."},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        passkey = random.randint(1000, 9999)
-
         passkey_obj = Passkey.objects.create(
             user=user,
             exam=exam,
-            code=str(passkey),
+            code=None,
             center=center,
             status='requested',
         )
         user_serializer = UserSerializer(user)
         exam_serializer = ExamDetailSerializer(exam)
         center_serializer = ExamCenterSerializer(center)
-        return Response({"message": "Passkey generated successfully.",
+        return Response({"message": "Passkey requested successfully.",
                          "user": user_serializer.data,
                          "center": center_serializer.data,
 

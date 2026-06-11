@@ -478,9 +478,19 @@ class Passkey(models.Model):
     status = models.CharField(max_length=200,choices=[('requested','requested'),('isused', 'isused'),('fulfilled','fulfilled'),('rejected','rejected')], default='requested')
     reject_reason = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.status == 'fulfilled' and not self.code:
+            import random
+            while True:
+                new_code = str(random.randint(1000, 9999))
+                if not Passkey.objects.filter(code=new_code).exists():
+                    self.code = new_code
+                    break
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return str(self.user.username)
-    
 def get_default_level():
     return Level.objects.get_or_create(name='2nd Level Online')[0]   
 
