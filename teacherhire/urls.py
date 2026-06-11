@@ -123,6 +123,7 @@ urlpatterns = [
     # Passkey Routes
     path("generate-passkey/", GeneratePasskeyView.as_view(), name="generate_passkey"),
     path("verify-passcode/", VerifyPasscodeView.as_view(), name="verify_passcode"),
+    path("approve-passkey/", ApprovePasskeyView.as_view(), name="approve_passkey"),
 
     # Seeder Data Routes
     path("insert/data/teacher/", insert_data_teachers, name="insert_data_teachers"),
