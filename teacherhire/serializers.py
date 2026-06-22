@@ -2014,7 +2014,11 @@ class TeacherSerializer(serializers.ModelSerializer):
                         'subject': appl.get('subject'),
                         'teacher_job_type': appl.get('teacher_job_type'),
                         'salary_expectation': appl.get('salary_expectation'),
+                        'expected_salary': appl.get('salary_expectation'),
                         'salary_type': appl.get('salary_type'),
+                        'preferred_locations': appl.get('preferred_locations', []),
+                        'status': appl.get('status'),
+                        'created_at': appl.get('date'),
                     })
             if applies:
                 representation['apply'] = applies
