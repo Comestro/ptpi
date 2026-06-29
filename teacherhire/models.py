@@ -449,9 +449,15 @@ class TeacherExamResult(models.Model):
             ).order_by('-created_at').first()  
 
             if existing_result:
-                self.attempt = existing_result.attempt + 1
+                if self.time_taken_seconds < 60:
+                    self.attempt = existing_result.attempt
+                else:
+                    self.attempt = existing_result.attempt + 1
             else:
-                self.attempt = 1
+                if self.time_taken_seconds < 60:
+                    self.attempt = 0
+                else:
+                    self.attempt = 1
 
         super().save(*args, **kwargs)
 
