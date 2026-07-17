@@ -492,7 +492,7 @@ class ImpersonateUser(APIView):
             "data": {
                 "id": target_user.id,
                 "email": target_user.email,
-                "name": target_user.name,
+                "name": f"{target_user.Fname} {target_user.Lname}",
                 "role": role,
                 "token": token.key,
                 "refresh_token": refresh_token,
