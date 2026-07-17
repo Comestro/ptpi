@@ -111,6 +111,7 @@ urlpatterns = [
     path("register/<str:role>/", RegisterUser.as_view(), name="register"),
     path("change_password/", ChangePasswordView.as_view(), name="change_password"),
     path("login/", LoginUser.as_view(), name="login"),
+    path("admin/impersonate/<int:user_id>/", ImpersonateUser.as_view(), name="impersonate"),
     path("logout/", LogoutUser.as_view(), name="logout"),
     path("password_reset_request/", PasswordResetRequest.as_view(), name="password_reset_request"), # forget password
     path("reset_password/<str:uid>/<str:token>/", ResetPasswordView.as_view(), name="reset_password"), # forget password

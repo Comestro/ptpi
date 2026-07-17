@@ -2,7 +2,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
@@ -451,3 +451,51 @@ class DeactivateAccount(APIView):
         user.is_active = False
         user.save()
         return Response({'message': 'Account deactivated successfully'}, status=status.HTTP_200_OK)
+
+
+class ImpersonateUser(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    def post(self, request, user_id):
+        try:
+            target_user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        token = Token.objects.filter(user=target_user).first()
+        if token:
+            from datetime import timedelta
+            expiration_time = timedelta(seconds=settings.TOKEN_EXPIRATION_TIME)
+            if now() > token.created + expiration_time:
+                 token.delete()
+                 token = Token.objects.create(user=target_user)
+        else:
+            token = Token.objects.create(user=target_user)
+            
+        # Update last login (optional but good practice)
+        update_last_login(None, target_user)
+        
+        refresh_token = str(uuid.uuid4())
+        
+        role = (
+            "admin" if target_user.is_staff else
+            "interviewer" if getattr(target_user, 'is_interviewer', False) else
+            "recruiter" if target_user.is_recruiter else
+            "teacher" if target_user.is_teacher else
+            "centeruser" if target_user.is_centeruser else
+            "questionuser" if target_user.is_questionuser else "user"
+        )
+
+        return Response({
+            "status": "success",
+            "message": f"Impersonating {target_user.email}",
+            "data": {
+                "id": target_user.id,
+                "email": target_user.email,
+                "name": target_user.name,
+                "role": role,
+                "token": token.key,
+                "refresh_token": refresh_token,
+                "is_verified": target_user.is_verified,
+            }
+        }, status=status.HTTP_200_OK)
