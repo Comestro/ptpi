@@ -609,20 +609,13 @@ class ExamSerializer(serializers.ModelSerializer):
                 "subject": f"Subject '{subject.subject_name}' does not belong to class category '{class_category.name}'. Please select a valid subject for this class."
             })
         
-        # auto generate exam name
-        exam_name = f"{class_category.name} | {subject.subject_name} | {level.name}".strip()
-
-        existing_count = Exam.objects.filter(name__startswith=exam_name).count()
-        auto_name = f"{exam_name} | S{existing_count + 1}"
-
         if not assigneduser:
             admin_user = CustomUser.objects.filter(is_staff=True).first()
             print(admin_user)
             if admin_user:
                 assigneduser, created = AssignedQuestionUser.objects.get_or_create(user=admin_user)
-                # validated_data['status'] = True
             validated_data['assigneduser'] = assigneduser
-        validated_data['name'] = auto_name
+        
         return super().create(validated_data)
 
     def to_representation(self, instance):

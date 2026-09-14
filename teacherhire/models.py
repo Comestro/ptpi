@@ -357,6 +357,26 @@ class Exam(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     status = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        base_name = f"{self.class_category.name} | {self.subject.subject_name} | {self.level.name}".strip()
+        
+        if self.set_name:
+            self.name = f"{base_name} | {self.set_name}"
+        else:
+            if not self.pk:
+                existing_count = Exam.objects.filter(name__startswith=base_name).count()
+                self.name = f"{base_name} | S{existing_count + 1}"
+            else:
+                suffix = "S1"
+                if self.name and "|" in self.name:
+                    parts = self.name.split("|")
+                    possible_suffix = parts[-1].strip()
+                    if possible_suffix:
+                        suffix = possible_suffix
+                self.name = f"{base_name} | {suffix}"
+                
+        super().save(*args, **kwargs)
+
     @property
     def count_question(self):
         qs = self.questions.all()
@@ -366,7 +386,7 @@ class Exam(models.Model):
         }
 
     def __str__(self):
-        return str(self.name) 
+        return str(self.name)
 
 class Question(models.Model):
     order = models.PositiveIntegerField(default=0)
@@ -655,3 +675,20 @@ class SystemErrorLog(models.Model):
 
     def __str__(self):
         return f"{self.source} - {self.exception_type} - {self.created_at}"
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Subject)
+def update_exams_on_subject_save(sender, instance, **kwargs):
+    for exam in instance.exam_set.all():
+        exam.save()
+
+@receiver(post_save, sender=ClassCategory)
+def update_exams_on_category_save(sender, instance, **kwargs):
+    for exam in instance.exam_set.all():
+        exam.save()
+
+@receiver(post_save, sender=Level)
+def update_exams_on_level_save(sender, instance, **kwargs):
+    for exam in instance.exam_set.all():
+        exam.save()
