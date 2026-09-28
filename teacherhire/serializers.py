@@ -2128,13 +2128,28 @@ class TeacherFilterSerializer(serializers.ModelSerializer):
         return data
 
     def get_medium(self, obj):
-        attempt = obj.teacherexamresult_set.order_by('-created_at').first()
-        if attempt and attempt.language:
-            return attempt.language
-        profile = getattr(obj, 'profiles', None)
-        if profile and profile.language:
-            return profile.language
-        return None
+        request = self.context.get('request')
+        requested_langs = []
+        if request:
+            requested_langs = request.query_params.getlist('language') or request.query_params.getlist('medium')
+            requested_langs = [v.lower() for v in requested_langs if v and str(v).strip()]
+
+        attempts_langs = list(obj.teacherexamresult_set.exclude(language__isnull=True).exclude(language__exact='').values_list('language', flat=True).distinct())
+        
+        if not attempts_langs:
+            profile = getattr(obj, 'profiles', None)
+            if profile and profile.language:
+                attempts_langs = [profile.language]
+                
+        if not attempts_langs:
+            return None
+
+        if requested_langs:
+            matched = [lang for lang in attempts_langs if lang.lower() in requested_langs]
+            if matched:
+                return ", ".join(matched)
+                
+        return ", ".join(attempts_langs)
 
     def get_last_experience(self, obj):
         exp = obj.teacherexperiences.order_by('-end_date', '-start_date').first()
