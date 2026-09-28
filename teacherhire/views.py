@@ -4048,14 +4048,21 @@ class TeacherDetailAPIView(APIView):
                 
         serializer = TeacherSerializer(teacher, context={'request': request, 'is_admin': is_admin})
 
-        # For recruiters (non-admin), return only interview details
+        # For recruiters (non-admin), return both exam attempt details and interview details
         if not is_admin:
             interviews = Interview.objects.filter(
                 user=teacher
             ).exclude(grade__isnull=True).order_by('-created_at')
             
             interview_data = InterviewSerializer(interviews, many=True, context={'request': request}).data
-            return Response({"teacher": serializer.data, "attempts": interview_data}, status=200)
+            
+            exam_results_qs = TeacherExamResult.objects.filter(
+                user=teacher
+            ).select_related('exam__subject', 'exam__class_category', 'exam__level').order_by('-created_at')
+            exam_results = TeacherAttempterializer(exam_results_qs, many=True, context={'request': request}).data
+            
+            combined_attempts = list(exam_results) + list(interview_data)
+            return Response({"teacher": serializer.data, "attempts": combined_attempts}, status=200)
         
         # For admin, return exam attempt details
         exam_results_qs = TeacherExamResult.objects.filter(
