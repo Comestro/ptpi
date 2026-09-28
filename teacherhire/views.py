@@ -3895,10 +3895,13 @@ class TeacherFilterAPIView(APIView):
         if marital_status:
             filters &= Q(profiles__marital_status__iexact=marital_status[0]) if len(marital_status) == 1 else Q(profiles__marital_status__in=marital_status)
 
-        # Language filter
-        language = clean_values(request.query_params.getlist('language'))
+        # Language/Medium filter
+        language = clean_values(request.query_params.getlist('language') or request.query_params.getlist('medium'))
         if language:
-            filters &= Q(profiles__language__iexact=language[0]) if len(language) == 1 else Q(profiles__language__in=language)
+            if len(language) == 1:
+                filters &= (Q(profiles__language__iexact=language[0]) | Q(teacherexamresult__language__iexact=language[0]))
+            else:
+                filters &= (Q(profiles__language__in=language) | Q(teacherexamresult__language__in=language))
 
         # JobPreferenceLocation address filters (support multiple values, ignore empty/null)
         jp_fields = ['state', 'city', 'sub_division', 'post_office', 'area', 'pincode']

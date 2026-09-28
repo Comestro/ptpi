@@ -2079,12 +2079,13 @@ class TeacherFilterSerializer(serializers.ModelSerializer):
     current_address = serializers.SerializerMethodField()
     last_experience = serializers.SerializerMethodField()
     last_education = serializers.SerializerMethodField()
+    medium = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
         fields = [
             'id', 'Fname', 'Lname', 'email', 'profile_picture', 'phone_number',
-            'current_address', 'last_experience', 'last_education'
+            'current_address', 'last_experience', 'last_education', 'medium'
         ]
 
     def get_profile_picture(self, obj):
@@ -2125,6 +2126,15 @@ class TeacherFilterSerializer(serializers.ModelSerializer):
                 # area, pincode, block, village, postoffice removed
             }
         return data
+
+    def get_medium(self, obj):
+        attempt = obj.teacherexamresult_set.order_by('-created_at').first()
+        if attempt and attempt.language:
+            return attempt.language
+        profile = getattr(obj, 'profiles', None)
+        if profile and profile.language:
+            return profile.language
+        return None
 
     def get_last_experience(self, obj):
         exp = obj.teacherexperiences.order_by('-end_date', '-start_date').first()
