@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from .permissions import *
 import random
 import re
+from django.db import transaction
 from rest_framework.response import Response
 # ... existing imports
 
@@ -3212,15 +3213,100 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['recruiter_id'] = recruiter_id
         data['status'] = "requested"
+        
+        # Calculate required points
+        required_points = 0
+        class_categories = data.get('class_category', [])
+        subjects = data.get('subject', [])
+        
+        if not isinstance(class_categories, list):
+            class_categories = [class_categories]
+        if not isinstance(subjects, list):
+            subjects = [subjects]
+            
+        rules = RecruiterPointRule.objects.all()
+        max_points = 0
+        for cat in class_categories:
+            for sub in subjects:
+                exact = rules.filter(class_category_id=cat, subject_id=sub).first()
+                if exact:
+                    max_points = max(max_points, exact.points_required)
+                    continue
+                cat_only = rules.filter(class_category_id=cat, subject__isnull=True).first()
+                if cat_only:
+                    max_points = max(max_points, cat_only.points_required)
+                    continue
+                sub_only = rules.filter(class_category__isnull=True, subject_id=sub).first()
+                if sub_only:
+                    max_points = max(max_points, sub_only.points_required)
+                    continue
+                generic = rules.filter(class_category__isnull=True, subject__isnull=True).first()
+                if generic:
+                    max_points = max(max_points, generic.points_required)
+        
+        required_points = max_points
+        
         serializer = HireRequestSerializer(data=data)
         if serializer.is_valid(raise_exception=True):
-            serializer.save()
+            if required_points > 0:
+                with transaction.atomic():
+                    wallet, _ = Wallet.objects.get_or_create(user=request.user)
+                    wallet = Wallet.objects.select_for_update().get(id=wallet.id)
+                    if wallet.balance < required_points:
+                        return Response(
+                            {"error": f"Insufficient points. Required: {required_points}, Balance: {wallet.balance}"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    
+                    hire_instance = serializer.save()
+                    
+                    wallet.balance -= required_points
+                    wallet.save()
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=required_points,
+                        transaction_type='DEBIT',
+                        reference=f"HIRE_{hire_instance.id}",
+                        description=f"Recruiter hire request point deduction"
+                    )
+            else:
+                serializer.save()
+                
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         recruiter_id = self.request.user
         return HireRequest.objects.filter(recruiter_id=recruiter_id)
+        
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Check for refunds
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                wallet = debit_transaction.wallet
+                wallet.balance += debit_transaction.amount
+                wallet.save()
+                
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    amount=debit_transaction.amount,
+                    transaction_type='CREDIT',
+                    reference=f"REFUND_HIRE_{instance.id}",
+                    description="Refund for canceled hire request"
+                )
+        except Exception:
+            pass
+            
+        instance.delete()
+        return Response({"message": "Hire request deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -3230,11 +3316,36 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         if status_value not in ['requested', 'fulfilled', 'rejected']:
             return Response({"error": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
 
+        old_status = instance.status
         instance.status = status_value
         if status_value == "rejected":
             if not reject_reason:
                 return Response({"error": "Reject reason required when status is rejected"}, status=status.HTTP_400_BAD_REQUEST)
             instance.reject_reason = reject_reason
+            
+            # Refund points if status changes to rejected
+            if old_status != "rejected":
+                try:
+                    debit_transaction = WalletTransaction.objects.filter(
+                        wallet__user=instance.recruiter_id,
+                        reference=f"HIRE_{instance.id}",
+                        transaction_type='DEBIT'
+                    ).first()
+                    
+                    if debit_transaction:
+                        wallet = debit_transaction.wallet
+                        wallet.balance += debit_transaction.amount
+                        wallet.save()
+                        
+                        WalletTransaction.objects.create(
+                            wallet=wallet,
+                            amount=debit_transaction.amount,
+                            transaction_type='CREDIT',
+                            reference=f"REFUND_HIRE_{instance.id}",
+                            description="Refund for rejected hire request"
+                        )
+                except Exception:
+                    pass
         else:
             instance.reject_reason = None
 
@@ -3291,28 +3402,144 @@ class ApplyViewSet(viewsets.ModelViewSet):
             )
 
         data["user"] = user.id
-        # Save the new application
+        
+        # Calculate required points
+        job_type_id = data.get('teacher_job_type')
+        required_points = 0
+        if job_type_id:
+            locations_to_check = preferred_locations if preferred_locations else list(JobPreferenceLocation.objects.filter(user=user).values('state', 'district'))
+            rules = TeacherPointRule.objects.filter(job_type_id=job_type_id)
+            if rules.exists():
+                max_points_found = 0
+                rule_matched = False
+                for loc in locations_to_check:
+                    state = loc.get('state')
+                    district = loc.get('district')
+                    exact = rules.filter(state=state, district=district).first()
+                    if exact:
+                        max_points_found = max(max_points_found, exact.points_required)
+                        rule_matched = True
+                        continue
+                    state_only = rules.filter(state=state, district__isnull=True).first()
+                    if state_only:
+                        max_points_found = max(max_points_found, state_only.points_required)
+                        rule_matched = True
+                        continue
+                    generic = rules.filter(state__isnull=True, district__isnull=True).first()
+                    if generic:
+                        max_points_found = max(max_points_found, generic.points_required)
+                        rule_matched = True
+                if rule_matched:
+                    required_points = max_points_found
+        
         serializer = ApplySerializer(data=data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
-            apply_instance = serializer.save(user=user)
-            
-            # Save preferred locations if provided
-            if preferred_locations:
-                for loc_data in preferred_locations:
-                    JobPreferenceLocation.objects.create(
-                        user=user,
-                        apply=apply_instance,
-                        **loc_data
+            if required_points > 0:
+                with transaction.atomic():
+                    wallet, _ = Wallet.objects.get_or_create(user=user)
+                    wallet = Wallet.objects.select_for_update().get(id=wallet.id)
+                    if wallet.balance < required_points:
+                        return Response(
+                            {"error": f"Insufficient points. Required: {required_points}, Balance: {wallet.balance}"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    apply_instance = serializer.save(user=user)
+                    
+                    if preferred_locations:
+                        for loc_data in preferred_locations:
+                            JobPreferenceLocation.objects.create(
+                                user=user,
+                                apply=apply_instance,
+                                **loc_data
+                            )
+                    
+                    wallet.balance -= required_points
+                    wallet.save()
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=required_points,
+                        transaction_type='DEBIT',
+                        reference=f"APPLY_{apply_instance.id}",
+                        description=f"Job application point deduction"
                     )
+            else:
+                apply_instance = serializer.save(user=user)
+                if preferred_locations:
+                    for loc_data in preferred_locations:
+                        JobPreferenceLocation.objects.create(
+                            user=user,
+                            apply=apply_instance,
+                            **loc_data
+                        )
             
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_status = instance.status
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            new_status = updated_instance.status
+            
+            # If revoked, refund points
+            if old_status == True and new_status == False:
+                try:
+                    debit_transaction = WalletTransaction.objects.filter(
+                        wallet__user=request.user,
+                        reference=f"APPLY_{updated_instance.id}",
+                        transaction_type='DEBIT'
+                    ).first()
+                    
+                    if debit_transaction:
+                        wallet = debit_transaction.wallet
+                        wallet.balance += debit_transaction.amount
+                        wallet.save()
+                        
+                        WalletTransaction.objects.create(
+                            wallet=wallet,
+                            amount=debit_transaction.amount,
+                            transaction_type='CREDIT',
+                            reference=f"REFUND_APPLY_{updated_instance.id}",
+                            description="Refund for revoked job application"
+                        )
+                except Exception:
+                    pass
+            # If re-applied, deduct points
+            elif old_status == False and new_status == True:
+                # We need to calculate points again or just find the last refund and reverse it.
+                # Simplest is to find previous refund and deduct that amount.
+                try:
+                    refund = WalletTransaction.objects.filter(
+                        wallet__user=request.user,
+                        reference=f"REFUND_APPLY_{updated_instance.id}",
+                        transaction_type='CREDIT'
+                    ).first()
+                    
+                    if refund:
+                        wallet = refund.wallet
+                        if wallet.balance >= refund.amount:
+                            wallet.balance -= refund.amount
+                            wallet.save()
+                            
+                            WalletTransaction.objects.create(
+                                wallet=wallet,
+                                amount=refund.amount,
+                                transaction_type='DEBIT',
+                                reference=f"REAPPLY_{updated_instance.id}",
+                                description="Deduction for re-applying job application"
+                            )
+                        else:
+                            # Revert status if not enough balance
+                            updated_instance.status = False
+                            updated_instance.save()
+                            return Response({"error": "Insufficient points to re-apply."}, status=status.HTTP_400_BAD_REQUEST)
+                except Exception:
+                    pass
+            
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3321,6 +3548,30 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        
+        # Check for refunds
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"APPLY_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                wallet = debit_transaction.wallet
+                wallet.balance += debit_transaction.amount
+                wallet.save()
+                
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    amount=debit_transaction.amount,
+                    transaction_type='CREDIT',
+                    reference=f"REFUND_APPLY_{instance.id}",
+                    description="Refund for canceled job application"
+                )
+        except Exception:
+            pass
+            
         instance.delete()
         return Response({"message": "Applied Data deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 

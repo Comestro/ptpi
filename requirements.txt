@@ -67,3 +67,4 @@ uritemplate==4.2.0
 urllib3==1.26.20
 waitress==3.0.2
 whitenoise==6.8.2
+razorpay==2.0.1

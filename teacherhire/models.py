@@ -692,3 +692,91 @@ def update_exams_on_category_save(sender, instance, **kwargs):
 def update_exams_on_level_save(sender, instance, **kwargs):
     for exam in instance.exam_set.all():
         exam.save()
+
+# Wallet & Points System Models
+
+class Wallet(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} - Balance: {self.balance}"
+
+
+class WalletTransaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('CREDIT', 'Credit'),
+        ('DEBIT', 'Debit'),
+    ]
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('SUCCESS', 'Success'),
+        ('FAILED', 'Failed'),
+    ]
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
+    amount = models.IntegerField()
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    reference = models.CharField(max_length=255, null=True, blank=True, help_text="Reference ID (e.g., job application ID or hire request ID)")
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='SUCCESS')
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.transaction_type} of {self.amount} for {self.wallet.user.email}"
+
+
+class PointConfiguration(models.Model):
+    point_price_in_inr = models.DecimalField(max_digits=10, decimal_places=2, default=1.00, help_text="Cost of 1 Point in INR")
+    welcome_points = models.IntegerField(default=0, help_text="Free points given to newly registered users")
+    
+    def save(self, *args, **kwargs):
+        if not self.pk and PointConfiguration.objects.exists():
+            return
+        return super(PointConfiguration, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f"1 Point = {self.point_price_in_inr} INR | Welcome Points: {self.welcome_points}"
+
+
+class TeacherPointRule(models.Model):
+    job_type = models.ForeignKey('TeacherJobType', on_delete=models.CASCADE)
+    state = models.CharField(max_length=100, null=True, blank=True, help_text="Leave blank to apply to all states")
+    district = models.CharField(max_length=100, null=True, blank=True, help_text="Leave blank to apply to all districts")
+    points_required = models.IntegerField(default=0)
+    
+    def __str__(self):
+        loc = f"{self.district}, {self.state}" if self.district and self.state else "Any Location"
+        return f"{self.job_type.jobrole_name} in {loc} -> {self.points_required} Points"
+
+
+class RecruiterPointRule(models.Model):
+    class_category = models.ForeignKey('ClassCategory', on_delete=models.CASCADE, null=True, blank=True)
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE, null=True, blank=True)
+    points_required = models.IntegerField(default=0)
+    
+    def __str__(self):
+        cat = self.class_category.name if self.class_category else "Any Category"
+        sub = self.subject.subject_name if self.subject else "Any Subject"
+        return f"{cat} - {sub} -> {self.points_required} Points"
+
+
+class PaymentTransaction(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('SUCCESS', 'Success'),
+        ('FAILED', 'Failed'),
+    ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='payments')
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    points_purchased = models.IntegerField()
+    payment_status = models.CharField(max_length=15, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
+    razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_signature = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Payment of {self.amount_paid} INR by {self.user.email} - Status: {self.payment_status}"

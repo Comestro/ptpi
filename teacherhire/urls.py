@@ -8,6 +8,7 @@ from teacherhire.seeder_view import *
 from teacherhire.views_permissions import *
 from .views import ProfilecompletedView, CheckoutView
 from teacherhire.backup_restore_views import *
+from teacherhire.wallet_views import WalletDetailAPIView, CreatePaymentOrderAPIView, VerifyPaymentAPIView, RazorpayWebhookAPIView
 from django.conf.urls.static import static
 
 # Initialize router
@@ -93,6 +94,11 @@ router.register(r'interviewer/profile', InterviewerProfileViewSet, basename="int
 router.register(r'interviewer/availability', InterviewerAvailabilitySlotViewSet, basename="interviewer-availability")
 # === Permission-Based Routes ===
 urlpatterns = [
+    # Wallet & Point System
+    path('api/wallet/', WalletDetailAPIView.as_view(), name='wallet-detail'),
+    path('api/wallet/buy-points/', CreatePaymentOrderAPIView.as_view(), name='wallet-buy-points'),
+    path('api/wallet/verify-payment/', VerifyPaymentAPIView.as_view(), name='wallet-verify-payment'),
+
     path("admin/teacher/list/", AdminTeacherListView.as_view(), name="admin-teacher-list"),
     path("", include(router.urls)),
     path("new/teacher/", TeacherFilterAPIView.as_view(), name="new-teacher"),
@@ -144,4 +150,10 @@ urlpatterns = [
     # Backup & Restore DB
     path('backup-db/', BackupDatabaseView.as_view(), name='backup_db'),
     path('restore-db/', RestoreDBView.as_view(), name='restore_db'),
+    
+    # Wallet & Point System
+    path('api/wallet/', WalletDetailAPIView.as_view(), name='wallet-detail'),
+    path('api/wallet/create-order/', CreatePaymentOrderAPIView.as_view(), name='create-payment-order'),
+    path('api/wallet/verify-payment/', VerifyPaymentAPIView.as_view(), name='verify-payment'),
+    path('api/wallet/webhook/', RazorpayWebhookAPIView.as_view(), name='razorpay-webhook'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

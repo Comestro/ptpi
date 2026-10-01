@@ -259,3 +259,7 @@ if not DEBUG:
     #     ],
     # },
 # }
+# Razorpay Integration
+RAZORPAY_KEY_ID = 'rzp_test_placeholder'
+RAZORPAY_KEY_SECRET = 'placeholder_secret'
+

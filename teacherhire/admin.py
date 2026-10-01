@@ -261,3 +261,38 @@ class SystemErrorLogAdmin(admin.ModelAdmin):
     list_filter = ['source', 'created_at', 'request_method']
     search_fields = ['exception_type', 'exception_message', 'request_path', 'user__email']
     readonly_fields = ['created_at']
+
+# Wallet & Point System
+@admin.register(Wallet)
+class WalletAdmin(admin.ModelAdmin):
+    list_display = ['user', 'balance', 'created_at', 'updated_at']
+    search_fields = ['user__email', 'user__username']
+    list_filter = ['created_at']
+
+@admin.register(WalletTransaction)
+class WalletTransactionAdmin(admin.ModelAdmin):
+    list_display = ['wallet', 'amount', 'transaction_type', 'reference', 'created_at']
+    list_filter = ['transaction_type', 'created_at']
+    search_fields = ['wallet__user__email', 'reference', 'description']
+
+@admin.register(PointConfiguration)
+class PointConfigurationAdmin(admin.ModelAdmin):
+    list_display = ['id', 'point_price_in_inr', 'welcome_points']
+
+@admin.register(TeacherPointRule)
+class TeacherPointRuleAdmin(admin.ModelAdmin):
+    list_display = ['job_type', 'state', 'district', 'points_required']
+    list_filter = ['job_type', 'state']
+    search_fields = ['state', 'district', 'job_type__teacher_job_name']
+
+@admin.register(RecruiterPointRule)
+class RecruiterPointRuleAdmin(admin.ModelAdmin):
+    list_display = ['subject', 'class_category', 'points_required']
+    list_filter = ['subject', 'class_category']
+    search_fields = ['subject__subject_name', 'class_category__class_category_name']
+
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'razorpay_order_id', 'amount_paid', 'points_purchased', 'payment_status', 'created_at']
+    list_filter = ['payment_status', 'created_at']
+    search_fields = ['user__email', 'razorpay_order_id', 'razorpay_payment_id']
