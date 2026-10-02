@@ -120,6 +120,46 @@ class TeachersAddressViewSet(viewsets.ModelViewSet):
         count = get_count(TeachersAddress)
         return Response({"count": count})
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -251,6 +291,46 @@ class EducationalQulificationViewSet(viewsets.ModelViewSet):
         count = get_count(EducationalQualification)
         return Response({"count": count})
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -307,6 +387,46 @@ class LevelViewSet(viewsets.ModelViewSet):
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.exam_set.exists():
@@ -335,6 +455,46 @@ class SkillViewSet(viewsets.ModelViewSet):
         count = get_count(Skill)
         return Response({"Count": count})
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.teacherskill_set.exists():
@@ -356,6 +516,46 @@ class TeacherSkillViewSet(viewsets.ModelViewSet):
     def count(self, request):
         count = get_count(TeacherSkill)
         return Response({"Count": count})
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -415,6 +615,46 @@ class SingleTeacherSkillViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TeacherSkill.objects.filter(user=self.request.user)
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -439,6 +679,46 @@ class SubjectViewSet(viewsets.ModelViewSet):
     def count(self, request):
         count = get_count(Subject)
         return Response({"Count": count})
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -749,6 +1029,46 @@ class ClassCategoryViewSet(viewsets.ModelViewSet):
         count = get_count(ClassCategory)
         return Response({"Count": count})
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.subjects.exists():
@@ -770,6 +1090,46 @@ class PublicClassCategoryViewSet(viewsets.ModelViewSet):
     def count(self, request):
         count = get_count(ClassCategory)
         return Response({"Count": count})
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -795,6 +1155,46 @@ class ReasonViewSet(viewsets.ModelViewSet):
         count = get_count(Reason)
         return Response({"Count": count})
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -818,6 +1218,46 @@ class TeacherQualificationViewSet(viewsets.ModelViewSet):
         if teacher_id:
             return TeacherQualification.objects.filter(user_id=teacher_id)
         return TeacherQualification.objects.all()
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -907,6 +1347,46 @@ class SingleTeacherQualificationViewSet(viewsets.ModelViewSet):
             model_class=TeacherQualification
         )
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -944,6 +1424,46 @@ class TeacherExperiencesViewSet(viewsets.ModelViewSet):
         if teacher_id:
             return TeacherExperiences.objects.filter(user_id=teacher_id)
         return TeacherExperiences.objects.all()
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1091,6 +1611,46 @@ class ExamSetterQuestionViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         exam = instance.exam
@@ -1183,6 +1743,46 @@ class RoleViewSet(viewsets.ModelViewSet):
         count = get_count(Role)
         return Response({"Count": count})
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -1273,6 +1873,46 @@ class PreferenceViewSet(viewsets.ModelViewSet):
         except Preference.DoesNotExist:
             raise NotFound({"detail": "Preference not found."})
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -1308,6 +1948,46 @@ class TeacherSubjectViewSet(viewsets.ModelViewSet):
     def count(self, request):
         count = get_count(TeacherSubject)
         return Response({"Count": count})
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1382,6 +2062,46 @@ class TeacherClassCategoryViewSet(viewsets.ModelViewSet):
     def count(self, request):
         count = get_count(TeacherClassCategory)
         return Response({"Count": count})
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1575,6 +2295,46 @@ class JobPreferenceLocationViewSet(viewsets.ModelViewSet):
         if user.is_teacher:
             return JobPreferenceLocation.objects.filter(user=user)
         return JobPreferenceLocation.objects.all()
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -2064,6 +2824,46 @@ class ExamSetterViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         """Admins can delete any exam; assigned users can delete only their own."""
         user = request.user
@@ -2406,6 +3206,46 @@ class ReportViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         return Response({"error": "POST method is not allow."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -2816,6 +3656,46 @@ class ExamCenterViewSets(viewsets.ModelViewSet):
             serializer = TeacherExamCenterSerializer(queryset, many=True)
         return Response(serializer.data)
     
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -3132,6 +4012,46 @@ class AssignedQuestionUserViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         exam_created_user = Exam.objects.filter(assigneduser=instance).exists()
@@ -3281,6 +4201,46 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
             return HireRequest.objects.filter(recruiter_id=user)
         return HireRequest.objects.filter(teacher_id=user)
         
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         
@@ -3542,6 +4502,46 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Apply.objects.filter(user=self.request.user)
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -3969,6 +4969,46 @@ class NewExamSetterQuestionViewSet(viewsets.ModelViewSet):
         return Response({"message": "Sync complete", "logs": logs}, status=200)
 
 
+
+    
+    @action(detail=True, methods=['post'])
+    def withdraw(self, request, pk=None):
+        instance = self.get_object()
+        
+        if instance.status != 'requested':
+            return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+            return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Process refund
+        try:
+            debit_transaction = WalletTransaction.objects.filter(
+                wallet__user=request.user,
+                reference=f"HIRE_{instance.id}",
+                transaction_type='DEBIT'
+            ).first()
+            
+            if debit_transaction:
+                with transaction.atomic():
+                    wallet = Wallet.objects.select_for_update().get(id=debit_transaction.wallet.id)
+                    wallet.balance += debit_transaction.amount
+                    wallet.save()
+                    
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=debit_transaction.amount,
+                        transaction_type='CREDIT',
+                        description=f"Refund for withdrawn hire request #{instance.id}",
+                        reference=f"REFUND_HIRE_{instance.id}"
+                    )
+        except Exception as e:
+            print("Refund error:", e)
+            
+        instance.status = 'withdrawn'
+        instance.save()
+        
+        return Response({"status": "withdrawn successfully"})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
