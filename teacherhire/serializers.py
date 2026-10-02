@@ -2285,3 +2285,17 @@ class SystemErrorLogSerializer(serializers.ModelSerializer):
         if obj.user:
             return f"{obj.user.Fname or ''} {obj.user.Lname or ''}".strip() or obj.user.username
         return None
+class PointConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PointConfiguration
+        fields = '__all__'
+
+class TeacherPointRuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeacherPointRule
+        fields = '__all__'
+
+class RecruiterPointRuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RecruiterPointRule
+        fields = '__all__'

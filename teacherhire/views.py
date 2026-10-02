@@ -4553,3 +4553,17 @@ class SystemErrorLogViewSet(viewsets.ModelViewSet):
     def clear_all(self, request):
         SystemErrorLog.objects.all().delete()
         return Response({"message": "All error logs cleared successfully"}, status=200)
+class PointConfigurationViewSet(viewsets.ModelViewSet):
+    queryset = PointConfiguration.objects.all()
+    serializer_class = PointConfigurationSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+class TeacherPointRuleViewSet(viewsets.ModelViewSet):
+    queryset = TeacherPointRule.objects.all().order_by('-id')
+    serializer_class = TeacherPointRuleSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+class RecruiterPointRuleViewSet(viewsets.ModelViewSet):
+    queryset = RecruiterPointRule.objects.all().order_by('-id')
+    serializer_class = RecruiterPointRuleSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]

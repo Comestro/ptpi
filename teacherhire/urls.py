@@ -55,6 +55,9 @@ router.register(r"admin/teacherexamresult", AllTeacherExamResultViewSet, basenam
 router.register(r"admin/apply", AllApplyViewSet, basename="admin-apply")
 router.register(r"admin/count", CountDataViewSet, basename="admin-count")
 router.register(r"admin/systemerrorlog", SystemErrorLogViewSet, basename="admin-systemerrorlog")
+router.register(r"admin/pointconfig", PointConfigurationViewSet, basename="admin-pointconfig")
+router.register(r"admin/teacherpointrule", TeacherPointRuleViewSet, basename="admin-teacherpointrule")
+router.register(r"admin/recruiterpointrule", RecruiterPointRuleViewSet, basename="admin-recruiterpointrule")
 
 # === Teacher Routes ===
 router.register(r"admin/teacher", TeacherViewSet, basename="admin-teacher")
