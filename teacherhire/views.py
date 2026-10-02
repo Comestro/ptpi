@@ -4209,7 +4209,7 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         if instance.status != 'requested':
             return Response({"error": "Only pending requests can be withdrawn."}, status=status.HTTP_400_BAD_REQUEST)
             
-        if request.user.role != 'recruiter' or instance.recruiter_id != request.user:
+        if not getattr(request.user, 'is_recruiter', False) or instance.recruiter_id != request.user:
             return Response({"error": "Unauthorized to withdraw this request."}, status=status.HTTP_403_FORBIDDEN)
 
         # Process refund
