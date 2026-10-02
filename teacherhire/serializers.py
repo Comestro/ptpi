@@ -1343,6 +1343,9 @@ class HireRequestSerializer(serializers.ModelSerializer):
     
     teacher_name = serializers.SerializerMethodField()
     recruiter_name = serializers.SerializerMethodField()
+    job_type_names = serializers.SerializerMethodField()
+    subject_names = serializers.SerializerMethodField()
+    class_category_names = serializers.SerializerMethodField()
 
     class Meta:
         model = HireRequest
@@ -1354,11 +1357,21 @@ class HireRequestSerializer(serializers.ModelSerializer):
         except Exception:
             return None
 
+
     def get_recruiter_name(self, obj):
         try:
             return f"{obj.recruiter_id.Fname} {obj.recruiter_id.Lname}".strip()
         except Exception:
             return None
+
+    def get_job_type_names(self, obj):
+        return [t.teacher_job_name for t in obj.teacher_job_type.all()] if obj.teacher_job_type else []
+
+    def get_subject_names(self, obj):
+        return [s.subject_name for s in obj.subject.all()] if obj.subject else []
+
+    def get_class_category_names(self, obj):
+        return [c.name for c in obj.class_category.all()] if obj.class_category else []
 
 
     def to_representation(self, instance):
