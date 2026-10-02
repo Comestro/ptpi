@@ -97,10 +97,7 @@ router.register(r'interviewer/profile', InterviewerProfileViewSet, basename="int
 router.register(r'interviewer/availability', InterviewerAvailabilitySlotViewSet, basename="interviewer-availability")
 # === Permission-Based Routes ===
 urlpatterns = [
-    # Wallet & Point System
-    path('api/wallet/', WalletDetailAPIView.as_view(), name='wallet-detail'),
-    path('api/wallet/buy-points/', CreatePaymentOrderAPIView.as_view(), name='wallet-buy-points'),
-    path('api/wallet/verify-payment/', VerifyPaymentAPIView.as_view(), name='wallet-verify-payment'),
+    # Wallet & Point System Removed duplicate
 
     path("admin/teacher/list/", AdminTeacherListView.as_view(), name="admin-teacher-list"),
     path("", include(router.urls)),
@@ -155,8 +152,8 @@ urlpatterns = [
     path('restore-db/', RestoreDBView.as_view(), name='restore_db'),
     
     # Wallet & Point System
-    path('api/wallet/', WalletDetailAPIView.as_view(), name='wallet-detail'),
-    path('api/wallet/create-order/', CreatePaymentOrderAPIView.as_view(), name='create-payment-order'),
-    path('api/wallet/verify-payment/', VerifyPaymentAPIView.as_view(), name='verify-payment'),
-    path('api/wallet/webhook/', RazorpayWebhookAPIView.as_view(), name='razorpay-webhook'),
+    path('wallet/', WalletDetailAPIView.as_view(), name='wallet-detail'),
+    path('wallet/create-order/', CreatePaymentOrderAPIView.as_view(), name='create-payment-order'),
+    path('wallet/verify-payment/', VerifyPaymentAPIView.as_view(), name='verify-payment'),
+    path('wallet/webhook/', RazorpayWebhookAPIView.as_view(), name='razorpay-webhook'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
