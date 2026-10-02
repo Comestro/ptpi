@@ -260,6 +260,6 @@ if not DEBUG:
     # },
 # }
 # Razorpay Integration
-RAZORPAY_KEY_ID = 'rzp_test_placeholder'
-RAZORPAY_KEY_SECRET = 'placeholder_secret'
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_placeholder')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'placeholder_secret')
 
