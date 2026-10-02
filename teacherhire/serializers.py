@@ -1340,10 +1340,26 @@ class HireRequestSerializer(serializers.ModelSerializer):
     teacher_job_type = serializers.PrimaryKeyRelatedField(queryset=TeacherJobType.objects.all(), many=True, required=False)
     class_category = serializers.PrimaryKeyRelatedField(queryset=ClassCategory.objects.all(), many=True, required=False)
     subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False)
+    
+    teacher_name = serializers.SerializerMethodField()
+    recruiter_name = serializers.SerializerMethodField()
 
     class Meta:
         model = HireRequest
         fields = "__all__"
+        
+    def get_teacher_name(self, obj):
+        try:
+            return f"{obj.teacher_id.Fname} {obj.teacher_id.Lname}".strip()
+        except Exception:
+            return None
+
+    def get_recruiter_name(self, obj):
+        try:
+            return f"{obj.recruiter_id.Fname} {obj.recruiter_id.Lname}".strip()
+        except Exception:
+            return None
+
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
