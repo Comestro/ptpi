@@ -3276,8 +3276,10 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
-        recruiter_id = self.request.user
-        return HireRequest.objects.filter(recruiter_id=recruiter_id)
+        user = self.request.user
+        if getattr(user, 'is_recruiter', False):
+            return HireRequest.objects.filter(recruiter_id=user)
+        return HireRequest.objects.filter(teacher_id=user)
         
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -3348,6 +3350,60 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
                     pass
         else:
             instance.reject_reason = None
+            
+        if status_value == "fulfilled" and old_status != "fulfilled":
+            teacher = instance.teacher_id
+            if not teacher:
+                return Response({"error": "No teacher associated with this request"}, status=status.HTTP_400_BAD_REQUEST)
+                
+            locations_to_check = list(JobPreferenceLocation.objects.filter(user=teacher).values('state', 'district'))
+            job_type_ids = instance.teacher_job_type.all().values_list('id', flat=True)
+            
+            required_points = 0
+            for job_type_id in job_type_ids:
+                rules = TeacherPointRule.objects.filter(job_type_id=job_type_id)
+                if rules.exists():
+                    max_points_found = 0
+                    rule_matched = False
+                    for loc in locations_to_check:
+                        state = loc.get('state')
+                        district = loc.get('district')
+                        exact = rules.filter(state=state, district=district).first()
+                        if exact:
+                            max_points_found = max(max_points_found, exact.points_required)
+                            rule_matched = True
+                            continue
+                        state_only = rules.filter(state=state, district__isnull=True).first()
+                        if state_only:
+                            max_points_found = max(max_points_found, state_only.points_required)
+                            rule_matched = True
+                            continue
+                        generic = rules.filter(state__isnull=True, district__isnull=True).first()
+                        if generic:
+                            max_points_found = max(max_points_found, generic.points_required)
+                            rule_matched = True
+                    if rule_matched:
+                        required_points = max(required_points, max_points_found)
+            
+            if required_points > 0:
+                with transaction.atomic():
+                    wallet, _ = Wallet.objects.get_or_create(user=teacher)
+                    wallet = Wallet.objects.select_for_update().get(id=wallet.id)
+                    if wallet.balance < required_points:
+                        return Response(
+                            {"error": f"Insufficient points. Required: {required_points}, Balance: {wallet.balance}"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    
+                    wallet.balance -= required_points
+                    wallet.save()
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=required_points,
+                        transaction_type='DEBIT',
+                        reference=f"ACCEPT_HIRE_{instance.id}",
+                        description="Point deduction for accepting hire request"
+                    )
 
         instance.save()
         serializer = self.get_serializer(instance)
@@ -3403,75 +3459,16 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
         data["user"] = user.id
         
-        # Calculate required points
-        job_type_id = data.get('teacher_job_type')
-        required_points = 0
-        if job_type_id:
-            locations_to_check = preferred_locations if preferred_locations else list(JobPreferenceLocation.objects.filter(user=user).values('state', 'district'))
-            rules = TeacherPointRule.objects.filter(job_type_id=job_type_id)
-            if rules.exists():
-                max_points_found = 0
-                rule_matched = False
-                for loc in locations_to_check:
-                    state = loc.get('state')
-                    district = loc.get('district')
-                    exact = rules.filter(state=state, district=district).first()
-                    if exact:
-                        max_points_found = max(max_points_found, exact.points_required)
-                        rule_matched = True
-                        continue
-                    state_only = rules.filter(state=state, district__isnull=True).first()
-                    if state_only:
-                        max_points_found = max(max_points_found, state_only.points_required)
-                        rule_matched = True
-                        continue
-                    generic = rules.filter(state__isnull=True, district__isnull=True).first()
-                    if generic:
-                        max_points_found = max(max_points_found, generic.points_required)
-                        rule_matched = True
-                if rule_matched:
-                    required_points = max_points_found
-        
         serializer = ApplySerializer(data=data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
-            if required_points > 0:
-                with transaction.atomic():
-                    wallet, _ = Wallet.objects.get_or_create(user=user)
-                    wallet = Wallet.objects.select_for_update().get(id=wallet.id)
-                    if wallet.balance < required_points:
-                        return Response(
-                            {"error": f"Insufficient points. Required: {required_points}, Balance: {wallet.balance}"},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-
-                    apply_instance = serializer.save(user=user)
-                    
-                    if preferred_locations:
-                        for loc_data in preferred_locations:
-                            JobPreferenceLocation.objects.create(
-                                user=user,
-                                apply=apply_instance,
-                                **loc_data
-                            )
-                    
-                    wallet.balance -= required_points
-                    wallet.save()
-                    WalletTransaction.objects.create(
-                        wallet=wallet,
-                        amount=required_points,
-                        transaction_type='DEBIT',
-                        reference=f"APPLY_{apply_instance.id}",
-                        description=f"Job application point deduction"
+            apply_instance = serializer.save(user=user)
+            if preferred_locations:
+                for loc_data in preferred_locations:
+                    JobPreferenceLocation.objects.create(
+                        user=user,
+                        apply=apply_instance,
+                        **loc_data
                     )
-            else:
-                apply_instance = serializer.save(user=user)
-                if preferred_locations:
-                    for loc_data in preferred_locations:
-                        JobPreferenceLocation.objects.create(
-                            user=user,
-                            apply=apply_instance,
-                            **loc_data
-                        )
             
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
