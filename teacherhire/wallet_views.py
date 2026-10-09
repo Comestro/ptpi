@@ -48,8 +48,12 @@ class CreatePaymentOrderAPIView(APIView):
         points_to_buy = int(points_to_buy)
         config = PointConfiguration.objects.first()
         price_per_point = config.point_price_in_inr if config else Decimal('1.00')
+        min_recharge = config.min_wallet_recharge if config else 100
         
         amount_in_inr = Decimal(points_to_buy) * price_per_point
+        
+        if amount_in_inr < min_recharge:
+            return Response({"error": f"Minimum recharge amount is ₹{min_recharge}"}, status=400)
         amount_in_paise = int(amount_in_inr * 100)
         
         # Create Razorpay order

@@ -4134,37 +4134,31 @@ class RecHireRequestViewSet(viewsets.ModelViewSet):
         data['recruiter_id'] = recruiter_id
         data['status'] = "requested"
         
-        # Calculate required points
-        required_points = 0
+        # Calculate required points based on salary expectation
+        teacher_id = data.get('teacher_id')
+        job_types = data.get('teacher_job_type', [])
         class_categories = data.get('class_category', [])
         subjects = data.get('subject', [])
         
-        if not isinstance(class_categories, list):
-            class_categories = [class_categories]
-        if not isinstance(subjects, list):
-            subjects = [subjects]
+        if not isinstance(job_types, list):
+            job_types = [job_types]
             
-        rules = RecruiterPointRule.objects.all()
-        max_points = 0
-        for cat in class_categories:
-            for sub in subjects:
-                exact = rules.filter(class_category_id=cat, subject_id=sub).first()
-                if exact:
-                    max_points = max(max_points, exact.points_required)
-                    continue
-                cat_only = rules.filter(class_category_id=cat, subject__isnull=True).first()
-                if cat_only:
-                    max_points = max(max_points, cat_only.points_required)
-                    continue
-                sub_only = rules.filter(class_category__isnull=True, subject_id=sub).first()
-                if sub_only:
-                    max_points = max(max_points, sub_only.points_required)
-                    continue
-                generic = rules.filter(class_category__isnull=True, subject__isnull=True).first()
-                if generic:
-                    max_points = max(max_points, generic.points_required)
+        max_salary = 0
+        applies = Apply.objects.filter(user_id=teacher_id, teacher_job_type_id__in=job_types)
+        for app in applies:
+            try:
+                # Basic string to float conversion (handling potential non-numeric characters gracefully)
+                salary = float(''.join(filter(str.isdigit, str(app.salary_expectation) or '0')))
+                if salary > max_salary:
+                    max_salary = salary
+            except ValueError:
+                pass
+                
+        point_config = PointConfiguration.objects.first()
+        fee_percentage = point_config.hire_fee_percentage if point_config else 10.0
         
-        required_points = max_points
+        # We calculate the required points (1 point = 1 INR basically, unless point_price_in_inr is different, but for simplicity percentage is on INR which translates to points if 1:1)
+        required_points = int(max_salary * (float(fee_percentage) / 100))
         
         serializer = HireRequestSerializer(data=data)
         if serializer.is_valid(raise_exception=True):

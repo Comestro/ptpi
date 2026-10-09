@@ -730,6 +730,8 @@ class WalletTransaction(models.Model):
 class PointConfiguration(models.Model):
     point_price_in_inr = models.DecimalField(max_digits=10, decimal_places=2, default=1.00, help_text="Cost of 1 Point in INR")
     welcome_points = models.IntegerField(default=0, help_text="Free points given to newly registered users")
+    hire_fee_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=10.00, help_text="Percentage of expected salary to charge as points (e.g., 10 for 10%)")
+    min_wallet_recharge = models.IntegerField(default=100, help_text="Minimum amount (in INR) required for wallet recharge")
     
     def save(self, *args, **kwargs):
         if not self.pk and PointConfiguration.objects.exists():
@@ -737,7 +739,7 @@ class PointConfiguration(models.Model):
         return super(PointConfiguration, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"1 Point = {self.point_price_in_inr} INR | Welcome Points: {self.welcome_points}"
+        return f"Fee: {self.hire_fee_percentage}% | Min Recharge: {self.min_wallet_recharge}"
 
 
 class TeacherPointRule(models.Model):
