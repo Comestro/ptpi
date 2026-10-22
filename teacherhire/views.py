@@ -4415,15 +4415,45 @@ class ApplyViewSet(viewsets.ModelViewSet):
         
         serializer = ApplySerializer(data=data, context={"request": request})
         if serializer.is_valid(raise_exception=True):
-            apply_instance = serializer.save(user=user)
-            if preferred_locations:
-                for loc_data in preferred_locations:
-                    JobPreferenceLocation.objects.create(
-                        user=user,
-                        apply=apply_instance,
-                        **loc_data
+            # Calculate points required dynamically based on salary expectation & admin point config
+            salary_amount = 0
+            try:
+                raw_salary = data.get('salary_expectation', 0)
+                salary_amount = float(''.join(filter(str.isdigit, str(raw_salary) or '0')))
+            except ValueError:
+                salary_amount = 0
+
+            point_config = PointConfiguration.objects.first()
+            fee_pct = float(point_config.hire_fee_percentage) if point_config else 10.0
+            required_points = int(salary_amount * (fee_pct / 100.0))
+
+            wallet, _ = Wallet.objects.get_or_create(user=user)
+            if required_points > 0 and wallet.balance < required_points:
+                return Response(
+                    {"error": f"Insufficient wallet points. Required: {required_points} points ({fee_pct}% of expected salary ₹{salary_amount:,.0f}). Current balance: {wallet.balance} points. Please top up your wallet."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            with transaction.atomic():
+                apply_instance = serializer.save(user=user)
+                if preferred_locations:
+                    for loc_data in preferred_locations:
+                        JobPreferenceLocation.objects.create(
+                            user=user,
+                            apply=apply_instance,
+                            **loc_data
+                        )
+                if required_points > 0:
+                    wallet.balance -= required_points
+                    wallet.save()
+                    WalletTransaction.objects.create(
+                        wallet=wallet,
+                        amount=required_points,
+                        transaction_type='DEBIT',
+                        reference=f"APPLY_{apply_instance.id}",
+                        description=f"Point deduction for job application ({fee_pct}% of expected salary ₹{salary_amount:,.0f})"
                     )
-            
+
             return Response(ApplySerializer(apply_instance).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -5587,7 +5617,11 @@ class SystemErrorLogViewSet(viewsets.ModelViewSet):
 class PointConfigurationViewSet(viewsets.ModelViewSet):
     queryset = PointConfiguration.objects.all()
     serializer_class = PointConfigurationSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
 
 class TeacherPointRuleViewSet(viewsets.ModelViewSet):
     queryset = TeacherPointRule.objects.all().order_by('-id')
